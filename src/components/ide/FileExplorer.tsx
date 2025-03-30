@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
   FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
@@ -8,6 +7,7 @@ import {
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { Menu, Item, useContextMenu } from 'react-contexify';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import 'react-contexify/ReactContexify.css';
 
 const CONTEXT_MENU_ID = 'file-explorer-context-menu';
@@ -213,9 +213,21 @@ const FileExplorer: React.FC = () => {
     ));
   };
 
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      sessionStorage.clear();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
   return (
     <div 
-      className="h-full overflow-auto bg-sidebar flex flex-col"
+      className="h-full overflow-hidden bg-sidebar flex flex-col"
       onContextMenu={handleContextMenu}
     >
       <div className="px-2 py-1 flex justify-between items-center border-b border-border">
@@ -262,38 +274,40 @@ const FileExplorer: React.FC = () => {
         </div>
       )}
       
-      <div className="flex-1 overflow-auto">
-        {isSearching ? (
-          <div className="px-2 py-1">
-            {searchResults.length > 0 ? (
-              searchResults.map(item => (
-                <SearchResultItem 
-                  key={item.id} 
-                  item={item} 
-                  handleItemContextMenu={handleItemContextMenu}
-                />
-              ))
-            ) : (
-              <div className="text-sm text-slate-400 px-2 py-1">
-                No results found
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="px-2 py-1">
-            {renderFileTree(files)}
-          </div>
-        )}
-      </div>
+      <ScrollArea className="flex-1">
+        <div className="py-1.5">
+          {isSearching ? (
+            <div className="px-2">
+              {searchResults.length > 0 ? (
+                searchResults.map(item => (
+                  <SearchResultItem 
+                    key={item.id} 
+                    item={item} 
+                    handleItemContextMenu={handleItemContextMenu}
+                  />
+                ))
+              ) : (
+                <div className="text-sm text-slate-400 px-2 py-1">
+                  No results found
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="px-2">
+              {renderFileTree(files)}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
       
-      <Menu id={CONTEXT_MENU_ID} className="context-menu">
-        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')} className="context-menu-item">
+      <Menu id={CONTEXT_MENU_ID} className="context-menu min-w-[150px] py-1 bg-sidebar border border-border rounded shadow-md text-sidebar-foreground text-sm">
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')} className="context-menu-item px-2 py-1 hover:bg-[#cccccc29] flex items-center">
           <div className="flex items-center">
             <FileText size={14} className="mr-2 opacity-70" />
             <span>New File</span>
           </div>
         </Item>
-        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')} className="context-menu-item">
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')} className="context-menu-item px-2 py-1 hover:bg-[#cccccc29] flex items-center">
           <div className="flex items-center">
             <Folder size={14} className="mr-2 opacity-70" />
             <span>New Folder</span>
@@ -301,14 +315,14 @@ const FileExplorer: React.FC = () => {
         </Item>
       </Menu>
       
-      <Menu id={FILE_ITEM_MENU_ID} className="context-menu">
-        <Item onClick={({ props }) => startRenaming(props.itemId)} className="context-menu-item">
+      <Menu id={FILE_ITEM_MENU_ID} className="context-menu min-w-[150px] py-1 bg-sidebar border border-border rounded shadow-md text-sidebar-foreground text-sm">
+        <Item onClick={({ props }) => startRenaming(props.itemId)} className="context-menu-item px-2 py-1 hover:bg-[#cccccc29] flex items-center">
           <div className="flex items-center">
             <Edit size={14} className="mr-2 opacity-70" />
             <span>Rename</span>
           </div>
         </Item>
-        <Item onClick={({ props }) => deleteFile(props.itemId)} className="context-menu-item">
+        <Item onClick={({ props }) => deleteFile(props.itemId)} className="context-menu-item px-2 py-1 hover:bg-[#cccccc29] flex items-center">
           <div className="flex items-center">
             <Trash size={14} className="mr-2 opacity-70" />
             <span>Delete</span>
@@ -316,26 +330,26 @@ const FileExplorer: React.FC = () => {
         </Item>
       </Menu>
       
-      <Menu id={FOLDER_ITEM_MENU_ID} className="context-menu">
-        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')} className="context-menu-item">
+      <Menu id={FOLDER_ITEM_MENU_ID} className="context-menu min-w-[150px] py-1 bg-sidebar border border-border rounded shadow-md text-sidebar-foreground text-sm">
+        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')} className="context-menu-item px-2 py-1 hover:bg-[#cccccc29] flex items-center">
           <div className="flex items-center">
             <FileText size={14} className="mr-2 opacity-70" />
             <span>New File</span>
           </div>
         </Item>
-        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'folder')} className="context-menu-item">
+        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'folder')} className="context-menu-item px-2 py-1 hover:bg-[#cccccc29] flex items-center">
           <div className="flex items-center">
             <FolderPlus size={14} className="mr-2 opacity-70" />
             <span>New Folder</span>
           </div>
         </Item>
-        <Item onClick={({ props }) => startRenaming(props.itemId)} className="context-menu-item">
+        <Item onClick={({ props }) => startRenaming(props.itemId)} className="context-menu-item px-2 py-1 hover:bg-[#cccccc29] flex items-center">
           <div className="flex items-center">
             <Edit size={14} className="mr-2 opacity-70" />
             <span>Rename</span>
           </div>
         </Item>
-        <Item onClick={({ props }) => deleteFile(props.itemId)} className="context-menu-item">
+        <Item onClick={({ props }) => deleteFile(props.itemId)} className="context-menu-item px-2 py-1 hover:bg-[#cccccc29] flex items-center">
           <div className="flex items-center">
             <Trash size={14} className="mr-2 opacity-70" />
             <span>Delete</span>
