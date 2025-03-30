@@ -1,7 +1,6 @@
-
-import React, { useState, useRef } from 'react';
-import { FileSystemItem, useFileSystem } from '@/contexts/FileSystemContext';
-import { ChevronDown, ChevronRight, File, Folder, FolderOpen, Plus, MoreVertical } from 'lucide-react';
+import React, { useState } from 'react';
+import { useFileSystem } from '@/contexts/FileSystemContext';
+import { ChevronDown, ChevronRight, Folder, FolderOpen, Plus, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEditor } from '@/contexts/EditorContext';
@@ -9,10 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { getFileIconName, getFileTypeColor } from '@/utils/languageUtils';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import '../styles/contextMenu.css';
-
-// Icons for different file types
-import * as LucideIcons from 'lucide-react';
+import '../../styles/contextMenu.css';
 
 const FileExplorer: React.FC = () => {
   const { 
@@ -34,22 +30,18 @@ const FileExplorer: React.FC = () => {
   const [renameValue, setRenameValue] = useState('');
   const { toast } = useToast();
   
-  // Render a file or folder item
   const renderItem = (item: FileSystemItem) => {
     const isRenaming = renamingItem === item.id;
     const isCreatingInFolder = newItemParentPath === item.path && newItemType !== null;
     
-    // Get icon for file
     const getIcon = () => {
       if (item.type === 'folder') {
         return item.isOpen ? <FolderOpen size={16} className="shrink-0" /> : <Folder size={16} className="shrink-0" />;
       }
       
-      // Get icon for file based on extension
       const iconName = getFileIconName(item.name);
       const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.File;
       
-      // Get color for the file type
       const color = getFileTypeColor(item.name);
       
       return <IconComponent size={16} className="shrink-0" style={{ color }} />;
@@ -71,22 +63,18 @@ const FileExplorer: React.FC = () => {
           }}
           onContextMenu={(e) => {
             e.preventDefault();
-            // Context menu would be handled here in a more complete implementation
           }}
         >
-          {/* Folder toggle or file icon */}
           <div className="mr-1 w-4 flex justify-center">
             {item.type === 'folder' ? (
               item.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
             ) : null}
           </div>
           
-          {/* Icon */}
           <div className="mr-1.5">
             {getIcon()}
           </div>
           
-          {/* Name or rename input */}
           {isRenaming ? (
             <Input
               value={renameValue}
@@ -112,12 +100,10 @@ const FileExplorer: React.FC = () => {
             <span className="truncate">{item.name}</span>
           )}
           
-          {/* Indicators for file status */}
           {item.type === 'file' && item.isModified && (
             <span className="ml-1 text-amber-500 font-bold">●</span>
           )}
           
-          {/* Actions dropdown */}
           <div className="ml-auto opacity-0 group-hover:opacity-100">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -167,7 +153,6 @@ const FileExplorer: React.FC = () => {
           </div>
         </div>
         
-        {/* New item creation form */}
         {isCreatingInFolder && (
           <div className="pl-6 py-1">
             <Input
@@ -194,7 +179,6 @@ const FileExplorer: React.FC = () => {
           </div>
         )}
         
-        {/* Render children if this is a folder and it's open */}
         {item.type === 'folder' && item.isOpen && item.children && (
           <div className="pl-4">
             {item.children.map(child => renderItem(child))}
@@ -204,14 +188,12 @@ const FileExplorer: React.FC = () => {
     );
   };
   
-  // Filter files based on search query
   const filteredFiles = searchQuery.trim() !== '' 
     ? searchFiles(searchQuery)
     : files;
   
   return (
     <div className="flex flex-col h-full bg-editor">
-      {/* Explorer header */}
       <div className="p-2 border-b border-border flex justify-between items-center">
         <h2 className="text-sm font-medium">Explorer</h2>
         
@@ -231,7 +213,6 @@ const FileExplorer: React.FC = () => {
         </div>
       </div>
       
-      {/* Search bar */}
       <div className="p-2 border-b border-border">
         <Input
           placeholder="Search files..."
@@ -241,11 +222,9 @@ const FileExplorer: React.FC = () => {
         />
       </div>
       
-      {/* File tree */}
       <div className="flex-1 overflow-auto p-1 text-xs">
         {filteredFiles.map(file => renderItem(file))}
         
-        {/* New item at root level */}
         {newItemParentPath === '/my-project' && newItemType && (
           <div className="py-1 px-2">
             <Input
