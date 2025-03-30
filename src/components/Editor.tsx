@@ -28,20 +28,6 @@ const Editor: React.FC<EditorProps> = ({ content, language }) => {
         .replace(/(\w+):/g, '<span class="text-syntax-keyword">$1</span>:')
         .replace(/(\d+[a-z%]+)/g, '<span class="text-syntax-variable">$1</span>')
         .replace(/(!important)/g, '<span class="text-syntax-keyword">$1</span>');
-    } else if (lang === 'json') {
-      return code
-        .replace(/(".*?"):/g, '<span class="text-syntax-keyword">$1</span>:')
-        .replace(/: (".*?")/g, ': <span class="text-syntax-string">$1</span>')
-        .replace(/(\btrue\b|\bfalse\b|\bnull\b|\bundefined\b)/g, '<span class="text-syntax-variable">$1</span>')
-        .replace(/(\b\d+\b)/g, '<span class="text-syntax-function">$1</span>');
-    } else if (lang === 'markdown') {
-      return code
-        .replace(/^(#{1,6})\s+(.+)$/gm, '<span class="text-syntax-keyword">$1</span> <span class="text-syntax-function">$2</span>')
-        .replace(/\*\*(.+?)\*\*/g, '<span class="text-syntax-keyword">**</span><span class="text-syntax-variable">$1</span><span class="text-syntax-keyword">**</span>')
-        .replace(/\*(.+?)\*/g, '<span class="text-syntax-keyword">*</span><span class="text-syntax-string">$1</span><span class="text-syntax-keyword">*</span>')
-        .replace(/`(.+?)`/g, '<span class="text-syntax-comment">`$1`</span>')
-        .replace(/!\[(.*?)\]\((.*?)\)/g, '<span class="text-syntax-keyword">![$1]($2)</span>')
-        .replace(/\[(.*?)\]\((.*?)\)/g, '<span class="text-syntax-string">[$1]</span><span class="text-syntax-variable">($2)</span>');
     }
     return code;
   };

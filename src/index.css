@@ -3,262 +3,167 @@
 @tailwind components;
 @tailwind utilities;
 
-@import './styles/contextMenu.css';
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+    --primary: 220.9 39.3% 11%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71.4% 4.1%;
+    --radius: 0.5rem;
+    
+    /* IDE-specific colors */
+    --sidebar: 0 0% 85%;
+    --sidebar-foreground: 0 0% 20%;
+    --editor: 0 0% 95%;
+    --editor-line: 0 0% 90%;
+    --terminal: 0 0% 85%;
+    --terminal-foreground: 0 0% 20%;
+    --tab-active: 0 0% 100%;
+    --tab-inactive: 0 0% 90%;
+    --status-bar: 0 0% 95%;
+  }
 
-:root {
-  --font-family: 'Inter', sans-serif;
-  --editor-font: 'JetBrains Mono', monospace;
+  .dark {
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 210 20% 98%;
+    --primary-foreground: 220.9 39.3% 11%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 216 12.2% 83.9%;
+    
+    /* IDE-specific colors for dark mode */
+    --sidebar: 220 10% 15%;
+    --sidebar-foreground: 210 30% 90%;
+    --editor: 220 15% 10%;
+    --editor-line: 0 0% 20%;
+    --terminal: 220 10% 15%;
+    --terminal-foreground: 210 30% 90%;
+    --tab-active: 220 8% 17%;
+    --tab-inactive: 220 10% 15%;
+    --status-bar: 220 20% 10%;
+  }
 }
 
-/* Dark theme variables */
-.dark {
-  --background: #1A1E2B;
-  --foreground: #E1E7EF;
-  --sidebar-bg: #16191F;
-  --sidebar-foreground: #E1E7EF;
-  --terminal-bg: #181C28;
-  --terminal-foreground: #E1E7EF;
-  --editor-bg: #1A1E2B;
-  --editor-line: #2C313C;
-  --tab-active: #1A1E2B;
-  --tab-inactive: #16191F;
-  --border-color: #2C313C;
-  --status-bar: #16191F;
-  --syntax-keyword: #C678DD;
-  --syntax-string: #98C379;
-  --syntax-variable: #E06C75;
-  --syntax-function: #61AFEF;
-  --syntax-comment: #6A737D;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }
 
-/* Light theme variables */
-.light {
-  --background: #F5F5F5;
-  --foreground: #24292E;
-  --sidebar-bg: #ECECEC;
-  --sidebar-foreground: #24292E;
-  --terminal-bg: #FFFFFF;
-  --terminal-foreground: #24292E;
-  --editor-bg: #FFFFFF;
-  --editor-line: #F0F0F0;
-  --tab-active: #FFFFFF;
-  --tab-inactive: #ECECEC;
-  --border-color: #E1E4E8;
-  --status-bar: #ECECEC;
-  --syntax-keyword: #D73A49;
-  --syntax-string: #032F62;
-  --syntax-variable: #E36209;
-  --syntax-function: #6F42C1;
-  --syntax-comment: #6A737D;
+@layer components {
+  /* File explorer item hover and active states */
+  .file-explorer-item {
+    @apply text-opacity-75 transition-all duration-150;
+  }
+  
+  .file-explorer-item:hover {
+    @apply text-opacity-100;
+  }
+  
+  .file-explorer-item:hover,
+  .file-explorer-item.selected,
+  .active-file {
+    @apply bg-[#cccccc29];
+  }
+  
+  .file-explorer-item .file-icon,
+  .file-explorer-item .folder-icon {
+    @apply text-opacity-70 transition-all duration-150;
+  }
+  
+  .file-explorer-item:hover .file-icon,
+  .file-explorer-item:hover .folder-icon,
+  .file-explorer-item.selected .file-icon,
+  .file-explorer-item.selected .folder-icon {
+    @apply text-opacity-90;
+  }
+  
+  /* Context menu styles */
+  .context-menu {
+    @apply min-w-[180px] bg-sidebar border border-border/30 rounded-md shadow-lg overflow-hidden;
+  }
+  
+  .context-menu-item {
+    @apply px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-[#cccccc29] transition-colors duration-150;
+  }
+  
+  /* Chat styles for AI Coworker */
+  .chat-bubble-user {
+    @apply bg-blue-600 text-white rounded-2xl rounded-tr-none px-4 py-2 ml-auto max-w-[80%];
+  }
+  
+  .chat-bubble-ai {
+    @apply bg-gray-700 text-white rounded-2xl rounded-tl-none px-4 py-2 mr-auto w-full;
+  }
+  
+  /* Terminal style chat input */
+  .terminal-input {
+    @apply w-full bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono;
+  }
+  
+  /* Menu dropdown styles */
+  .menu-dropdown {
+    @apply absolute z-50 min-w-48 bg-sidebar border border-border rounded shadow-lg py-1;
+  }
+  
+  .menu-item {
+    @apply px-3 py-1.5 flex items-center text-sm text-sidebar-foreground hover:bg-[#cccccc29] cursor-pointer;
+  }
+  
+  .menu-separator {
+    @apply border-t border-border my-1;
+  }
 }
 
-/* Default to dark theme */
-body {
-  font-family: var(--font-family);
-  @apply dark;
-}
-
-/* Apply styles to color variables */
-.bg-editor {
-  background-color: var(--editor-bg);
-}
-
-.bg-editor-line {
-  background-color: var(--editor-line);
-}
-
-.bg-sidebar {
-  background-color: var(--sidebar-bg);
-}
-
-.text-sidebar-foreground {
-  color: var(--sidebar-foreground);
-}
-
-.bg-sidebar-foreground {
-  background-color: var(--sidebar-foreground);
-}
-
-.bg-terminal {
-  background-color: var(--terminal-bg);
-}
-
-.text-terminal-foreground {
-  color: var(--terminal-foreground);
-}
-
-.bg-tab-active {
-  background-color: var(--tab-active);
-}
-
-.bg-tab-inactive {
-  background-color: var(--tab-inactive);
-}
-
-.border-border {
-  border-color: var(--border-color);
-}
-
-.bg-status-bar {
-  background-color: var(--status-bar);
-}
-
-/* Syntax highlighting colors */
+/* Syntax highlighting for code editor */
 .text-syntax-keyword {
-  color: var(--syntax-keyword);
+  @apply text-blue-600 dark:text-blue-400;
 }
 
 .text-syntax-string {
-  color: var(--syntax-string);
+  @apply text-green-600 dark:text-green-400;
 }
 
 .text-syntax-variable {
-  color: var(--syntax-variable);
+  @apply text-orange-600 dark:text-orange-400;
 }
 
 .text-syntax-function {
-  color: var(--syntax-function);
+  @apply text-purple-600 dark:text-purple-400;
 }
 
 .text-syntax-comment {
-  color: var(--syntax-comment);
-}
-
-/* File explorer styling */
-.file-explorer-item {
-  transition: background-color 0.2s;
-}
-
-.file-explorer-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.file-explorer-item.selected {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.file-icon, .folder-icon {
-  color: var(--sidebar-foreground);
-  opacity: 0.7;
-}
-
-/* Terminal styling */
-.terminal-input {
-  background-color: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--border-color);
-  color: var(--terminal-foreground);
-  width: 100%;
-  border-radius: 4px;
-  padding: 8px 12px;
-  outline: none;
-}
-
-.terminal-input:focus {
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.terminal-prompt {
-  color: #F9826C;
-}
-
-.terminal-path {
-  color: #79B8FF;
-}
-
-.terminal-highlight {
-  color: #56D4DD;
-}
-
-/* Chat bubbles */
-.chat-bubble-user {
-  background-color: #4F5AED;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 12px 12px 0 12px;
-  max-width: 80%;
-}
-
-.chat-bubble-ai {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--terminal-foreground);
-  padding: 8px 12px;
-  border-radius: 12px 12px 12px 0;
-  max-width: 80%;
-}
-
-/* Menu Dropdown */
-.menu-dropdown {
-  position: absolute;
-  z-index: 50;
-  background-color: var(--sidebar-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  min-width: 180px;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  padding: 6px 12px;
-  font-size: 13px;
-  color: var(--sidebar-foreground);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.menu-separator {
-  height: 1px;
-  margin: 4px 0;
-  background-color: var(--border-color);
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* For react-contexify */
-.react-contexify {
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  font-size: 13px;
-  padding: 4px 0;
-}
-
-.react-contexify__item {
-  padding: 0;
-}
-
-.react-contexify__item:not(.react-contexify__item--disabled):hover > .react-contexify__item__content {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.react-contexify__item__content {
-  padding: 6px 12px;
-  color: var(--sidebar-foreground);
-}
-
-.react-contexify__separator {
-  height: 1px;
-  margin: 4px 0;
-  background-color: var(--border-color);
+  @apply text-gray-500;
 }

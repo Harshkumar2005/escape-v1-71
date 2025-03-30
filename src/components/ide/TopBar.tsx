@@ -1,36 +1,15 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
-import { positionToRange } from '@/utils/editorUtils';
 import FontSelector from './FontSelector';
-import { toast } from 'sonner';
 
 const TopBar: React.FC = () => {
-  const { saveActiveFile, activeTabId, undoTabClose, monacoInstance } = useEditor();
+  const { saveActiveFile, activeTabId } = useEditor();
   const { createFile, deleteFile, addLogMessage } = useFileSystem();
   
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+S to save
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        handleAction('save');
-      }
-      
-      // Ctrl+Y or Ctrl+Shift+Z for redo
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
-        e.preventDefault();
-        handleAction('redo');
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTabId]);
   
   // Handle opening/closing menus
   const toggleMenu = (menuName: string) => {
@@ -47,102 +26,51 @@ const TopBar: React.FC = () => {
       case 'new-file':
         createFile('/my-project', 'untitled.txt', 'file');
         addLogMessage('success', 'New file created');
-        toast.success('New file created');
         break;
       case 'save':
         saveActiveFile();
         addLogMessage('success', 'File saved');
-        toast.success('File saved');
         break;
       case 'delete':
         if (activeTabId) {
           deleteFile(activeTabId);
           addLogMessage('success', 'File deleted');
-          toast.success('File deleted');
         } else {
           addLogMessage('error', 'No file selected');
-          toast.error('No file selected');
         }
         break;
       case 'copy':
-        if (monacoInstance) {
-          const selection = monacoInstance.getSelection();
-          if (selection && !selection.isEmpty()) {
-            const text = monacoInstance.getModel()?.getValueInRange(selection);
-            if (text) {
-              navigator.clipboard.writeText(text);
-              addLogMessage('success', 'Content copied to clipboard');
-              toast.success('Content copied to clipboard');
-            }
-          }
-        }
+        addLogMessage('success', 'Content copied to clipboard');
         break;
       case 'cut':
-        if (monacoInstance) {
-          const selection = monacoInstance.getSelection();
-          if (selection && !selection.isEmpty()) {
-            const text = monacoInstance.getModel()?.getValueInRange(selection);
-            if (text) {
-              navigator.clipboard.writeText(text);
-              const range = positionToRange(selection);
-              monacoInstance.executeEdits('', [{ range, text: '' }]);
-              addLogMessage('success', 'Content cut to clipboard');
-              toast.success('Content cut to clipboard');
-            }
-          }
-        }
+        addLogMessage('success', 'Content cut to clipboard');
         break;
       case 'paste':
-        if (monacoInstance) {
-          navigator.clipboard.readText().then(text => {
-            const selection = monacoInstance.getSelection();
-            const position = selection || monacoInstance.getPosition();
-            if (position) {
-              const range = positionToRange(position);
-              monacoInstance.executeEdits('', [{ range, text }]);
-              addLogMessage('success', 'Content pasted from clipboard');
-              toast.success('Content pasted from clipboard');
-            }
-          });
-        }
+        addLogMessage('success', 'Content pasted from clipboard');
         break;
       case 'undo':
-        if (monacoInstance) {
-          monacoInstance.trigger('', 'undo', null);
-          addLogMessage('success', 'Undo operation');
-          toast.success('Undo operation');
-        } else {
-          undoTabClose();
-          toast.success('Reopened closed tab');
-        }
+        addLogMessage('success', 'Undo operation');
         break;
       case 'redo':
-        if (monacoInstance) {
-          monacoInstance.trigger('', 'redo', null);
-          addLogMessage('success', 'Redo operation');
-          toast.success('Redo operation');
-        }
+        addLogMessage('success', 'Redo operation');
         break;
       case 'toggle-minimap':
         addLogMessage('success', 'Minimap toggled');
-        toast.success('Minimap toggled');
         break;
       case 'toggle-wrap':
         addLogMessage('success', 'Word wrap toggled');
-        toast.success('Word wrap toggled');
         break;
       case 'keyboard-shortcuts':
         addLogMessage('info', 'Keyboard shortcuts coming soon');
-        toast.info('Keyboard shortcuts coming soon');
         break;
       case 'about':
         addLogMessage('info', 'Code Editor IDE - Version 1.0.0');
-        toast.info('Code Editor IDE - Version 1.0.0');
         break;
       default:
         break;
     }
     
+    // Close menu after action
     setActiveMenu(null);
   };
   
@@ -261,6 +189,7 @@ const TopBar: React.FC = () => {
       </div>
       
       <div className="flex items-center space-x-2">
+        {/* Moved FontSelector to the top right */}
         <FontSelector />
         
         <button 
