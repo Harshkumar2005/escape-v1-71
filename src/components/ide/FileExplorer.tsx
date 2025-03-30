@@ -1,8 +1,9 @@
+
 import React, { useState, useRef } from 'react';
 import { 
   File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
   FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
-  FileCog, FileSpreadsheet
+  FileCog, FileSpreadsheet, Edit, Trash, FolderPlus
 } from 'lucide-react';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
