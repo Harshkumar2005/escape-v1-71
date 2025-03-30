@@ -82,6 +82,24 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, []);
 
+  // Add event listener for beforeunload to clear session storage
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Clear all session storage related to editor tabs when page is closed or refreshed
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith(STORAGE_KEY_PREFIX) || key === TABS_STORAGE_KEY || key === ACTIVE_TAB_KEY) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
   // Save tabs to session storage whenever they change
   useEffect(() => {
     try {
