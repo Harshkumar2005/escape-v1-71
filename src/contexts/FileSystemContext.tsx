@@ -1,5 +1,5 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getLanguageFromExtension } from '@/utils/languageUtils';
 
 // Types
 export type FileType = 'file' | 'folder';
@@ -200,7 +200,7 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               newItem.children = [];
             } else {
               newItem.content = '';
-              newItem.language = name.split('.').pop() || 'plaintext';
+              newItem.language = getLanguageFromExtension(name);
               newItem.isModified = false;
             }
             
@@ -252,7 +252,7 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             
             // If this is a file, update language based on new extension
             if (item.type === 'file') {
-              item.language = newName.split('.').pop() || 'plaintext';
+              item.language = getLanguageFromExtension(newName);
             }
             
             // Update paths of all children if this is a folder

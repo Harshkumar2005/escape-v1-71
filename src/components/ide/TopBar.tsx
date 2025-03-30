@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
@@ -7,7 +6,7 @@ import FontSelector from './FontSelector';
 import { toast } from 'sonner';
 
 const TopBar: React.FC = () => {
-  const { saveActiveFile, activeTabId, undoTabClose } = useEditor();
+  const { saveActiveFile, activeTabId, undoTabClose, monacoInstance } = useEditor();
   const { createFile, deleteFile, addLogMessage } = useFileSystem();
   
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -19,6 +18,12 @@ const TopBar: React.FC = () => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleAction('save');
+      }
+      
+      // Ctrl+Y or Ctrl+Shift+Z for redo
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+        e.preventDefault();
+        handleAction('redo');
       }
     };
     
@@ -59,32 +64,59 @@ const TopBar: React.FC = () => {
         }
         break;
       case 'copy':
-        addLogMessage('success', 'Content copied to clipboard');
-        toast.success('Content copied to clipboard');
-        break;
-      case 'cut':
-        addLogMessage('success', 'Content cut to clipboard');
-        toast.success('Content cut to clipboard');
-        break;
-      case 'paste':
-        addLogMessage('success', 'Content pasted from clipboard');
-        toast.success('Content pasted from clipboard');
-        break;
-      case 'undo':
-        addLogMessage('success', 'Undo operation');
-        if (document.activeElement && 'closest' in document.activeElement) {
-          // Find if we're in an editor
-          const editorElement = (document.activeElement as Element).closest('.monaco-editor');
-          if (!editorElement) {
-            // If not in an editor, try to undo tab close
-            undoTabClose();
-            toast.success('Reopened closed tab');
+        if (monacoInstance) {
+          const selection = monacoInstance.getSelection();
+          if (selection && !selection.isEmpty()) {
+            const text = monacoInstance.getModel()?.getValueInRange(selection);
+            if (text) {
+              navigator.clipboard.writeText(text);
+              addLogMessage('success', 'Content copied to clipboard');
+              toast.success('Content copied to clipboard');
+            }
           }
         }
         break;
+      case 'cut':
+        if (monacoInstance) {
+          const selection = monacoInstance.getSelection();
+          if (selection && !selection.isEmpty()) {
+            const text = monacoInstance.getModel()?.getValueInRange(selection);
+            if (text) {
+              navigator.clipboard.writeText(text);
+              monacoInstance.executeEdits('', [{ range: selection, text: '' }]);
+              addLogMessage('success', 'Content cut to clipboard');
+              toast.success('Content cut to clipboard');
+            }
+          }
+        }
+        break;
+      case 'paste':
+        if (monacoInstance) {
+          navigator.clipboard.readText().then(text => {
+            const selection = monacoInstance.getSelection();
+            monacoInstance.executeEdits('', [{ range: selection || monacoInstance.getPosition(), text }]);
+            addLogMessage('success', 'Content pasted from clipboard');
+            toast.success('Content pasted from clipboard');
+          });
+        }
+        break;
+      case 'undo':
+        if (monacoInstance) {
+          monacoInstance.trigger('', 'undo', null);
+          addLogMessage('success', 'Undo operation');
+          toast.success('Undo operation');
+        } else {
+          // If not in editor, try to undo tab close
+          undoTabClose();
+          toast.success('Reopened closed tab');
+        }
+        break;
       case 'redo':
-        addLogMessage('success', 'Redo operation');
-        toast.success('Redo operation');
+        if (monacoInstance) {
+          monacoInstance.trigger('', 'redo', null);
+          addLogMessage('success', 'Redo operation');
+          toast.success('Redo operation');
+        }
         break;
       case 'toggle-minimap':
         addLogMessage('success', 'Minimap toggled');
@@ -225,7 +257,6 @@ const TopBar: React.FC = () => {
       </div>
       
       <div className="flex items-center space-x-2">
-        {/* Moved FontSelector to the top right */}
         <FontSelector />
         
         <button 

@@ -84,16 +84,24 @@ const EditorArea: React.FC = () => {
       wordWrap: 'on',
     });
     
-    // Set up keyboard shortcuts
-    // Ctrl+S to save
+    // Enable keyboard shortcuts
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       saveActiveFile();
       toast.success('File saved');
     });
     
-    // Ctrl+Z and Ctrl+Y already work for undo/redo
+    // Add more keyboard shortcuts for redo functionality
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyZ, () => {
+      editor.trigger('keyboard', 'redo', null);
+      toast.success('Redo');
+    });
     
-    // Ctrl+C to copy
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyY, () => {
+      editor.trigger('keyboard', 'redo', null);
+      toast.success('Redo');
+    });
+    
+    // Enhanced copy functionality
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC, () => {
       const selection = editor.getSelection();
       if (selection && !selection.isEmpty()) {
@@ -106,9 +114,24 @@ const EditorArea: React.FC = () => {
         }
       }
     });
-
-    // Ctrl+V to paste - Monaco handles this natively
   };
+  
+  // Enable global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Global Ctrl+S handler
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (activeTabId) {
+          saveActiveFile();
+          toast.success('File saved');
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTabId, saveActiveFile]);
   
   // Get active file language
   const getFileLanguage = () => {

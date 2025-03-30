@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { 
   File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
@@ -9,6 +8,7 @@ import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemCo
 import { useEditor } from '@/contexts/EditorContext';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 import 'react-contexify/ReactContexify.css';
+import { getFileTypeColor } from '@/utils/languageUtils';
 
 const CONTEXT_MENU_ID = 'file-explorer-context-menu';
 const FILE_ITEM_MENU_ID = 'file-item-context-menu';
@@ -16,6 +16,7 @@ const FOLDER_ITEM_MENU_ID = 'folder-item-context-menu';
 
 const getFileIcon = (fileName: string) => {
   const extension = fileName.split('.').pop()?.toLowerCase();
+  const color = getFileTypeColor(fileName);
   
   switch(extension) {
     case 'js':
@@ -32,13 +33,13 @@ const getFileIcon = (fileName: string) => {
     case 'c':
     case 'cpp':
     case 'cs':
-      return <FileCode size={16} className="file-icon" />;
+      return <FileCode size={16} className="file-icon" style={{ color }} />;
     
     case 'txt':
     case 'md':
     case 'rtf':
     case 'log':
-      return <FileText size={16} className="file-icon" />;
+      return <FileText size={16} className="file-icon" style={{ color }} />;
     
     case 'jpg':
     case 'jpeg':
@@ -47,23 +48,23 @@ const getFileIcon = (fileName: string) => {
     case 'svg':
     case 'bmp':
     case 'ico':
-      return <FileImage size={16} className="file-icon" />;
+      return <FileImage size={16} className="file-icon" style={{ color }} />;
     
     case 'mp4':
     case 'avi':
     case 'mov':
     case 'wmv':
     case 'webm':
-      return <FileVideo size={16} className="file-icon" />;
+      return <FileVideo size={16} className="file-icon" style={{ color }} />;
     
     case 'mp3':
     case 'wav':
     case 'ogg':
     case 'flac':
-      return <FileAudio size={16} className="file-icon" />;
+      return <FileAudio size={16} className="file-icon" style={{ color }} />;
     
     case 'json':
-      return <FileJson size={16} className="file-icon" />;
+      return <FileJson size={16} className="file-icon" style={{ color }} />;
     
     case 'yml':
     case 'yaml':
@@ -71,20 +72,20 @@ const getFileIcon = (fileName: string) => {
     case 'ini':
     case 'env':
     case 'config':
-      return <FileCog size={16} className="file-icon" />;
+      return <FileCog size={16} className="file-icon" style={{ color }} />;
     
     case 'csv':
     case 'xls':
     case 'xlsx':
-      return <FileSpreadsheet size={16} className="file-icon" />;
+      return <FileSpreadsheet size={16} className="file-icon" style={{ color }} />;
     
     case 'exe':
     case 'bat':
     case 'sh':
-      return <FileCheck size={16} className="file-icon" />;
+      return <FileCheck size={16} className="file-icon" style={{ color }} />;
     
     default:
-      return <File size={16} className="file-icon" />;
+      return <File size={16} className="file-icon" style={{ color }} />;
   }
 };
 
