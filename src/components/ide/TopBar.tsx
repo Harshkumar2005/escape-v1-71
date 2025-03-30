@@ -4,9 +4,10 @@ import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpC
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import FontSelector from './FontSelector';
+import { toast } from 'sonner';
 
 const TopBar: React.FC = () => {
-  const { saveActiveFile, activeTabId } = useEditor();
+  const { saveActiveFile, activeTabId, undoLastAction, redoLastAction } = useEditor();
   const { createFile, deleteFile, addLogMessage } = useFileSystem();
   
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -29,7 +30,6 @@ const TopBar: React.FC = () => {
         break;
       case 'save':
         saveActiveFile();
-        addLogMessage('success', 'File saved');
         break;
       case 'delete':
         if (activeTabId) {
@@ -40,19 +40,25 @@ const TopBar: React.FC = () => {
         }
         break;
       case 'copy':
-        addLogMessage('success', 'Content copied to clipboard');
+        if (document.execCommand('copy')) {
+          toast.success('Content copied to clipboard');
+        }
         break;
       case 'cut':
-        addLogMessage('success', 'Content cut to clipboard');
+        if (document.execCommand('cut')) {
+          toast.success('Content cut to clipboard');
+        }
         break;
       case 'paste':
-        addLogMessage('success', 'Content pasted from clipboard');
+        if (document.execCommand('paste')) {
+          toast.success('Content pasted from clipboard');
+        }
         break;
       case 'undo':
-        addLogMessage('success', 'Undo operation');
+        undoLastAction();
         break;
       case 'redo':
-        addLogMessage('success', 'Redo operation');
+        redoLastAction();
         break;
       case 'toggle-minimap':
         addLogMessage('success', 'Minimap toggled');
@@ -61,7 +67,7 @@ const TopBar: React.FC = () => {
         addLogMessage('success', 'Word wrap toggled');
         break;
       case 'keyboard-shortcuts':
-        addLogMessage('info', 'Keyboard shortcuts coming soon');
+        toast.info('Keyboard shortcuts: Ctrl+S to save, Ctrl+Z to undo, Ctrl+Y to redo');
         break;
       case 'about':
         addLogMessage('info', 'Code Editor IDE - Version 1.0.0');
@@ -87,18 +93,18 @@ const TopBar: React.FC = () => {
             File
           </button>
           {activeMenu === 'file' && (
-            <div className="menu-dropdown mt-1 left-0">
-              <div className="menu-item" onClick={() => handleAction('new-file')}>
+            <div className="menu-dropdown mt-1 left-0 bg-sidebar border border-border rounded shadow-lg py-1 z-50">
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('new-file')}>
                 <FileIcon size={14} className="mr-2" />
                 New File
               </div>
-              <div className="menu-item" onClick={() => handleAction('save')}>
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('save')}>
                 <Save size={14} className="mr-2" />
                 Save
                 <span className="ml-auto text-xs opacity-70">Ctrl+S</span>
               </div>
-              <div className="menu-separator"></div>
-              <div className="menu-item" onClick={() => handleAction('delete')}>
+              <div className="border-t border-border my-1"></div>
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('delete')}>
                 <Trash2 size={14} className="mr-2" />
                 Delete
               </div>
@@ -114,29 +120,29 @@ const TopBar: React.FC = () => {
             Edit
           </button>
           {activeMenu === 'edit' && (
-            <div className="menu-dropdown mt-1 left-0">
-              <div className="menu-item" onClick={() => handleAction('undo')}>
+            <div className="menu-dropdown mt-1 left-0 bg-sidebar border border-border rounded shadow-lg py-1 z-50">
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('undo')}>
                 <Undo size={14} className="mr-2" />
                 Undo
                 <span className="ml-auto text-xs opacity-70">Ctrl+Z</span>
               </div>
-              <div className="menu-item" onClick={() => handleAction('redo')}>
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('redo')}>
                 <Redo size={14} className="mr-2" />
                 Redo
                 <span className="ml-auto text-xs opacity-70">Ctrl+Y</span>
               </div>
-              <div className="menu-separator"></div>
-              <div className="menu-item" onClick={() => handleAction('copy')}>
+              <div className="border-t border-border my-1"></div>
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('copy')}>
                 <Copy size={14} className="mr-2" />
                 Copy
                 <span className="ml-auto text-xs opacity-70">Ctrl+C</span>
               </div>
-              <div className="menu-item" onClick={() => handleAction('cut')}>
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('cut')}>
                 <Clipboard size={14} className="mr-2" />
                 Cut
                 <span className="ml-auto text-xs opacity-70">Ctrl+X</span>
               </div>
-              <div className="menu-item" onClick={() => handleAction('paste')}>
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('paste')}>
                 <Clipboard size={14} className="mr-2" />
                 Paste
                 <span className="ml-auto text-xs opacity-70">Ctrl+V</span>
@@ -153,12 +159,12 @@ const TopBar: React.FC = () => {
             View
           </button>
           {activeMenu === 'view' && (
-            <div className="menu-dropdown mt-1 left-0">
-              <div className="menu-item" onClick={() => handleAction('toggle-minimap')}>
+            <div className="menu-dropdown mt-1 left-0 bg-sidebar border border-border rounded shadow-lg py-1 z-50">
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('toggle-minimap')}>
                 <LayoutGrid size={14} className="mr-2" />
                 Toggle Minimap
               </div>
-              <div className="menu-item" onClick={() => handleAction('toggle-wrap')}>
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('toggle-wrap')}>
                 <RotateCcw size={14} className="mr-2" />
                 Toggle Word Wrap
               </div>
@@ -174,12 +180,12 @@ const TopBar: React.FC = () => {
             Help
           </button>
           {activeMenu === 'help' && (
-            <div className="menu-dropdown mt-1 left-0">
-              <div className="menu-item" onClick={() => handleAction('keyboard-shortcuts')}>
+            <div className="menu-dropdown mt-1 left-0 bg-sidebar border border-border rounded shadow-lg py-1 z-50">
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('keyboard-shortcuts')}>
                 <Command size={14} className="mr-2" />
                 Keyboard Shortcuts
               </div>
-              <div className="menu-item" onClick={() => handleAction('about')}>
+              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('about')}>
                 <HelpCircle size={14} className="mr-2" />
                 About
               </div>
@@ -189,7 +195,6 @@ const TopBar: React.FC = () => {
       </div>
       
       <div className="flex items-center space-x-2">
-        {/* Moved FontSelector to the top right */}
         <FontSelector />
         
         <button 
@@ -198,6 +203,22 @@ const TopBar: React.FC = () => {
           title="Save (Ctrl+S)"
         >
           <Save size={16} />
+        </button>
+        
+        <button 
+          className="p-1 hover:text-white transition-colors"
+          onClick={() => handleAction('undo')}
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo size={16} />
+        </button>
+        
+        <button 
+          className="p-1 hover:text-white transition-colors"
+          onClick={() => handleAction('redo')}
+          title="Redo (Ctrl+Y)"
+        >
+          <Redo size={16} />
         </button>
         
         <button 

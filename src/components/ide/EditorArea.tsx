@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { Editor, OnMount, useMonaco } from '@monaco-editor/react';
 import { X, Circle } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
@@ -38,12 +38,48 @@ const Tab: React.FC<TabProps> = ({ id, name, isActive, isModified, onClick, onCl
 };
 
 const EditorArea: React.FC = () => {
-  const { openedTabs, activeTabId, openTab, closeTab, setActiveTab, updateMonacoInstance } = useEditor();
-  const { getFileById, updateFileContent } = useFileSystem();
+  const { 
+    openedTabs, 
+    activeTabId, 
+    openTab, 
+    closeTab, 
+    setActiveTab, 
+    updateMonacoInstance,
+    saveActiveFile,
+    getTabContent,
+    updateTabContent,
+    undoLastAction,
+    redoLastAction
+  } = useEditor();
+  
   const { editorTheme } = useTheme();
   const { editorFont } = useFont();
   const monaco = useMonaco();
   const editorRef = useRef<any>(null);
+  
+  // Handle keyboard shortcuts
+  const handleKeyboardShortcuts = useCallback((e: KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 's') {
+        e.preventDefault();
+        saveActiveFile();
+      } else if (e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undoLastAction();
+      } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+        e.preventDefault();
+        redoLastAction();
+      }
+    }
+  }, [saveActiveFile, undoLastAction, redoLastAction]);
+
+  // Set up global keyboard shortcut listeners
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyboardShortcuts);
+    return () => {
+      window.removeEventListener('keydown', handleKeyboardShortcuts);
+    };
+  }, [handleKeyboardShortcuts]);
   
   // Set up Monaco editor
   const handleEditorMount: OnMount = (editor, monaco) => {
@@ -69,38 +105,103 @@ const EditorArea: React.FC = () => {
       tabSize: 2,
       wordWrap: 'on',
     });
-    
-    // Set up Ctrl+S to save
+
+    // Set up context menu with copy/paste options
+    editor.addAction({
+      id: 'custom-copy',
+      label: 'Copy',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
+      contextMenuGroupId: 'modification',
+      run: () => {
+        const selection = editor.getSelection();
+        if (selection) {
+          const text = editor.getModel()?.getValueInRange(selection);
+          if (text) {
+            navigator.clipboard.writeText(text).catch(err => {
+              console.error('Failed to copy text: ', err);
+            });
+          }
+        }
+      }
+    });
+
+    editor.addAction({
+      id: 'custom-paste',
+      label: 'Paste',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV],
+      contextMenuGroupId: 'modification',
+      run: async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          editor.executeEdits('clipboard', [{
+            range: editor.getSelection(),
+            text: text,
+            forceMoveMarkers: true
+          }]);
+        } catch (err) {
+          console.error('Failed to paste text: ', err);
+        }
+      }
+    });
+
+    editor.addAction({
+      id: 'custom-cut',
+      label: 'Cut',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyX],
+      contextMenuGroupId: 'modification',
+      run: () => {
+        const selection = editor.getSelection();
+        if (selection) {
+          const text = editor.getModel()?.getValueInRange(selection);
+          if (text) {
+            navigator.clipboard.writeText(text).then(() => {
+              editor.executeEdits('clipboard', [{
+                range: selection,
+                text: '',
+                forceMoveMarkers: true
+              }]);
+            }).catch(err => {
+              console.error('Failed to cut text: ', err);
+            });
+          }
+        }
+      }
+    });
+
+    // Set up save shortcut
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       if (activeTabId) {
-        const content = editor.getValue();
-        updateFileContent(activeTabId, content);
+        saveActiveFile();
       }
+    });
+
+    // Set up undo/redo shortcuts
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyZ, () => {
+      undoLastAction();
+    });
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyZ, () => {
+      redoLastAction();
     });
   };
   
   // Get active file content
-  const getFileContent = () => {
+  const getActiveFileContent = () => {
     if (!activeTabId) return '';
-    const file = getFileById(activeTabId);
-    return file?.content || '';
+    return getTabContent(activeTabId);
   };
   
   // Get active file language
   const getFileLanguage = () => {
     if (!activeTabId) return 'plaintext';
-    const file = getFileById(activeTabId);
-    return file?.language || 'plaintext';
+    const tab = openedTabs.find(tab => tab.id === activeTabId);
+    return tab?.language || 'plaintext';
   };
   
   // Handle editor value changes
   const handleEditorChange = (value: string | undefined) => {
     if (activeTabId && value !== undefined) {
-      // Only update if content has changed to avoid infinite loops
-      const file = getFileById(activeTabId);
-      if (file && file.content !== value) {
-        updateFileContent(activeTabId, value);
-      }
+      updateTabContent(activeTabId, value);
     }
   };
   
@@ -199,7 +300,7 @@ const EditorArea: React.FC = () => {
             height="100%"
             defaultLanguage={getFileLanguage()}
             language={getFileLanguage()}
-            value={getFileContent()}
+            value={getActiveFileContent()}
             theme={editorTheme}
             onChange={handleEditorChange}
             onMount={handleEditorMount}
