@@ -1,11 +1,11 @@
 
 import React from 'react';
-import CodeEditor from '@/components/CodeEditor';
+import CodeEditorIDE from '@/components/ide/CodeEditorIDE';
 
 const Index = () => {
   return (
-    <div className="h-screen overflow-hidden">
-      <CodeEditor />
+    <div className="h-screen w-screen overflow-hidden">
+      <CodeEditorIDE />
     </div>
   );
 };
