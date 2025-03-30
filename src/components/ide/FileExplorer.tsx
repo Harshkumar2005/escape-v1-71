@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
-import { useFileSystem } from '@/contexts/FileSystemContext';
-import { ChevronDown, ChevronRight, Folder, FolderOpen, Plus, MoreVertical } from 'lucide-react';
+import { useFileSystem, FileSystemItem } from '@/contexts/FileSystemContext';
+import { ChevronDown, ChevronRight, Folder, FolderOpen, Plus, MoreVertical, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEditor } from '@/contexts/EditorContext';
@@ -9,6 +10,7 @@ import { getFileIconName, getFileTypeColor } from '@/utils/languageUtils';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import '../../styles/contextMenu.css';
+import * as Icons from 'lucide-react';
 
 const FileExplorer: React.FC = () => {
   const { 
@@ -40,7 +42,7 @@ const FileExplorer: React.FC = () => {
       }
       
       const iconName = getFileIconName(item.name);
-      const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.File;
+      const IconComponent = (Icons as any)[iconName] || File;
       
       const color = getFileTypeColor(item.name);
       

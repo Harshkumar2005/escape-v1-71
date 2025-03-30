@@ -3,7 +3,7 @@ import { editor } from 'monaco-editor';
 
 // Helper function to convert monaco Position or Selection to IRange
 export const positionToRange = (
-  position: editor.IPosition | editor.ISelection
+  position: editor.IPosition | editor.IRange
 ): editor.IRange => {
   if ('startLineNumber' in position) {
     // It's already a selection/range

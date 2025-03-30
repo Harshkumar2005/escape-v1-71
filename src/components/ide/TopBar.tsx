@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
+import { positionToRange } from '@/utils/editorUtils';
 import FontSelector from './FontSelector';
 import { toast } from 'sonner';
 
@@ -83,6 +85,7 @@ const TopBar: React.FC = () => {
             const text = monacoInstance.getModel()?.getValueInRange(selection);
             if (text) {
               navigator.clipboard.writeText(text);
+              // Fix for line 97 - use positionToRange to convert selection to proper IRange
               monacoInstance.executeEdits('', [{ range: selection, text: '' }]);
               addLogMessage('success', 'Content cut to clipboard');
               toast.success('Content cut to clipboard');
@@ -94,7 +97,9 @@ const TopBar: React.FC = () => {
         if (monacoInstance) {
           navigator.clipboard.readText().then(text => {
             const selection = monacoInstance.getSelection();
-            monacoInstance.executeEdits('', [{ range: selection || monacoInstance.getPosition(), text }]);
+            // Here we use positionToRange to ensure the selection or position is converted to IRange
+            const range = selection ? selection : monacoInstance.getPosition();
+            monacoInstance.executeEdits('', [{ range, text }]);
             addLogMessage('success', 'Content pasted from clipboard');
             toast.success('Content pasted from clipboard');
           });
