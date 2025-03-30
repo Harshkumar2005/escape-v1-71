@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ interface GithubFile {
   type: string;
   sha: string;
   url: string;
+  size?: number; // Make size optional to match GitHub API
   content?: string;
 }
 
@@ -82,10 +84,10 @@ const GithubRepoLoader: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching GitHub repository contents:', error);
-      addLogMessage('error', `Failed to fetch repository: ${error.message}`);
+      addLogMessage('error', `Failed to fetch repository: ${error instanceof Error ? error.message : String(error)}`);
       toast({
         title: 'Error',
-        description: `Failed to fetch repository: ${error.message}`,
+        description: `Failed to fetch repository: ${error instanceof Error ? error.message : String(error)}`,
         variant: 'destructive'
       });
       setIsLoading(false);
@@ -95,8 +97,8 @@ const GithubRepoLoader: React.FC = () => {
   // Fetch the content of a specific file
   const fetchFileContent = async (owner: string, repo: string, file: GithubFile) => {
     try {
-      // Skip large binary files
-      if (isBinaryFile(file.name) || file.size > 1000000) {
+      // Skip large binary files - check file size if available
+      if (isBinaryFile(file.name) || (file.size !== undefined && file.size > 1000000)) {
         addLogMessage('warning', `Skipped large or binary file: ${file.path}`);
         return;
       }
@@ -201,11 +203,11 @@ const GithubRepoLoader: React.FC = () => {
       console.error('Error importing repository:', error);
       toast({
         title: 'Import Failed',
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive'
       });
       
-      addLogMessage('error', `Failed to import repository: ${error.message}`);
+      addLogMessage('error', `Failed to import repository: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useFileSystem, FileSystemItem } from '@/contexts/FileSystemContext';
+import { useFileSystem } from '@/contexts/FileSystemContext';
 import { ChevronDown, ChevronRight, Folder, FolderOpen, Plus, MoreVertical, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,9 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import '../../styles/contextMenu.css';
 import * as Icons from 'lucide-react';
+
+// Import FileSystemItem type from FileSystemContext
+import { FileSystemItem } from '@/contexts/FileSystemContext';
 
 const FileExplorer: React.FC = () => {
   const { 

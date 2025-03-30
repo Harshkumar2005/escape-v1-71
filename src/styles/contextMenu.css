@@ -1,74 +1,48 @@
 
 /* Context Menu Styles */
-.context-menu {
-  background-color: var(--sidebar-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  min-width: 160px;
-  padding: 2px 0;
-  z-index: 1000;
+.menu-dropdown {
+  position: absolute;
+  z-index: 50;
+  background-color: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  width: 12rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
 }
 
-.context-menu-item {
+.menu-item {
   display: flex;
   align-items: center;
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
   color: var(--sidebar-foreground);
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: background-color 0.2s;
 }
 
-.context-menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+.menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.context-menu-item.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.context-menu-separator {
+.menu-separator {
   height: 1px;
-  margin: 2px 0;
-  background-color: var(--border-color);
+  background-color: var(--border);
+  margin: 0.25rem 0;
 }
 
-.context-menu-icon {
-  margin-right: 6px;
-  opacity: 0.8;
+/* Context Menu Animation */
+.menu-dropdown {
+  animation: menuFadeIn 0.1s ease-out;
 }
 
-.context-menu-shortcut {
-  margin-left: auto;
-  opacity: 0.6;
-  font-size: 10px;
-}
-
-/* Styling for react-contexify */
-.react-contexify {
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  font-size: 12px;
-  padding: 2px 0;
-}
-
-.react-contexify__item {
-  padding: 0;
-}
-
-.react-contexify__item:not(.react-contexify__item--disabled):hover > .react-contexify__item__content {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.react-contexify__item__content {
-  padding: 4px 10px;
-  color: var(--sidebar-foreground);
-}
-
-.react-contexify__separator {
-  height: 1px;
-  margin: 2px 0;
-  background-color: var(--border-color);
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

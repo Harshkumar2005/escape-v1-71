@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
@@ -85,8 +84,8 @@ const TopBar: React.FC = () => {
             const text = monacoInstance.getModel()?.getValueInRange(selection);
             if (text) {
               navigator.clipboard.writeText(text);
-              // Fix for line 97 - use positionToRange to convert selection to proper IRange
-              monacoInstance.executeEdits('', [{ range: selection, text: '' }]);
+              const range = positionToRange(selection);
+              monacoInstance.executeEdits('', [{ range, text: '' }]);
               addLogMessage('success', 'Content cut to clipboard');
               toast.success('Content cut to clipboard');
             }
@@ -97,11 +96,13 @@ const TopBar: React.FC = () => {
         if (monacoInstance) {
           navigator.clipboard.readText().then(text => {
             const selection = monacoInstance.getSelection();
-            // Here we use positionToRange to ensure the selection or position is converted to IRange
-            const range = selection ? selection : monacoInstance.getPosition();
-            monacoInstance.executeEdits('', [{ range, text }]);
-            addLogMessage('success', 'Content pasted from clipboard');
-            toast.success('Content pasted from clipboard');
+            const position = selection || monacoInstance.getPosition();
+            if (position) {
+              const range = positionToRange(position);
+              monacoInstance.executeEdits('', [{ range, text }]);
+              addLogMessage('success', 'Content pasted from clipboard');
+              toast.success('Content pasted from clipboard');
+            }
           });
         }
         break;
@@ -111,7 +112,6 @@ const TopBar: React.FC = () => {
           addLogMessage('success', 'Undo operation');
           toast.success('Undo operation');
         } else {
-          // If not in editor, try to undo tab close
           undoTabClose();
           toast.success('Reopened closed tab');
         }
@@ -143,7 +143,6 @@ const TopBar: React.FC = () => {
         break;
     }
     
-    // Close menu after action
     setActiveMenu(null);
   };
   

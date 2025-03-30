@@ -1,7 +1,7 @@
 
 import { editor } from 'monaco-editor';
 
-// Helper function to convert monaco Position or Selection to IRange
+// Helper function to convert monaco Position or Selection to a range
 export const positionToRange = (
   position: editor.IPosition | editor.IRange
 ): editor.IRange => {
