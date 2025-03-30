@@ -21,8 +21,12 @@ export default {
     extend: {
       colors: {
         border: "hsl(var(--border))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        background: {
+          DEFAULT: "hsl(var(--background))",
+        },
+        foreground: {
+          DEFAULT: "hsl(var(--foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar))",
           foreground: "hsl(var(--sidebar-foreground))",

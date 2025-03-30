@@ -11,8 +11,12 @@ export default {
       colors: {
         border: "rgb(39, 43, 51)",
         input: "rgb(29, 33, 41)",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        background: {
+          DEFAULT: "hsl(var(--background))",
+        },
+        foreground: {
+          DEFAULT: "hsl(var(--foreground))",
+        },
         
         sidebar: {
           DEFAULT: "rgb(26, 30, 38)",
