@@ -36,10 +36,10 @@ export const ProjectStartup: React.FC = () => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-sidebar border-border">
           <DialogHeader>
-            <DialogTitle>Welcome to Code Editor</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-sidebar-foreground">Welcome to Code Editor</DialogTitle>
+            <DialogDescription className="text-sidebar-foreground opacity-70">
               Choose how you want to get started with your project
             </DialogDescription>
           </DialogHeader>
@@ -47,7 +47,7 @@ export const ProjectStartup: React.FC = () => {
           <div className="grid grid-cols-1 gap-4 py-4">
             <Button
               variant="outline"
-              className="flex items-center justify-start gap-2 h-20 px-4"
+              className="flex items-center justify-start gap-2 h-20 px-4 bg-editor hover:bg-editor/90 border-border text-sidebar-foreground"
               onClick={handleLoadFromGithub}
             >
               <Github className="h-6 w-6 text-blue-500" />
@@ -61,7 +61,7 @@ export const ProjectStartup: React.FC = () => {
             
             <Button
               variant="outline"
-              className="flex items-center justify-start gap-2 h-20 px-4"
+              className="flex items-center justify-start gap-2 h-20 px-4 bg-editor hover:bg-editor/90 border-border text-sidebar-foreground"
               onClick={handleStartNewProject}
             >
               <FileCode className="h-6 w-6 text-green-500" />

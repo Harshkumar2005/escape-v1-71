@@ -1,10 +1,10 @@
 
-import { editor } from 'monaco-editor';
+import * as monaco from 'monaco-editor';
 
 // Type definitions for monaco editor
-type Position = editor.Position;
-type Selection = editor.Selection;
-type IRange = editor.IRange;
+type Position = monaco.Position;
+type Selection = monaco.Selection;
+type IRange = monaco.IRange;
 
 // Convert a Position object to an IRange object
 export const positionToRange = (position: Position): IRange => {
@@ -23,5 +23,5 @@ export const createSelectionRange = (
   endLine: number,
   endColumn: number
 ): Selection => {
-  return new Selection(startLine, startColumn, endLine, endColumn);
+  return new monaco.Selection(startLine, startColumn, endLine, endColumn);
 };
