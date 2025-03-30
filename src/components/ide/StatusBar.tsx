@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { GitBranch, Terminal, Columns, Sun, Moon, Save } from 'lucide-react';
+import { GitBranch, Terminal, Columns, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
@@ -17,7 +17,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
   toggleRightSidebar 
 }) => {
   const { theme, toggleTheme } = useTheme();
-  const { activeTabId, saveActiveFile } = useEditor();
+  const { activeTabId } = useEditor();
   const { getFileById, addLogMessage } = useFileSystem();
   const [time, setTime] = useState<string>('');
   const [activeFileInfo, setActiveFileInfo] = useState({ 
@@ -58,44 +58,35 @@ const StatusBar: React.FC<StatusBarProps> = ({
   }, [activeTabId, getFileById]);
   
   return (
-    <div className="flex items-center justify-between px-3 py-1.5 bg-status-bar text-slate-400 border-t border-border">
+    <div className="flex items-center justify-between px-2 py-1.5 bg-status-bar text-slate-400 text-xs border-t border-border">
       <div className="flex items-center space-x-4">
-        <div className="flex items-center text-[14px]">
-          <GitBranch size={14} className="mr-1.5" />
+        <div className="flex items-center text-[13px]">
+          <GitBranch size={14} className="mr-1" />
           <span>main</span>
         </div>
         
         <button 
-          className="flex items-center hover:text-white transition-colors text-[14px]"
+          className="flex items-center hover:text-white transition-colors text-[13px]"
           onClick={() => {
             toggleLeftSidebar();
             addLogMessage('info', 'Toggled explorer sidebar');
           }}
         >
-          <Columns size={14} className="mr-1.5" />
+          <Columns size={14} className="mr-1" />
           <span>Explorer</span>
-        </button>
-        
-        <button 
-          className="flex items-center hover:text-white transition-colors text-[14px]"
-          onClick={saveActiveFile}
-          title="Save (Ctrl+S)"
-        >
-          <Save size={14} className="mr-1.5" />
-          <span>Save</span>
         </button>
       </div>
       
       <div className="flex items-center space-x-4">
         {activeFileInfo.path && (
-          <span className="text-slate-500 max-w-xs truncate text-[14px]" title={activeFileInfo.path}>
+          <span className="text-slate-500 max-w-xs truncate text-[13px]" title={activeFileInfo.path}>
             {activeFileInfo.path}
           </span>
         )}
         
-        <span className="text-[14px]">{activeFileInfo.language}</span>
+        <span className="text-[13px]">{activeFileInfo.language}</span>
         
-        <span className="text-[14px]">{time}</span>
+        <span className="text-[13px]">{time}</span>
         
         <button
           className="flex items-center hover:text-white transition-colors"
