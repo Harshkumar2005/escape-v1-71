@@ -1,11 +1,12 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Editor, OnMount, useMonaco } from '@monaco-editor/react';
-import { X, Circle } from 'lucide-react';
+import { X, Circle, CopyCheck, Save, ClipboardCopy, Undo, Redo, RotateCcw } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useFont } from '@/contexts/FontContext';
+import { toast } from 'sonner';
 
 // Tab component for the editor
 interface TabProps {
@@ -38,12 +39,25 @@ const Tab: React.FC<TabProps> = ({ id, name, isActive, isModified, onClick, onCl
 };
 
 const EditorArea: React.FC = () => {
-  const { openedTabs, activeTabId, openTab, closeTab, setActiveTab, updateMonacoInstance } = useEditor();
-  const { getFileById, updateFileContent } = useFileSystem();
+  const { 
+    openedTabs, 
+    activeTabId, 
+    openTab, 
+    closeTab, 
+    setActiveTab, 
+    updateMonacoInstance,
+    saveActiveFile,
+    updateTabContent,
+    getTabContent,
+    undoTabClose
+  } = useEditor();
+  
+  const { getFileById } = useFileSystem();
   const { editorTheme } = useTheme();
   const { editorFont } = useFont();
   const monaco = useMonaco();
   const editorRef = useRef<any>(null);
+  const [isCopying, setIsCopying] = useState(false);
   
   // Set up Monaco editor
   const handleEditorMount: OnMount = (editor, monaco) => {
@@ -70,20 +84,30 @@ const EditorArea: React.FC = () => {
       wordWrap: 'on',
     });
     
-    // Set up Ctrl+S to save
+    // Set up keyboard shortcuts
+    // Ctrl+S to save
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      if (activeTabId) {
-        const content = editor.getValue();
-        updateFileContent(activeTabId, content);
+      saveActiveFile();
+      toast.success('File saved');
+    });
+    
+    // Ctrl+Z and Ctrl+Y already work for undo/redo
+    
+    // Ctrl+C to copy
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC, () => {
+      const selection = editor.getSelection();
+      if (selection && !selection.isEmpty()) {
+        const text = editor.getModel()?.getValueInRange(selection);
+        if (text) {
+          navigator.clipboard.writeText(text).then(() => {
+            setIsCopying(true);
+            setTimeout(() => setIsCopying(false), 1000);
+          });
+        }
       }
     });
-  };
-  
-  // Get active file content
-  const getFileContent = () => {
-    if (!activeTabId) return '';
-    const file = getFileById(activeTabId);
-    return file?.content || '';
+
+    // Ctrl+V to paste - Monaco handles this natively
   };
   
   // Get active file language
@@ -96,11 +120,7 @@ const EditorArea: React.FC = () => {
   // Handle editor value changes
   const handleEditorChange = (value: string | undefined) => {
     if (activeTabId && value !== undefined) {
-      // Only update if content has changed to avoid infinite loops
-      const file = getFileById(activeTabId);
-      if (file && file.content !== value) {
-        updateFileContent(activeTabId, value);
-      }
+      updateTabContent(activeTabId, value);
     }
   };
   
@@ -108,6 +128,12 @@ const EditorArea: React.FC = () => {
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
     e.stopPropagation();
     closeTab(tabId);
+  };
+
+  // Handle undo tab close
+  const handleUndoTabClose = () => {
+    undoTabClose();
+    toast.success('Reopened closed tab');
   };
   
   // Set up Monaco editor themes
@@ -174,32 +200,227 @@ const EditorArea: React.FC = () => {
       });
     }
   }, [monaco]);
+
+  // Add context menu
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!editorRef.current) return;
+    
+    const editor = editorRef.current;
+    const selection = editor.getSelection();
+    const hasSelection = selection && !selection.isEmpty();
+    
+    // Create custom minimalist context menu
+    const contextMenu = document.createElement('div');
+    contextMenu.className = 'absolute z-50 bg-sidebar border border-border rounded shadow-md py-1 min-w-32';
+    contextMenu.style.left = `${e.clientX}px`;
+    contextMenu.style.top = `${e.clientY}px`;
+    
+    // Add menu items
+    const createMenuItem = (icon: JSX.Element, text: string, onClick: () => void, disabled: boolean = false) => {
+      const item = document.createElement('div');
+      item.className = `px-2 py-1 text-sm flex items-center ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-sidebar-foreground hover:bg-opacity-10 cursor-pointer'} text-sidebar-foreground opacity-90`;
+      
+      if (!disabled) {
+        item.onclick = () => {
+          onClick();
+          document.body.removeChild(contextMenu);
+        };
+      }
+      
+      // Render icon
+      const iconContainer = document.createElement('span');
+      iconContainer.className = 'mr-2 text-slate-400';
+      const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      iconSvg.setAttribute('width', '14');
+      iconSvg.setAttribute('height', '14');
+      iconSvg.setAttribute('viewBox', '0 0 24 24');
+      iconSvg.setAttribute('fill', 'none');
+      iconSvg.setAttribute('stroke', 'currentColor');
+      iconSvg.setAttribute('stroke-width', '2');
+      iconSvg.setAttribute('stroke-linecap', 'round');
+      iconSvg.setAttribute('stroke-linejoin', 'round');
+      
+      // This is a simplified approach - in reality you'd need to recreate the icon's paths
+      // For demo purposes, we'll just use a placeholder
+      iconSvg.innerHTML = '<circle cx="12" cy="12" r="10" />';
+      
+      iconContainer.appendChild(iconSvg);
+      item.appendChild(iconContainer);
+      
+      const textSpan = document.createElement('span');
+      textSpan.textContent = text;
+      item.appendChild(textSpan);
+      
+      return item;
+    };
+    
+    // Copy
+    contextMenu.appendChild(createMenuItem(
+      <ClipboardCopy size={14} />, 
+      'Copy',
+      () => {
+        const text = editor.getModel()?.getValueInRange(selection);
+        if (text) {
+          navigator.clipboard.writeText(text);
+          toast.success('Copied to clipboard');
+        }
+      },
+      !hasSelection
+    ));
+    
+    // Cut
+    contextMenu.appendChild(createMenuItem(
+      <ClipboardCopy size={14} />, 
+      'Cut',
+      () => {
+        const text = editor.getModel()?.getValueInRange(selection);
+        if (text) {
+          navigator.clipboard.writeText(text);
+          editor.executeEdits('', [{ range: selection, text: '' }]);
+          toast.success('Cut to clipboard');
+        }
+      },
+      !hasSelection
+    ));
+    
+    // Paste
+    contextMenu.appendChild(createMenuItem(
+      <ClipboardCopy size={14} />, 
+      'Paste',
+      async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          editor.executeEdits('', [{ range: selection || editor.getPosition(), text }]);
+          toast.success('Pasted from clipboard');
+        } catch (err) {
+          toast.error('Failed to paste: ' + (err instanceof Error ? err.message : String(err)));
+        }
+      }
+    ));
+    
+    // Add separator
+    const separator = document.createElement('div');
+    separator.className = 'my-1 border-t border-border';
+    contextMenu.appendChild(separator);
+    
+    // Undo
+    contextMenu.appendChild(createMenuItem(
+      <Undo size={14} />, 
+      'Undo',
+      () => {
+        editor.trigger('contextmenu', 'undo', null);
+      }
+    ));
+    
+    // Redo
+    contextMenu.appendChild(createMenuItem(
+      <Redo size={14} />, 
+      'Redo',
+      () => {
+        editor.trigger('contextmenu', 'redo', null);
+      }
+    ));
+    
+    // Save
+    contextMenu.appendChild(createMenuItem(
+      <Save size={14} />, 
+      'Save',
+      () => {
+        saveActiveFile();
+        toast.success('File saved');
+      }
+    ));
+    
+    // Add the context menu to the document
+    document.body.appendChild(contextMenu);
+    
+    // Remove when clicking outside
+    const handleOutsideClick = () => {
+      if (document.body.contains(contextMenu)) {
+        document.body.removeChild(contextMenu);
+      }
+      document.removeEventListener('click', handleOutsideClick);
+    };
+    
+    setTimeout(() => {
+      document.addEventListener('click', handleOutsideClick);
+    }, 0);
+  }, [saveActiveFile]);
   
   return (
     <div className="h-full flex flex-col">
-      {/* Tabs bar */}
-      <div className="flex items-center bg-sidebar border-b border-border overflow-x-auto">
-        {openedTabs.map(tab => (
-          <Tab
-            key={tab.id}
-            id={tab.id}
-            name={tab.name}
-            isActive={tab.id === activeTabId}
-            isModified={tab.isModified}
-            onClick={() => setActiveTab(tab.id)}
-            onClose={(e) => handleCloseTab(e, tab.id)}
-          />
-        ))}
+      {/* Editor toolbar with actions */}
+      <div className="flex items-center justify-between bg-sidebar border-b border-border px-2 py-1">
+        {/* Tabs bar */}
+        <div className="flex items-center overflow-x-auto flex-1">
+          {openedTabs.map(tab => (
+            <Tab
+              key={tab.id}
+              id={tab.id}
+              name={tab.name}
+              isActive={tab.id === activeTabId}
+              isModified={tab.isModified}
+              onClick={() => setActiveTab(tab.id)}
+              onClose={(e) => handleCloseTab(e, tab.id)}
+            />
+          ))}
+        </div>
+        
+        {/* Editor actions */}
+        <div className="flex items-center space-x-1">
+          <button
+            className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+            onClick={handleUndoTabClose}
+            title="Undo Close Tab (Reopen)"
+          >
+            <RotateCcw size={14} />
+          </button>
+          
+          <button
+            className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+            onClick={() => {
+              saveActiveFile();
+              toast.success('File saved');
+            }}
+            title="Save File (Ctrl+S)"
+          >
+            <Save size={14} />
+          </button>
+          
+          <button
+            className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+            onClick={() => {
+              if (editorRef.current) {
+                const selection = editorRef.current.getSelection();
+                if (selection && !selection.isEmpty()) {
+                  const text = editorRef.current.getModel()?.getValueInRange(selection);
+                  if (text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                      setIsCopying(true);
+                      toast.success('Copied to clipboard');
+                      setTimeout(() => setIsCopying(false), 1000);
+                    });
+                  }
+                }
+              }
+            }}
+            title="Copy Selection (Ctrl+C)"
+          >
+            {isCopying ? <CopyCheck size={14} /> : <ClipboardCopy size={14} />}
+          </button>
+        </div>
       </div>
       
       {/* Editor */}
-      <div className="flex-1">
+      <div className="flex-1" onContextMenu={handleContextMenu}>
         {activeTabId ? (
           <Editor
             height="100%"
             defaultLanguage={getFileLanguage()}
             language={getFileLanguage()}
-            value={getFileContent()}
+            value={getTabContent(activeTabId)}
             theme={editorTheme}
             onChange={handleEditorChange}
             onMount={handleEditorMount}

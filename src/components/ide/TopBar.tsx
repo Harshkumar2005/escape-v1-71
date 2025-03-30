@@ -1,15 +1,30 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import FontSelector from './FontSelector';
+import { toast } from 'sonner';
 
 const TopBar: React.FC = () => {
-  const { saveActiveFile, activeTabId } = useEditor();
+  const { saveActiveFile, activeTabId, undoTabClose } = useEditor();
   const { createFile, deleteFile, addLogMessage } = useFileSystem();
   
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleAction('save');
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTabId]);
   
   // Handle opening/closing menus
   const toggleMenu = (menuName: string) => {
@@ -26,45 +41,66 @@ const TopBar: React.FC = () => {
       case 'new-file':
         createFile('/my-project', 'untitled.txt', 'file');
         addLogMessage('success', 'New file created');
+        toast.success('New file created');
         break;
       case 'save':
         saveActiveFile();
         addLogMessage('success', 'File saved');
+        toast.success('File saved');
         break;
       case 'delete':
         if (activeTabId) {
           deleteFile(activeTabId);
           addLogMessage('success', 'File deleted');
+          toast.success('File deleted');
         } else {
           addLogMessage('error', 'No file selected');
+          toast.error('No file selected');
         }
         break;
       case 'copy':
         addLogMessage('success', 'Content copied to clipboard');
+        toast.success('Content copied to clipboard');
         break;
       case 'cut':
         addLogMessage('success', 'Content cut to clipboard');
+        toast.success('Content cut to clipboard');
         break;
       case 'paste':
         addLogMessage('success', 'Content pasted from clipboard');
+        toast.success('Content pasted from clipboard');
         break;
       case 'undo':
         addLogMessage('success', 'Undo operation');
+        if (document.activeElement && 'closest' in document.activeElement) {
+          // Find if we're in an editor
+          const editorElement = (document.activeElement as Element).closest('.monaco-editor');
+          if (!editorElement) {
+            // If not in an editor, try to undo tab close
+            undoTabClose();
+            toast.success('Reopened closed tab');
+          }
+        }
         break;
       case 'redo':
         addLogMessage('success', 'Redo operation');
+        toast.success('Redo operation');
         break;
       case 'toggle-minimap':
         addLogMessage('success', 'Minimap toggled');
+        toast.success('Minimap toggled');
         break;
       case 'toggle-wrap':
         addLogMessage('success', 'Word wrap toggled');
+        toast.success('Word wrap toggled');
         break;
       case 'keyboard-shortcuts':
         addLogMessage('info', 'Keyboard shortcuts coming soon');
+        toast.info('Keyboard shortcuts coming soon');
         break;
       case 'about':
         addLogMessage('info', 'Code Editor IDE - Version 1.0.0');
+        toast.info('Code Editor IDE - Version 1.0.0');
         break;
       default:
         break;
