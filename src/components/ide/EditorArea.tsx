@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useCallback } from 'react';
 import { Editor, OnMount, useMonaco } from '@monaco-editor/react';
 import { X, Circle } from 'lucide-react';
@@ -5,8 +6,8 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useFont } from '@/contexts/FontContext';
-import { toast } from 'sonner';
 
+// Tab component for the editor
 interface TabProps {
   id: string;
   name: string;
@@ -56,6 +57,7 @@ const EditorArea: React.FC = () => {
   const monaco = useMonaco();
   const editorRef = useRef<any>(null);
   
+  // Handle keyboard shortcuts
   const handleKeyboardShortcuts = useCallback((e: KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
       if (e.key === 's') {
@@ -71,6 +73,7 @@ const EditorArea: React.FC = () => {
     }
   }, [saveActiveFile, undoLastAction, redoLastAction]);
 
+  // Set up global keyboard shortcut listeners
   useEffect(() => {
     window.addEventListener('keydown', handleKeyboardShortcuts);
     return () => {
@@ -78,19 +81,12 @@ const EditorArea: React.FC = () => {
     };
   }, [handleKeyboardShortcuts]);
   
+  // Set up Monaco editor
   const handleEditorMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
     updateMonacoInstance(editor);
     
-    const language = getFileLanguage();
-    
-    if (activeTabId) {
-      const tab = openedTabs.find(tab => tab.id === activeTabId);
-      if (tab) {
-        toast.success(`Opened ${tab.name} with ${language} syntax highlighting`);
-      }
-    }
-    
+    // Set up editor options for better coding experience
     editor.updateOptions({
       fontSize: 14,
       fontFamily: editorFont + ", 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
@@ -110,6 +106,7 @@ const EditorArea: React.FC = () => {
       wordWrap: 'on',
     });
 
+    // Set up context menu with copy/paste options
     editor.addAction({
       id: 'custom-copy',
       label: 'Copy',
@@ -171,12 +168,14 @@ const EditorArea: React.FC = () => {
       }
     });
 
+    // Set up save shortcut
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       if (activeTabId) {
         saveActiveFile();
       }
     });
 
+    // Set up undo/redo shortcuts
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyZ, () => {
       undoLastAction();
     });
@@ -186,73 +185,36 @@ const EditorArea: React.FC = () => {
     });
   };
   
+  // Get active file content
   const getActiveFileContent = () => {
     if (!activeTabId) return '';
     return getTabContent(activeTabId);
   };
   
+  // Get active file language
   const getFileLanguage = () => {
     if (!activeTabId) return 'plaintext';
-    
     const tab = openedTabs.find(tab => tab.id === activeTabId);
-    if (!tab) return 'plaintext';
-    
-    const extension = tab.name.split('.').pop()?.toLowerCase();
-    
-    switch (extension) {
-      case 'js': return 'javascript';
-      case 'jsx': return 'javascript';
-      case 'ts': return 'typescript';
-      case 'tsx': return 'typescript';
-      
-      case 'html': return 'html';
-      case 'htm': return 'html';
-      case 'css': return 'css';
-      case 'scss': return 'scss';
-      case 'less': return 'less';
-      
-      case 'json': return 'json';
-      case 'xml': return 'xml';
-      case 'yaml': 
-      case 'yml': return 'yaml';
-      
-      case 'py': return 'python';
-      case 'java': return 'java';
-      case 'c': return 'c';
-      case 'cpp': 
-      case 'cc': return 'cpp';
-      case 'cs': return 'csharp';
-      case 'go': return 'go';
-      case 'rs': return 'rust';
-      case 'rb': return 'ruby';
-      case 'php': return 'php';
-      
-      case 'sh': 
-      case 'bash': return 'shell';
-      case 'ps1': return 'powershell';
-      
-      case 'md': return 'markdown';
-      
-      case 'toml': return 'toml';
-      case 'ini': return 'ini';
-      
-      default: return tab.language || 'plaintext';
-    }
+    return tab?.language || 'plaintext';
   };
   
+  // Handle editor value changes
   const handleEditorChange = (value: string | undefined) => {
     if (activeTabId && value !== undefined) {
       updateTabContent(activeTabId, value);
     }
   };
   
+  // Handle tab close
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
     e.stopPropagation();
     closeTab(tabId);
   };
   
+  // Set up Monaco editor themes
   useEffect(() => {
     if (monaco) {
+      // Define custom dark theme for the editor
       monaco.editor.defineTheme('custom-dark', {
         base: 'vs-dark',
         inherit: true,
@@ -282,6 +244,7 @@ const EditorArea: React.FC = () => {
         }
       });
       
+      // Define custom light theme for the editor
       monaco.editor.defineTheme('custom-light', {
         base: 'vs',
         inherit: true,
@@ -314,7 +277,8 @@ const EditorArea: React.FC = () => {
   }, [monaco]);
   
   return (
-    <div className="flex flex-col h-full">
+    <div className="h-full flex flex-col">
+      {/* Tabs bar */}
       <div className="flex items-center bg-sidebar border-b border-border overflow-x-auto">
         {openedTabs.map(tab => (
           <Tab
@@ -329,6 +293,7 @@ const EditorArea: React.FC = () => {
         ))}
       </div>
       
+      {/* Editor */}
       <div className="flex-1">
         {activeTabId ? (
           <Editor

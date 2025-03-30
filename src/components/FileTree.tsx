@@ -53,7 +53,7 @@ const FileTree: React.FC<FileTreeProps> = ({ items, selectedFile, onSelectFile }
   };
 
   return (
-    <div className="h-full overflow-y-auto py-1.5 scrollbar-none">
+    <div className="h-full overflow-y-auto py-1">
       {renderItems(items)}
     </div>
   );
