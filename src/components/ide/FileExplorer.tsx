@@ -285,36 +285,60 @@ const FileExplorer: React.FC = () => {
         )}
       </div>
       
-      <Menu id={CONTEXT_MENU_ID}>
-        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')}>
-          New File
+      <Menu id={CONTEXT_MENU_ID} className="context-menu">
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')} className="context-menu-item">
+          <div className="flex items-center">
+            <FileText size={14} className="mr-2 opacity-70" />
+            <span>New File</span>
+          </div>
         </Item>
-        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')}>
-          New Folder
-        </Item>
-      </Menu>
-      
-      <Menu id={FILE_ITEM_MENU_ID}>
-        <Item onClick={({ props }) => startRenaming(props.itemId)}>
-          Rename
-        </Item>
-        <Item onClick={({ props }) => deleteFile(props.itemId)}>
-          Delete
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')} className="context-menu-item">
+          <div className="flex items-center">
+            <Folder size={14} className="mr-2 opacity-70" />
+            <span>New Folder</span>
+          </div>
         </Item>
       </Menu>
       
-      <Menu id={FOLDER_ITEM_MENU_ID}>
-        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')}>
-          New File
+      <Menu id={FILE_ITEM_MENU_ID} className="context-menu">
+        <Item onClick={({ props }) => startRenaming(props.itemId)} className="context-menu-item">
+          <div className="flex items-center">
+            <Edit size={14} className="mr-2 opacity-70" />
+            <span>Rename</span>
+          </div>
         </Item>
-        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'folder')}>
-          New Folder
+        <Item onClick={({ props }) => deleteFile(props.itemId)} className="context-menu-item">
+          <div className="flex items-center">
+            <Trash size={14} className="mr-2 opacity-70" />
+            <span>Delete</span>
+          </div>
         </Item>
-        <Item onClick={({ props }) => startRenaming(props.itemId)}>
-          Rename
+      </Menu>
+      
+      <Menu id={FOLDER_ITEM_MENU_ID} className="context-menu">
+        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')} className="context-menu-item">
+          <div className="flex items-center">
+            <FileText size={14} className="mr-2 opacity-70" />
+            <span>New File</span>
+          </div>
         </Item>
-        <Item onClick={({ props }) => deleteFile(props.itemId)}>
-          Delete
+        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'folder')} className="context-menu-item">
+          <div className="flex items-center">
+            <FolderPlus size={14} className="mr-2 opacity-70" />
+            <span>New Folder</span>
+          </div>
+        </Item>
+        <Item onClick={({ props }) => startRenaming(props.itemId)} className="context-menu-item">
+          <div className="flex items-center">
+            <Edit size={14} className="mr-2 opacity-70" />
+            <span>Rename</span>
+          </div>
+        </Item>
+        <Item onClick={({ props }) => deleteFile(props.itemId)} className="context-menu-item">
+          <div className="flex items-center">
+            <Trash size={14} className="mr-2 opacity-70" />
+            <span>Delete</span>
+          </div>
         </Item>
       </Menu>
     </div>

@@ -29,19 +29,19 @@ const FileTree: React.FC<FileTreeProps> = ({ items, selectedFile, onSelectFile }
         return (
           <div 
             key={index}
-            className={`flex items-center py-0.5 px-2 text-sm cursor-pointer hover:bg-slate-700 ${selectedFile === item.name ? 'active-file' : ''}`}
+            className={`file-explorer-item flex items-center py-0.5 px-2 text-sm cursor-pointer rounded-sm ${selectedFile === item.name ? 'selected' : ''}`}
             onClick={() => onSelectFile(item.name)}
           >
-            {item.icon || <File size={16} className="file-icon" />}
-            <span className="file-text">{item.name}</span>
+            {item.icon || <File size={16} className="file-icon mr-1.5" />}
+            <span className="file-text truncate">{item.name}</span>
           </div>
         );
       } else {
         return (
           <div key={index} className="cursor-pointer">
-            <div className="flex items-center py-0.5 px-2 text-sm hover:bg-slate-700">
-              {item.icon || <Folder size={16} className="folder-icon" />}
-              <span className="file-text">{item.name}</span>
+            <div className="file-explorer-item flex items-center py-0.5 px-2 text-sm rounded-sm">
+              {item.icon || <Folder size={16} className="folder-icon mr-1.5" />}
+              <span className="file-text truncate">{item.name}</span>
             </div>
             <div className="pl-4">
               {renderItems(item.children)}
@@ -53,7 +53,7 @@ const FileTree: React.FC<FileTreeProps> = ({ items, selectedFile, onSelectFile }
   };
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto py-1">
       {renderItems(items)}
     </div>
   );

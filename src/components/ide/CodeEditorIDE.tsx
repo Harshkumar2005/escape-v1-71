@@ -68,57 +68,35 @@ const CodeEditorIDE: React.FC = () => {
               
               <div className="flex-1 flex overflow-hidden">
                 <ResizablePanelGroup direction="horizontal">
-                  {/* Left Sidebar */}
-                  {showLeftSidebar && (
-                    <>
-                      <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                        <FileExplorer />
-                      </ResizablePanel>
-                      <ResizableHandle withHandle />
-                    </>
-                  )}
-                  
-                  {/* Main Content Area */}
-                  <ResizablePanel defaultSize={showLeftSidebar ? 80 : 100}>
-                    <ResizablePanelGroup direction="vertical">
-                      {/* Editor Area */}
-                      <ResizablePanel defaultSize={showTerminal ? 70 : 100}>
-                        <EditorArea />
-                      </ResizablePanel>
-                      
-                      {/* AI Terminal and Logs Container */}
-                      {showTerminal && (
-                        <>
-                          <ResizableHandle withHandle />
-                          <ResizablePanel 
-                            defaultSize={30} 
-                            minSize={10} 
-                            maxSize={90}
-                            onResize={size => setTerminalSize(size)}
-                          >
-                            <AITerminalContainer 
-                              maximizeTerminal={maximizeTerminal}
-                              minimizeTerminal={minimizeTerminal}
-                            />
-                          </ResizablePanel>
-                        </>
-                      )}
-                    </ResizablePanelGroup>
+                  {/* AI Panel (Left) */}
+                  <ResizablePanel defaultSize={25} minSize={15} maxSize={40}>
+                    <AITerminalContainer 
+                      maximizeTerminal={maximizeTerminal}
+                      minimizeTerminal={minimizeTerminal}
+                    />
                   </ResizablePanel>
                   
-                  {/* Right Sidebar (Optional) */}
-                  {showRightSidebar && (
-                    <>
-                      <ResizableHandle withHandle />
-                      <ResizablePanel defaultSize={20}>
-                        <div className="h-full bg-sidebar p-2">
-                          {/* Right sidebar content - could be extensions, outline, etc. */}
-                          <h3 className="text-sm font-medium mb-2">Outline</h3>
-                          {/* Outline content would go here */}
-                        </div>
+                  <ResizableHandle withHandle />
+                  
+                  {/* Main Content Area */}
+                  <ResizablePanel defaultSize={50}>
+                    <ResizablePanelGroup direction="horizontal">
+                      {/* Left Sidebar */}
+                      {showLeftSidebar && (
+                        <>
+                          <ResizablePanel defaultSize={30} minSize={15} maxSize={40}>
+                            <FileExplorer />
+                          </ResizablePanel>
+                          <ResizableHandle withHandle />
+                        </>
+                      )}
+                      
+                      {/* Editor Area */}
+                      <ResizablePanel defaultSize={showLeftSidebar ? 70 : 100}>
+                        <EditorArea />
                       </ResizablePanel>
-                    </>
-                  )}
+                    </ResizablePanelGroup>
+                  </ResizablePanel>
                 </ResizablePanelGroup>
               </div>
               

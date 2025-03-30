@@ -83,17 +83,40 @@
 }
 
 @layer components {
-  /* Global hover styles for dark mode */
-  .file-explorer-item:hover,
-  .menu-item:hover,
-  button:hover:not(.bg-blue-500):not(.bg-green-500):not(.bg-red-500) {
-    background-color: #cccccc29 !important;
+  /* File explorer item hover and active states (restricted scope) */
+  .file-explorer-item {
+    @apply text-opacity-75 transition-all duration-150;
   }
   
-  /* Selected file background */
-  .active-file,
-  .file-explorer-item.selected {
-    background-color: #cccccc29 !important;
+  .file-explorer-item:hover {
+    @apply text-opacity-100;
+  }
+  
+  .file-explorer-item:hover,
+  .file-explorer-item.selected,
+  .active-file {
+    @apply bg-[#cccccc29];
+  }
+  
+  .file-explorer-item .file-icon,
+  .file-explorer-item .folder-icon {
+    @apply text-opacity-70 transition-all duration-150;
+  }
+  
+  .file-explorer-item:hover .file-icon,
+  .file-explorer-item:hover .folder-icon,
+  .file-explorer-item.selected .file-icon,
+  .file-explorer-item.selected .folder-icon {
+    @apply text-opacity-90;
+  }
+  
+  /* Context menu styles */
+  .context-menu {
+    @apply min-w-[180px] bg-sidebar border border-border/30 rounded-md shadow-lg overflow-hidden;
+  }
+  
+  .context-menu-item {
+    @apply px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-[#cccccc29] transition-colors duration-150;
   }
   
   /* Chat styles for AI Coworker */
