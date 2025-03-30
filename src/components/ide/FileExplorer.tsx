@@ -223,10 +223,10 @@ const FileExplorer: React.FC = () => {
       
       {/* Context Menus */}
       <Menu id={CONTEXT_MENU_ID}>
-        <Item onClick={({ props }) => startCreatingNewItem(files[0].path, 'file')}>
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')}>
           New File
         </Item>
-        <Item onClick={({ props }) => startCreatingNewItem(files[0].path, 'folder')}>
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')}>
           New Folder
         </Item>
       </Menu>
@@ -303,7 +303,9 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
     <div>
       {/* File/Folder Item */}
       <div
-        className={`flex items-center py-0.5 px-1 cursor-pointer hover:bg-sidebar-foreground hover:bg-opacity-10 rounded ${isSelected ? 'bg-sidebar-foreground bg-opacity-20' : ''}`}
+        className={`file-explorer-item flex items-center py-0.5 px-1 cursor-pointer rounded ${
+          isSelected ? 'bg-sidebar-foreground bg-opacity-20' : ''
+        }`}
         style={{ paddingLeft: `${(depth * 12) + 4}px` }}
         onClick={handleItemClick}
         onContextMenu={(e) => handleItemContextMenu(e, item)}
@@ -395,7 +397,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ item, handleItemCon
   
   return (
     <div
-      className="flex items-center py-0.5 px-2 cursor-pointer hover:bg-sidebar-foreground hover:bg-opacity-10 rounded"
+      className="file-explorer-item flex items-center py-0.5 px-2 cursor-pointer rounded"
       onClick={handleClick}
       onContextMenu={(e) => handleItemContextMenu(e, item)}
     >

@@ -5,6 +5,7 @@ import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import { Plus, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { toast } from 'sonner';
 
 interface TerminalTabProps {
   terminalId: string;
@@ -42,7 +43,12 @@ interface TerminalInstance {
   containerRef: React.RefObject<HTMLDivElement>;
 }
 
-const TerminalPanel: React.FC = () => {
+interface TerminalPanelProps {
+  maximizeTerminal?: () => void;
+  minimizeTerminal?: () => void;
+}
+
+const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimizeTerminal }) => {
   const [terminals, setTerminals] = useState<TerminalInstance[]>([]);
   const [activeTerminalId, setActiveTerminalId] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
@@ -54,7 +60,7 @@ const TerminalPanel: React.FC = () => {
     const id = `term-${Date.now()}`;
     const terminal = new XTerm({
       cursorBlink: true,
-      fontFamily: "'Menlo', 'Monaco', 'Courier New', monospace",
+      fontFamily: "var(--font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
       fontSize: 14,
       theme: {
         background: terminalTheme.background,
@@ -149,6 +155,18 @@ const TerminalPanel: React.FC = () => {
       }
     }
   }, [terminals, activeTerminalId]);
+
+  // Apply theme changes to existing terminals
+  useEffect(() => {
+    terminals.forEach(term => {
+      term.terminal.options.theme = {
+        background: terminalTheme.background,
+        foreground: terminalTheme.foreground,
+        cursor: terminalTheme.cursor,
+        selectionBackground: terminalTheme.selection,
+      };
+    });
+  }, [terminalTheme, terminals]);
   
   // Handle close terminal
   const closeTerminal = (id: string) => {
@@ -174,6 +192,20 @@ const TerminalPanel: React.FC = () => {
   // Toggle maximize
   const toggleMaximize = () => {
     setMaximized(prev => !prev);
+    
+    if (!maximized) {
+      // Maximize the terminal panel
+      if (maximizeTerminal) {
+        maximizeTerminal();
+      }
+      toast.info("Terminal maximized");
+    } else {
+      // Restore the terminal panel
+      if (minimizeTerminal) {
+        minimizeTerminal();
+      }
+      toast.info("Terminal restored");
+    }
     
     // Resize terminals after the animation completes
     setTimeout(() => {
@@ -204,13 +236,18 @@ const TerminalPanel: React.FC = () => {
         <div className="flex items-center px-2">
           <button 
             className="p-1 text-slate-400 hover:text-white rounded-sm"
-            onClick={createTerminal}
+            onClick={() => {
+              createTerminal();
+              toast.success("New terminal created");
+            }}
+            title="New Terminal"
           >
             <Plus size={16} />
           </button>
           <button 
             className="p-1 ml-1 text-slate-400 hover:text-white rounded-sm"
             onClick={toggleMaximize}
+            title={maximized ? "Restore Terminal" : "Maximize Terminal"}
           >
             {maximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>

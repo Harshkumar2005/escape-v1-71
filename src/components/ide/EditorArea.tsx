@@ -48,17 +48,24 @@ const EditorArea: React.FC = () => {
     editorRef.current = editor;
     updateMonacoInstance(editor);
     
-    // Set up editor options
+    // Set up editor options for better coding experience
     editor.updateOptions({
       fontSize: 14,
-      fontFamily: "'Menlo', 'Monaco', 'Courier New', monospace",
-      minimap: { enabled: false },
+      fontFamily: "var(--font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
+      minimap: { enabled: true },
       scrollBeyondLastLine: false,
       renderLineHighlight: 'all',
       cursorBlinking: 'smooth',
       cursorSmoothCaretAnimation: 'on',
       smoothScrolling: true,
       linkedEditing: true,
+      formatOnPaste: true,
+      formatOnType: true,
+      autoClosingBrackets: 'always',
+      autoClosingQuotes: 'always',
+      autoIndent: 'full',
+      tabSize: 2,
+      wordWrap: 'on',
     });
     
     // Set up Ctrl+S to save
@@ -104,8 +111,8 @@ const EditorArea: React.FC = () => {
   // Set up Monaco editor themes
   useEffect(() => {
     if (monaco) {
-      // Define custom theme for the editor
-      monaco.editor.defineTheme('zed-dark', {
+      // Define custom dark theme for the editor
+      monaco.editor.defineTheme('custom-dark', {
         base: 'vs-dark',
         inherit: true,
         rules: [
@@ -115,6 +122,8 @@ const EditorArea: React.FC = () => {
           { token: 'number', foreground: 'D19A66' },
           { token: 'operator', foreground: '56B6C2' },
           { token: 'function', foreground: '61AFEF' },
+          { token: 'variable', foreground: 'E06C75' },
+          { token: 'type', foreground: 'E5C07B' },
         ],
         colors: {
           'editor.background': '#1A1E2B',
@@ -124,10 +133,16 @@ const EditorArea: React.FC = () => {
           'editorLineNumber.foreground': '#858585',
           'editor.selectionBackground': '#264F78',
           'editor.inactiveSelectionBackground': '#3A3D41',
+          'editorSuggestWidget.background': '#1A1E2B',
+          'editorSuggestWidget.border': '#383E4C',
+          'editorSuggestWidget.selectedBackground': '#2C313C',
+          'editorHoverWidget.background': '#1A1E2B',
+          'editorHoverWidget.border': '#383E4C',
         }
       });
       
-      monaco.editor.defineTheme('zed-light', {
+      // Define custom light theme for the editor
+      monaco.editor.defineTheme('custom-light', {
         base: 'vs',
         inherit: true,
         rules: [
@@ -137,6 +152,8 @@ const EditorArea: React.FC = () => {
           { token: 'number', foreground: '005CC5' },
           { token: 'operator', foreground: 'D73A49' },
           { token: 'function', foreground: '6F42C1' },
+          { token: 'variable', foreground: 'E36209' },
+          { token: 'type', foreground: '6F42C1' },
         ],
         colors: {
           'editor.background': '#F8F8F8',
@@ -146,6 +163,11 @@ const EditorArea: React.FC = () => {
           'editorLineNumber.foreground': '#6E7781',
           'editor.selectionBackground': '#B4D8FE',
           'editor.inactiveSelectionBackground': '#E5EBF1',
+          'editorSuggestWidget.background': '#FFFFFF',
+          'editorSuggestWidget.border': '#E1E4E8',
+          'editorSuggestWidget.selectedBackground': '#F1F2F3',
+          'editorHoverWidget.background': '#FFFFFF',
+          'editorHoverWidget.border': '#E1E4E8',
         }
       });
     }
@@ -176,12 +198,30 @@ const EditorArea: React.FC = () => {
             defaultLanguage={getFileLanguage()}
             language={getFileLanguage()}
             value={getFileContent()}
-            theme={editorTheme === 'dark' ? 'zed-dark' : 'zed-light'}
+            theme={editorTheme}
             onChange={handleEditorChange}
             onMount={handleEditorMount}
             options={{
               readOnly: false,
               automaticLayout: true,
+              autoIndent: 'full',
+              formatOnPaste: true,
+              formatOnType: true,
+              autoClosingBrackets: 'always',
+              autoClosingQuotes: 'always',
+              wordWrap: 'on',
+              quickSuggestions: {
+                other: true,
+                comments: true,
+                strings: true
+              },
+              suggestOnTriggerCharacters: true,
+              acceptSuggestionOnCommitCharacter: true,
+              tabCompletion: 'on',
+              parameterHints: {
+                enabled: true,
+                cycle: true
+              },
             }}
           />
         ) : (

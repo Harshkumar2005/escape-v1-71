@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 type ThemeMode = 'dark' | 'light';
 
@@ -22,7 +23,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [theme, setTheme] = useState<ThemeMode>('dark');
 
   // Set up editor and terminal themes based on UI theme
-  const editorTheme = theme === 'dark' ? 'vs-dark' : 'light';
+  const editorTheme = theme === 'dark' ? 'custom-dark' : 'custom-light';
   
   const terminalTheme = {
     dark: {
@@ -32,8 +33,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       selection: 'rgba(255, 255, 255, 0.3)'
     },
     light: {
-      background: '#f5f5f5',
-      foreground: '#333333',
+      background: 'hsl(var(--terminal))',
+      foreground: 'hsl(var(--terminal-foreground))',
       cursor: '#333333',
       selection: 'rgba(0, 0, 0, 0.3)'
     }
@@ -41,12 +42,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Toggle between dark and light theme
   const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'dark' ? 'light' : 'dark'));
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    toast(`${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} theme activated`);
   };
 
   // Apply theme to document
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
   }, [theme]);
 
   return (

@@ -5,6 +5,7 @@
 
 @layer base {
   :root {
+    /* Dark theme (default) */
     --background: 220 19% 18%;
     --foreground: 0 0% 90%;
     
@@ -14,7 +15,7 @@
     --editor: 220 19% 18%;
     --editor-line: 220 19% 20%;
     
-    --terminal: 220 19% 13%;
+    --terminal: 220 19% 18%;
     --terminal-foreground: 0 0% 80%;
     
     --tab-active: 220 19% 18%;
@@ -28,6 +29,8 @@
     --syntax-comment: 220 15% 50%;
     
     --status-bar: 220 21% 16%;
+    
+    --font-family: "JetBrains Mono";
   }
 
   .light {
@@ -40,7 +43,7 @@
     --editor: 0 0% 100%;
     --editor-line: 220 13% 95%;
     
-    --terminal: 220 10% 96%;
+    --terminal: 0 0% 100%;
     --terminal-foreground: 220 10% 20%;
     
     --tab-active: 0 0% 100%;
@@ -64,11 +67,11 @@
   
   body {
     @apply bg-background text-foreground m-0 p-0 overflow-hidden;
-    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-family: var(--font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   }
   
   pre, code {
-    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-family: var(--font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   }
 }
 
@@ -132,6 +135,32 @@
   @apply bg-slate-500;
 }
 
+/* File explorer styling */
+.file-explorer-item {
+  @apply transition-colors duration-150;
+}
+
+.file-explorer-item:hover {
+  @apply bg-sidebar-foreground bg-opacity-10;
+}
+
+.file-explorer-item.active {
+  @apply bg-sidebar-foreground bg-opacity-20;
+}
+
+/* Menu dropdown styling */
+.menu-dropdown {
+  @apply absolute z-50 bg-sidebar border border-border rounded shadow-lg py-1 min-w-40;
+}
+
+.menu-item {
+  @apply px-4 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-foreground hover:bg-opacity-10 cursor-pointer flex items-center;
+}
+
+.menu-separator {
+  @apply my-1 border-t border-border;
+}
+
 /* Nice scrollbars for file tree and other scrollable areas */
 ::-webkit-scrollbar {
   width: 8px;
@@ -188,4 +217,9 @@
 [data-panel-group-direction="vertical"] > [data-panel-handle]:hover,
 [data-panel-group-direction="vertical"] > [data-panel-handle]:focus {
   height: 2px !important;
+}
+
+/* Monaco Editor theme overrides */
+.monaco-editor .monaco-scrollable-element {
+  border-radius: 4px;
 }

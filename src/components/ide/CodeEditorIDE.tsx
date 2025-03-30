@@ -9,13 +9,17 @@ import CommandPalette from './CommandPalette';
 import { FileSystemProvider } from '@/contexts/FileSystemContext';
 import { EditorProvider } from '@/contexts/EditorContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { FontProvider } from '@/contexts/FontContext';
 import TopBar from './TopBar';
+import { Toaster } from 'sonner';
 
 const CodeEditorIDE: React.FC = () => {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(false);
   const [showTerminal, setShowTerminal] = useState(true);
+  const [terminalSize, setTerminalSize] = useState(30);
+  const [prevTerminalSize, setPrevTerminalSize] = useState(30);
   
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -43,77 +47,98 @@ const CodeEditorIDE: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
   
+  // Handle terminal maximize/minimize
+  const maximizeTerminal = () => {
+    setPrevTerminalSize(terminalSize);
+    setTerminalSize(70);
+  };
+  
+  const minimizeTerminal = () => {
+    setTerminalSize(prevTerminalSize);
+  };
+  
   return (
     <ThemeProvider>
-      <FileSystemProvider>
-        <EditorProvider>
-          <div className="flex flex-col h-full w-full bg-editor text-foreground">
-            <TopBar />
-            
-            <div className="flex-1 flex overflow-hidden">
-              <ResizablePanelGroup direction="horizontal">
-                {/* Left Sidebar */}
-                {showLeftSidebar && (
-                  <>
-                    <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                      <FileExplorer />
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                  </>
-                )}
-                
-                {/* Main Content Area */}
-                <ResizablePanel defaultSize={showLeftSidebar ? 60 : 80}>
-                  <ResizablePanelGroup direction="vertical">
-                    {/* Editor Area */}
-                    <ResizablePanel defaultSize={70}>
-                      <EditorArea />
-                    </ResizablePanel>
-                    
-                    {/* Terminal */}
-                    {showTerminal && (
-                      <>
-                        <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={30}>
-                          <TerminalPanel />
-                        </ResizablePanel>
-                      </>
-                    )}
-                  </ResizablePanelGroup>
-                </ResizablePanel>
-                
-                {/* Right Sidebar (Optional) */}
-                {showRightSidebar && (
-                  <>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={20}>
-                      <div className="h-full bg-sidebar p-2">
-                        {/* Right sidebar content - could be extensions, outline, etc. */}
-                        <h3 className="text-sm font-medium mb-2">Outline</h3>
-                        {/* Outline content would go here */}
-                      </div>
-                    </ResizablePanel>
-                  </>
-                )}
-              </ResizablePanelGroup>
-            </div>
-            
-            {/* Status Bar */}
-            <StatusBar 
-              toggleTerminal={() => setShowTerminal(prev => !prev)}
-              toggleLeftSidebar={() => setShowLeftSidebar(prev => !prev)}
-              toggleRightSidebar={() => setShowRightSidebar(prev => !prev)}
-            />
-            
-            {/* Command Palette */}
-            {showCommandPalette && (
-              <CommandPalette 
-                onClose={() => setShowCommandPalette(false)}
+      <FontProvider>
+        <FileSystemProvider>
+          <EditorProvider>
+            <div className="flex flex-col h-full w-full bg-editor text-foreground">
+              <Toaster position="top-right" />
+              <TopBar />
+              
+              <div className="flex-1 flex overflow-hidden">
+                <ResizablePanelGroup direction="horizontal">
+                  {/* Left Sidebar */}
+                  {showLeftSidebar && (
+                    <>
+                      <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                        <FileExplorer />
+                      </ResizablePanel>
+                      <ResizableHandle withHandle />
+                    </>
+                  )}
+                  
+                  {/* Main Content Area */}
+                  <ResizablePanel defaultSize={showLeftSidebar ? 60 : 80}>
+                    <ResizablePanelGroup direction="vertical">
+                      {/* Editor Area */}
+                      <ResizablePanel defaultSize={showTerminal ? 70 : 100}>
+                        <EditorArea />
+                      </ResizablePanel>
+                      
+                      {/* Terminal */}
+                      {showTerminal && (
+                        <>
+                          <ResizableHandle withHandle />
+                          <ResizablePanel 
+                            defaultSize={30} 
+                            minSize={10} 
+                            maxSize={90}
+                            onResize={size => setTerminalSize(size)}
+                          >
+                            <TerminalPanel 
+                              maximizeTerminal={maximizeTerminal}
+                              minimizeTerminal={minimizeTerminal}
+                            />
+                          </ResizablePanel>
+                        </>
+                      )}
+                    </ResizablePanelGroup>
+                  </ResizablePanel>
+                  
+                  {/* Right Sidebar (Optional) */}
+                  {showRightSidebar && (
+                    <>
+                      <ResizableHandle withHandle />
+                      <ResizablePanel defaultSize={20}>
+                        <div className="h-full bg-sidebar p-2">
+                          {/* Right sidebar content - could be extensions, outline, etc. */}
+                          <h3 className="text-sm font-medium mb-2">Outline</h3>
+                          {/* Outline content would go here */}
+                        </div>
+                      </ResizablePanel>
+                    </>
+                  )}
+                </ResizablePanelGroup>
+              </div>
+              
+              {/* Status Bar */}
+              <StatusBar 
+                toggleTerminal={() => setShowTerminal(prev => !prev)}
+                toggleLeftSidebar={() => setShowLeftSidebar(prev => !prev)}
+                toggleRightSidebar={() => setShowRightSidebar(prev => !prev)}
               />
-            )}
-          </div>
-        </EditorProvider>
-      </FileSystemProvider>
+              
+              {/* Command Palette */}
+              {showCommandPalette && (
+                <CommandPalette 
+                  onClose={() => setShowCommandPalette(false)}
+                />
+              )}
+            </div>
+          </EditorProvider>
+        </FileSystemProvider>
+      </FontProvider>
     </ThemeProvider>
   );
 };

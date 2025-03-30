@@ -62,7 +62,11 @@ export default {
         },
       },
       fontFamily: {
-        mono: ["Menlo", "Monaco", "Courier New", "monospace"],
+        mono: ["var(--font-family)", "JetBrains Mono", "Menlo", "Monaco", "Courier New", "monospace"],
+        "jetbrains": ["JetBrains Mono", "monospace"],
+        "fira": ["Fira Code", "monospace"],
+        "source-code": ["Source Code Pro", "monospace"],
+        "inter": ["Inter", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

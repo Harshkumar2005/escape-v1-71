@@ -4,6 +4,7 @@ import { GitBranch, Terminal, Columns, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
+import FontSelector from './FontSelector';
 
 interface StatusBarProps {
   toggleTerminal: () => void;
@@ -93,9 +94,12 @@ const StatusBar: React.FC<StatusBarProps> = ({
         
         <span>{time}</span>
         
+        <FontSelector />
+        
         <button
           className="flex items-center hover:text-white transition-colors"
           onClick={toggleTheme}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
         >
           {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
         </button>
