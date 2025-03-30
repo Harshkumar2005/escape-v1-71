@@ -83,7 +83,7 @@
 }
 
 @layer components {
-  /* File explorer item hover and active states (restricted scope) */
+  /* File explorer item hover and active states */
   .file-explorer-item {
     @apply text-opacity-75 transition-all duration-150;
   }
@@ -145,4 +145,25 @@
   .menu-separator {
     @apply border-t border-border my-1;
   }
+}
+
+/* Syntax highlighting for code editor */
+.text-syntax-keyword {
+  @apply text-blue-600 dark:text-blue-400;
+}
+
+.text-syntax-string {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.text-syntax-variable {
+  @apply text-orange-600 dark:text-orange-400;
+}
+
+.text-syntax-function {
+  @apply text-purple-600 dark:text-purple-400;
+}
+
+.text-syntax-comment {
+  @apply text-gray-500;
 }

@@ -58,15 +58,15 @@ const StatusBar: React.FC<StatusBarProps> = ({
   }, [activeTabId, getFileById]);
   
   return (
-    <div className="flex items-center justify-between px-2 py-1 bg-status-bar text-slate-400 text-xs border-t border-border">
+    <div className="flex items-center justify-between px-2 py-1.5 bg-status-bar text-slate-400 text-xs border-t border-border">
       <div className="flex items-center space-x-4">
-        <div className="flex items-center">
+        <div className="flex items-center text-[13px]">
           <GitBranch size={14} className="mr-1" />
           <span>main</span>
         </div>
         
         <button 
-          className="flex items-center hover:text-white transition-colors"
+          className="flex items-center hover:text-white transition-colors text-[13px]"
           onClick={() => {
             toggleLeftSidebar();
             addLogMessage('info', 'Toggled explorer sidebar');
@@ -75,29 +75,18 @@ const StatusBar: React.FC<StatusBarProps> = ({
           <Columns size={14} className="mr-1" />
           <span>Explorer</span>
         </button>
-        
-        <button
-          className="flex items-center hover:text-white transition-colors"
-          onClick={() => {
-            toggleTerminal();
-            addLogMessage('info', 'Toggled terminal panel');
-          }}
-        >
-          <Terminal size={14} className="mr-1" />
-          <span>Terminal</span>
-        </button>
       </div>
       
       <div className="flex items-center space-x-4">
         {activeFileInfo.path && (
-          <span className="text-slate-500 max-w-xs truncate" title={activeFileInfo.path}>
+          <span className="text-slate-500 max-w-xs truncate text-[13px]" title={activeFileInfo.path}>
             {activeFileInfo.path}
           </span>
         )}
         
-        <span>{activeFileInfo.language}</span>
+        <span className="text-[13px]">{activeFileInfo.language}</span>
         
-        <span>{time}</span>
+        <span className="text-[13px]">{time}</span>
         
         <button
           className="flex items-center hover:text-white transition-colors"

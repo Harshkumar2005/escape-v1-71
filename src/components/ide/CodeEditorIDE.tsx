@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import FileExplorer from './FileExplorer';
 import EditorArea from './EditorArea';
-import AITerminalContainer from './AITerminalContainer';
+import AICoworker from './AICoworker';
 import StatusBar from './StatusBar';
 import CommandPalette from './CommandPalette';
 import { FileSystemProvider } from '@/contexts/FileSystemContext';
@@ -16,10 +16,8 @@ import { Toaster } from 'sonner';
 const CodeEditorIDE: React.FC = () => {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
-  const [showRightSidebar, setShowRightSidebar] = useState(false);
+  const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
-  const [terminalSize, setTerminalSize] = useState(30);
-  const [prevTerminalSize, setPrevTerminalSize] = useState(30);
   
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -35,27 +33,11 @@ const CodeEditorIDE: React.FC = () => {
         e.preventDefault();
         setShowLeftSidebar(prev => !prev);
       }
-      
-      // Toggle terminal: Ctrl/Cmd + `
-      if ((e.ctrlKey || e.metaKey) && e.key === '`') {
-        e.preventDefault();
-        setShowTerminal(prev => !prev);
-      }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-  
-  // Handle terminal maximize/minimize
-  const maximizeTerminal = () => {
-    setPrevTerminalSize(terminalSize);
-    setTerminalSize(70);
-  };
-  
-  const minimizeTerminal = () => {
-    setTerminalSize(prevTerminalSize);
-  };
   
   return (
     <ThemeProvider>
@@ -68,34 +50,23 @@ const CodeEditorIDE: React.FC = () => {
               
               <div className="flex-1 flex overflow-hidden">
                 <ResizablePanelGroup direction="horizontal">
-                  {/* AI Panel (Left) */}
-                  <ResizablePanel defaultSize={25} minSize={15} maxSize={40}>
-                    <AITerminalContainer 
-                      maximizeTerminal={maximizeTerminal}
-                      minimizeTerminal={minimizeTerminal}
-                    />
+                  {/* Left Sidebar - File Explorer (fixed on the left) */}
+                  <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                    <FileExplorer />
                   </ResizablePanel>
                   
                   <ResizableHandle withHandle />
                   
-                  {/* Main Content Area */}
-                  <ResizablePanel defaultSize={50}>
-                    <ResizablePanelGroup direction="horizontal">
-                      {/* Left Sidebar */}
-                      {showLeftSidebar && (
-                        <>
-                          <ResizablePanel defaultSize={30} minSize={15} maxSize={40}>
-                            <FileExplorer />
-                          </ResizablePanel>
-                          <ResizableHandle withHandle />
-                        </>
-                      )}
-                      
-                      {/* Editor Area */}
-                      <ResizablePanel defaultSize={showLeftSidebar ? 70 : 100}>
-                        <EditorArea />
-                      </ResizablePanel>
-                    </ResizablePanelGroup>
+                  {/* Main Editor Area (center) */}
+                  <ResizablePanel defaultSize={60}>
+                    <EditorArea />
+                  </ResizablePanel>
+                  
+                  <ResizableHandle withHandle />
+                  
+                  {/* AI Coworker (fixed on the right) */}
+                  <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                    <AICoworker />
                   </ResizablePanel>
                 </ResizablePanelGroup>
               </div>

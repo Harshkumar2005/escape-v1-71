@@ -1,22 +1,15 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Paperclip, ArrowUp, ArrowDown, Maximize2, Minimize2 } from 'lucide-react';
+import { Send, User, Bot, Paperclip, Maximize2, Minimize2 } from 'lucide-react';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 
-interface AICoworkerProps {
-  maximizePanel?: () => void;
-  minimizePanel?: () => void;
-}
-
-interface Message {
-  id: string;
-  type: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
-
-const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel }) => {
-  const [messages, setMessages] = useState<Message[]>([
+const AICoworker: React.FC = () => {
+  const [messages, setMessages] = useState<{
+    id: string;
+    type: 'user' | 'assistant';
+    content: string;
+    timestamp: Date;
+  }[]>([
     {
       id: '1',
       type: 'assistant',
@@ -25,7 +18,6 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
     }
   ]);
   const [inputValue, setInputValue] = useState('');
-  const [isMaximized, setIsMaximized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { addLogMessage } = useFileSystem();
@@ -60,9 +52,9 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
     if (!inputValue.trim()) return;
 
     // Add user message
-    const userMessage: Message = {
+    const userMessage = {
       id: Date.now().toString(),
-      type: 'user',
+      type: 'user' as const,
       content: inputValue,
       timestamp: new Date()
     };
@@ -92,9 +84,9 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
         response = 'I\'m here to assist with your development tasks. Can you provide more details about what you need help with?';
       }
 
-      const aiMessage: Message = {
+      const aiMessage = {
         id: Date.now().toString(),
-        type: 'assistant',
+        type: 'assistant' as const,
         content: response,
         timestamp: new Date()
       };
@@ -104,18 +96,6 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
       // Log the AI response
       addLogMessage('success', `AI: ${response}`);
     }, 1000);
-  };
-
-  const toggleMaximize = () => {
-    setIsMaximized(!isMaximized);
-    if (!isMaximized) {
-      if (maximizePanel) maximizePanel();
-    } else {
-      if (minimizePanel) minimizePanel();
-    }
-    
-    // Log the panel state change
-    addLogMessage('info', isMaximized ? 'AI Panel minimized' : 'AI Panel maximized');
   };
 
   const formatTimestamp = (date: Date) => {
@@ -132,15 +112,6 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
         <div className="flex items-center">
           <Bot size={16} className="mr-2 text-blue-400" />
           <span className="text-sm font-medium text-sidebar-foreground opacity-90">AI Coworker</span>
-        </div>
-        <div className="flex items-center">
-          <button 
-            className="p-1 ml-1 text-slate-400 hover:text-white hover:bg-[#cccccc29] rounded transition-colors"
-            onClick={toggleMaximize}
-            title={isMaximized ? "Restore Panel" : "Maximize Panel"}
-          >
-            {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          </button>
         </div>
       </div>
 
