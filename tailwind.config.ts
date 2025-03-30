@@ -23,12 +23,18 @@ export default {
         border: "hsl(var(--border))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        sidebar: "hsl(var(--sidebar))",
-        "sidebar-foreground": "hsl(var(--sidebar-foreground))",
-        editor: "hsl(var(--editor))",
-        "editor-line": "hsl(var(--editor-line))",
-        terminal: "hsl(var(--terminal))",
-        "terminal-foreground": "hsl(var(--terminal-foreground))",
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+        },
+        editor: {
+          DEFAULT: "hsl(var(--editor))",
+          line: "hsl(var(--editor-line))",
+        },
+        terminal: {
+          DEFAULT: "hsl(var(--terminal))",
+          foreground: "hsl(var(--terminal-foreground))",
+        },
         "tab-active": "hsl(var(--tab-active))",
         "tab-inactive": "hsl(var(--tab-inactive))",
         "status-bar": "hsl(var(--status-bar))",
@@ -60,6 +66,7 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        input: "hsl(var(--input))",
       },
       fontFamily: {
         sans: ["var(--ui-font-family)", "Inter", "system-ui", "sans-serif"],

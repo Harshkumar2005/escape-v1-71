@@ -25,6 +25,17 @@
     --input: 220 13% 91%;
     --ring: 224 71.4% 4.1%;
     --radius: 0.5rem;
+    
+    /* IDE-specific colors */
+    --sidebar: 0 0% 85%;
+    --sidebar-foreground: 0 0% 20%;
+    --editor: 0 0% 95%;
+    --editor-line: 0 0% 90%;
+    --terminal: 0 0% 85%;
+    --terminal-foreground: 0 0% 20%;
+    --tab-active: 0 0% 100%;
+    --tab-inactive: 0 0% 90%;
+    --status-bar: 0 0% 95%;
   }
 
   .dark {
@@ -47,6 +58,17 @@
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
     --ring: 216 12.2% 83.9%;
+    
+    /* IDE-specific colors for dark mode */
+    --sidebar: 220 10% 15%;
+    --sidebar-foreground: 210 30% 90%;
+    --editor: 220 15% 10%;
+    --editor-line: 0 0% 20%;
+    --terminal: 220 10% 15%;
+    --terminal-foreground: 210 30% 90%;
+    --tab-active: 220 8% 17%;
+    --tab-inactive: 220 10% 15%;
+    --status-bar: 220 20% 10%;
   }
 }
 
