@@ -3,6 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base styles */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -25,17 +26,6 @@
     --input: 220 13% 91%;
     --ring: 224 71.4% 4.1%;
     --radius: 0.5rem;
-    
-    /* IDE-specific colors */
-    --sidebar: 0 0% 85%;
-    --sidebar-foreground: 0 0% 20%;
-    --editor: 0 0% 95%;
-    --editor-line: 0 0% 90%;
-    --terminal: 0 0% 85%;
-    --terminal-foreground: 0 0% 20%;
-    --tab-active: 0 0% 100%;
-    --tab-inactive: 0 0% 90%;
-    --status-bar: 0 0% 95%;
   }
 
   .dark {
@@ -58,112 +48,201 @@
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
     --ring: 216 12.2% 83.9%;
-    
-    /* IDE-specific colors for dark mode */
-    --sidebar: 220 10% 15%;
-    --sidebar-foreground: 210 30% 90%;
-    --editor: 220 15% 10%;
-    --editor-line: 0 0% 20%;
-    --terminal: 220 10% 15%;
-    --terminal-foreground: 210 30% 90%;
-    --tab-active: 220 8% 17%;
-    --tab-inactive: 220 10% 15%;
-    --status-bar: 220 20% 10%;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-}
-
+/* Custom utility classes */
 @layer components {
-  /* File explorer item hover and active states */
-  .file-explorer-item {
-    @apply text-opacity-75 transition-all duration-150;
+  /* Editor theme colors */
+  .bg-sidebar {
+    @apply bg-[#1E2130] dark:bg-[#1E2130];
   }
   
-  .file-explorer-item:hover {
-    @apply text-opacity-100;
+  .bg-sidebar-foreground {
+    @apply text-white dark:text-white;
   }
   
-  .file-explorer-item:hover,
-  .file-explorer-item.selected,
-  .active-file {
-    @apply bg-[#cccccc29];
+  .bg-status-bar {
+    @apply bg-[#191C27] dark:bg-[#191C27];
   }
   
-  .file-explorer-item .file-icon,
-  .file-explorer-item .folder-icon {
-    @apply text-opacity-70 transition-all duration-150;
+  .bg-editor {
+    @apply bg-[#1A1E2B] dark:bg-[#1A1E2B];
   }
   
-  .file-explorer-item:hover .file-icon,
-  .file-explorer-item:hover .folder-icon,
-  .file-explorer-item.selected .file-icon,
-  .file-explorer-item.selected .folder-icon {
-    @apply text-opacity-90;
+  .bg-editor-line {
+    @apply bg-[#2C313C] dark:bg-[#2C313C];
   }
   
-  /* Context menu styles */
-  .context-menu {
-    @apply min-w-[180px] bg-sidebar border border-border/30 rounded-md shadow-lg overflow-hidden;
+  .bg-tab-active {
+    @apply bg-[#1A1E2B] dark:bg-[#1A1E2B];
   }
   
-  .context-menu-item {
-    @apply px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-[#cccccc29] transition-colors duration-150;
+  .bg-tab-inactive {
+    @apply bg-[#1E2130] dark:bg-[#1E2130];
   }
   
-  /* Chat styles for AI Coworker */
-  .chat-bubble-user {
-    @apply bg-blue-600 text-white rounded-2xl rounded-tr-none px-4 py-2 ml-auto max-w-[80%];
+  .border-border {
+    @apply border-[#2A2F3A] dark:border-[#2A2F3A];
   }
   
-  .chat-bubble-ai {
-    @apply bg-gray-700 text-white rounded-2xl rounded-tl-none px-4 py-2 mr-auto w-full;
+  /* Syntax highlighting colors */
+  .text-syntax-keyword {
+    @apply text-[#C678DD] dark:text-[#C678DD];
   }
   
-  /* Terminal style chat input */
-  .terminal-input {
-    @apply w-full bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono;
+  .text-syntax-string {
+    @apply text-[#98C379] dark:text-[#98C379];
   }
   
-  /* Menu dropdown styles */
-  .menu-dropdown {
-    @apply absolute z-50 min-w-48 bg-sidebar border border-border rounded shadow-lg py-1;
+  .text-syntax-comment {
+    @apply text-[#7F848E] dark:text-[#7F848E];
   }
   
-  .menu-item {
-    @apply px-3 py-1.5 flex items-center text-sm text-sidebar-foreground hover:bg-[#cccccc29] cursor-pointer;
+  .text-syntax-function {
+    @apply text-[#61AFEF] dark:text-[#61AFEF];
   }
   
-  .menu-separator {
-    @apply border-t border-border my-1;
+  .text-syntax-variable {
+    @apply text-[#E06C75] dark:text-[#E06C75];
   }
 }
 
-/* Syntax highlighting for code editor */
-.text-syntax-keyword {
-  @apply text-blue-600 dark:text-blue-400;
+/* File explorer item styling */
+.file-explorer-item {
+  transition: background-color 0.1s ease;
 }
 
-.text-syntax-string {
-  @apply text-green-600 dark:text-green-400;
+.file-explorer-item:hover {
+  background-color: rgba(204, 204, 204, 0.16);
 }
 
-.text-syntax-variable {
-  @apply text-orange-600 dark:text-orange-400;
+.file-explorer-item.selected {
+  background-color: rgba(204, 204, 204, 0.16);
+  color: white;
 }
 
-.text-syntax-function {
-  @apply text-purple-600 dark:text-purple-400;
+.file-explorer-item:hover .file-icon,
+.file-explorer-item.selected .file-icon {
+  opacity: 1;
 }
 
-.text-syntax-comment {
-  @apply text-gray-500;
+.file-icon {
+  opacity: 0.7;
+  transition: opacity 0.1s ease;
+}
+
+/* Context menu styling */
+.context-menu {
+  background-color: #252A37;
+  border: 1px solid #383E4C;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  padding: 4px 0;
+  min-width: 160px;
+  z-index: 1000;
+}
+
+.context-menu .react-contexify__separator {
+  background-color: #383E4C;
+  margin: 4px 0;
+  height: 1px;
+}
+
+.context-menu-item {
+  padding: 6px 12px;
+  color: #D4D4D4;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 2px;
+  margin: 0 2px;
+  transition: background-color 0.1s ease;
+}
+
+.context-menu-item:hover {
+  background-color: rgba(204, 204, 204, 0.16);
+  color: white;
+}
+
+.react-contexify__submenu {
+  background-color: #252A37;
+  border: 1px solid #383E4C;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.react-contexify {
+  opacity: 1 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+/* Editor tab styling */
+.tab-bar {
+  display: flex;
+  overflow-x: auto;
+  background-color: #1E2130;
+  border-bottom: 1px solid #2A2F3A;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  font-size: 14px;
+  cursor: pointer;
+  border-right: 1px solid #2A2F3A;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.tab-active {
+  background-color: #1A1E2B;
+  color: white;
+}
+
+.tab-inactive {
+  background-color: #1E2130;
+  color: #A9B2C3;
+}
+
+.tab-inactive:hover {
+  color: white;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3A404F;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4A5060;
+}
+
+/* Monaco editor overrides */
+.monaco-editor .editor-widget.suggest-widget .monaco-list .monaco-list-row .suggest-icon {
+  opacity: 0.75;
+}
+
+.monaco-editor .suggest-widget {
+  border: 1px solid #383E4C !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+.monaco-editor .parameter-hints-widget {
+  border: 1px solid #383E4C !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+.monaco-editor .hover-contents {
+  border: 1px solid #383E4C !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25) !important;
 }

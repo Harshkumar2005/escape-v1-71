@@ -1,7 +1,7 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Editor, OnMount, useMonaco } from '@monaco-editor/react';
-import { X, Circle } from 'lucide-react';
+import { X, Circle, Save, Undo, Redo, Copy, Clipboard } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -38,12 +38,42 @@ const Tab: React.FC<TabProps> = ({ id, name, isActive, isModified, onClick, onCl
 };
 
 const EditorArea: React.FC = () => {
-  const { openedTabs, activeTabId, openTab, closeTab, setActiveTab, updateMonacoInstance } = useEditor();
-  const { getFileById, updateFileContent } = useFileSystem();
+  const { 
+    openedTabs, 
+    activeTabId, 
+    openTab, 
+    closeTab, 
+    setActiveTab, 
+    updateMonacoInstance, 
+    saveActiveFile, 
+    getTabContent, 
+    updateTabContent,
+    undoFileChange,
+    redoFileChange
+  } = useEditor();
+  
+  const { getFileById } = useFileSystem();
   const { editorTheme } = useTheme();
   const { editorFont } = useFont();
   const monaco = useMonaco();
   const editorRef = useRef<any>(null);
+  const [activeContent, setActiveContent] = useState<string>('');
+  
+  // Load content whenever active tab changes
+  useEffect(() => {
+    if (activeTabId) {
+      const content = getTabContent(activeTabId);
+      setActiveContent(content);
+      
+      // Update editor content if editor is mounted
+      if (editorRef.current) {
+        const currentValue = editorRef.current.getValue();
+        if (currentValue !== content) {
+          editorRef.current.setValue(content);
+        }
+      }
+    }
+  }, [activeTabId, getTabContent]);
   
   // Set up Monaco editor
   const handleEditorMount: OnMount = (editor, monaco) => {
@@ -70,20 +100,33 @@ const EditorArea: React.FC = () => {
       wordWrap: 'on',
     });
     
-    // Set up Ctrl+S to save
+    // Set up keyboard shortcuts
+    
+    // Ctrl+S to save
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      if (activeTabId) {
-        const content = editor.getValue();
-        updateFileContent(activeTabId, content);
-      }
+      saveActiveFile();
     });
-  };
-  
-  // Get active file content
-  const getFileContent = () => {
-    if (!activeTabId) return '';
-    const file = getFileById(activeTabId);
-    return file?.content || '';
+    
+    // Ctrl+Z for undo
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyZ, () => {
+      undoFileChange();
+    });
+    
+    // Ctrl+Y or Ctrl+Shift+Z for redo
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyY, () => {
+      redoFileChange();
+    });
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyZ, () => {
+      redoFileChange();
+    });
+    
+    // Load content for active tab
+    if (activeTabId) {
+      const content = getTabContent(activeTabId);
+      if (content !== editor.getValue()) {
+        editor.setValue(content);
+      }
+    }
   };
   
   // Get active file language
@@ -96,11 +139,9 @@ const EditorArea: React.FC = () => {
   // Handle editor value changes
   const handleEditorChange = (value: string | undefined) => {
     if (activeTabId && value !== undefined) {
-      // Only update if content has changed to avoid infinite loops
-      const file = getFileById(activeTabId);
-      if (file && file.content !== value) {
-        updateFileContent(activeTabId, value);
-      }
+      // Update tab content in context and session storage
+      updateTabContent(activeTabId, value);
+      setActiveContent(value);
     }
   };
   
@@ -175,6 +216,59 @@ const EditorArea: React.FC = () => {
     }
   }, [monaco]);
   
+  // Editor toolbar with actions
+  const EditorToolbar = () => {
+    if (!activeTabId) return null;
+    
+    return (
+      <div className="flex items-center space-x-1 px-2 py-1 border-b border-border bg-sidebar">
+        <button 
+          className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+          onClick={saveActiveFile}
+          title="Save (Ctrl+S)"
+        >
+          <Save size={16} />
+        </button>
+        <button 
+          className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+          onClick={undoFileChange}
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo size={16} />
+        </button>
+        <button 
+          className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+          onClick={redoFileChange}
+          title="Redo (Ctrl+Y)"
+        >
+          <Redo size={16} />
+        </button>
+        <button 
+          className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+          onClick={() => {
+            if (editorRef.current) {
+              editorRef.current.trigger('keyboard', 'editor.action.clipboardCopyAction', null);
+            }
+          }}
+          title="Copy (Ctrl+C)"
+        >
+          <Copy size={16} />
+        </button>
+        <button 
+          className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+          onClick={() => {
+            if (editorRef.current) {
+              editorRef.current.trigger('keyboard', 'editor.action.clipboardPasteAction', null);
+            }
+          }}
+          title="Paste (Ctrl+V)"
+        >
+          <Clipboard size={16} />
+        </button>
+      </div>
+    );
+  };
+  
   return (
     <div className="h-full flex flex-col">
       {/* Tabs bar */}
@@ -192,6 +286,9 @@ const EditorArea: React.FC = () => {
         ))}
       </div>
       
+      {/* Editor toolbar */}
+      <EditorToolbar />
+      
       {/* Editor */}
       <div className="flex-1">
         {activeTabId ? (
@@ -199,7 +296,7 @@ const EditorArea: React.FC = () => {
             height="100%"
             defaultLanguage={getFileLanguage()}
             language={getFileLanguage()}
-            value={getFileContent()}
+            value={activeContent}
             theme={editorTheme}
             onChange={handleEditorChange}
             onMount={handleEditorMount}
