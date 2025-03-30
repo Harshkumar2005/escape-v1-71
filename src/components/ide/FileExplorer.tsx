@@ -141,6 +141,7 @@ const FileExplorer: React.FC = () => {
         newItemParentPath={newItemParentPath}
         newItemInputRef={newItemInputRef}
         handleCreateNewItem={handleCreateNewItem}
+        setRenamingItemId={setRenamingItemId}
       />
     ));
   };
@@ -155,13 +156,13 @@ const FileExplorer: React.FC = () => {
         <h2 className="text-sm font-medium text-sidebar-foreground">EXPLORER</h2>
         <div className="flex space-x-1">
           <button 
-            className="p-1 text-slate-400 hover:text-white rounded"
+            className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
             onClick={() => setIsSearching(!isSearching)}
           >
             <Search size={16} />
           </button>
           <button 
-            className="p-1 text-slate-400 hover:text-white rounded"
+            className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
             onClick={() => startCreatingNewItem(files[0].path, 'file')}
           >
             <Plus size={16} />
@@ -270,6 +271,7 @@ interface FileExplorerItemProps {
   newItemParentPath: string;
   newItemInputRef: React.RefObject<HTMLInputElement>;
   handleCreateNewItem: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  setRenamingItemId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const FileExplorerItem: React.FC<FileExplorerItemProps> = ({ 
@@ -282,7 +284,8 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
   newItemType,
   newItemParentPath,
   newItemInputRef,
-  handleCreateNewItem
+  handleCreateNewItem,
+  setRenamingItemId
 }) => {
   const { toggleFolder, selectedFile } = useFileSystem();
   const { openTab } = useEditor();
@@ -333,7 +336,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
             onBlur={() => setTimeout(() => setRenamingItemId(null), 100)}
           />
         ) : (
-          <span className="text-sm text-sidebar-foreground truncate">{item.name}</span>
+          <span className="text-sm text-sidebar-foreground opacity-90 truncate">{item.name}</span>
         )}
       </div>
       
@@ -372,6 +375,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
               newItemParentPath={newItemParentPath}
               newItemInputRef={newItemInputRef}
               handleCreateNewItem={handleCreateNewItem}
+              setRenamingItemId={setRenamingItemId}
             />
           ))}
         </div>
@@ -397,14 +401,14 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ item, handleItemCon
   
   return (
     <div
-      className="file-explorer-item flex items-center py-0.5 px-2 cursor-pointer rounded"
+      className="file-explorer-item flex items-center py-0.5 px-2 cursor-pointer rounded hover:bg-sidebar-foreground hover:bg-opacity-10 transition-colors"
       onClick={handleClick}
       onContextMenu={(e) => handleItemContextMenu(e, item)}
     >
       <span className="mr-2 text-slate-400">
         {item.type === 'folder' ? <Folder size={16} /> : <File size={16} />}
       </span>
-      <span className="text-sm text-sidebar-foreground truncate">{item.name}</span>
+      <span className="text-sm text-sidebar-foreground opacity-90 truncate">{item.name}</span>
       <span className="text-xs text-slate-500 ml-2 truncate opacity-70">{item.path}</span>
     </div>
   );

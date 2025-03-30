@@ -5,6 +5,7 @@ import { X, Circle } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useFont } from '@/contexts/FontContext';
 
 // Tab component for the editor
 interface TabProps {
@@ -27,7 +28,7 @@ const Tab: React.FC<TabProps> = ({ id, name, isActive, isModified, onClick, onCl
       <span className="text-sm truncate max-w-40">{name}</span>
       {isModified && <Circle size={8} className="ml-2 fill-current text-blue-500" />}
       <button 
-        className="ml-2 p-0.5 text-slate-400 hover:text-white rounded-sm"
+        className="ml-2 p-0.5 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded-sm transition-colors"
         onClick={onClose}
       >
         <X size={14} />
@@ -40,6 +41,7 @@ const EditorArea: React.FC = () => {
   const { openedTabs, activeTabId, openTab, closeTab, setActiveTab, updateMonacoInstance } = useEditor();
   const { getFileById, updateFileContent } = useFileSystem();
   const { editorTheme } = useTheme();
+  const { editorFont } = useFont();
   const monaco = useMonaco();
   const editorRef = useRef<any>(null);
   
@@ -51,7 +53,7 @@ const EditorArea: React.FC = () => {
     // Set up editor options for better coding experience
     editor.updateOptions({
       fontSize: 14,
-      fontFamily: "var(--font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
+      fontFamily: editorFont + ", 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
       minimap: { enabled: true },
       scrollBeyondLastLine: false,
       renderLineHighlight: 'all',
@@ -222,6 +224,7 @@ const EditorArea: React.FC = () => {
                 enabled: true,
                 cycle: true
               },
+              fontFamily: editorFont + ", 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
             }}
           />
         ) : (

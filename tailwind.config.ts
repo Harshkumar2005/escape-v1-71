@@ -62,7 +62,8 @@ export default {
         },
       },
       fontFamily: {
-        mono: ["var(--font-family)", "JetBrains Mono", "Menlo", "Monaco", "Courier New", "monospace"],
+        sans: ["var(--ui-font-family)", "Inter", "system-ui", "sans-serif"],
+        mono: ["var(--editor-font-family)", "JetBrains Mono", "Menlo", "Monaco", "Courier New", "monospace"],
         "jetbrains": ["JetBrains Mono", "monospace"],
         "fira": ["Fira Code", "monospace"],
         "source-code": ["Source Code Pro", "monospace"],

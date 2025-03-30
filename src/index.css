@@ -30,7 +30,9 @@
     
     --status-bar: 220 21% 16%;
     
-    --font-family: "JetBrains Mono";
+    --ui-font-family: "Inter";
+    --editor-font-family: "JetBrains Mono";
+    --font-family: "Inter";
   }
 
   .light {
@@ -67,11 +69,11 @@
   
   body {
     @apply bg-background text-foreground m-0 p-0 overflow-hidden;
-    font-family: var(--font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-family: var(--ui-font-family), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   
-  pre, code {
-    font-family: var(--font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  pre, code, .monaco-editor {
+    font-family: var(--editor-font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   }
 }
 
@@ -154,7 +156,7 @@
 }
 
 .menu-item {
-  @apply px-4 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-foreground hover:bg-opacity-10 cursor-pointer flex items-center;
+  @apply px-4 py-1.5 text-sm text-sidebar-foreground opacity-90 hover:bg-sidebar-foreground hover:bg-opacity-10 cursor-pointer flex items-center transition-colors;
 }
 
 .menu-separator {
@@ -190,6 +192,7 @@
 .react-contexify__item {
   color: hsl(var(--sidebar-foreground)) !important;
   font-size: 0.875rem;
+  opacity: 0.9;
 }
 
 .react-contexify__item:hover {
@@ -222,4 +225,13 @@
 /* Monaco Editor theme overrides */
 .monaco-editor .monaco-scrollable-element {
   border-radius: 4px;
+}
+
+/* Fix for sidebar resize issue */
+[data-panel-group-direction="horizontal"] .resize-handle {
+  cursor: col-resize !important;
+}
+
+[data-panel-group-direction="vertical"] .resize-handle {
+  cursor: row-resize !important;
 }

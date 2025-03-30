@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import FileExplorer from './FileExplorer';
 import EditorArea from './EditorArea';
-import TerminalPanel from './TerminalPanel';
+import AITerminalContainer from './AITerminalContainer';
 import StatusBar from './StatusBar';
 import CommandPalette from './CommandPalette';
 import { FileSystemProvider } from '@/contexts/FileSystemContext';
@@ -63,7 +63,7 @@ const CodeEditorIDE: React.FC = () => {
         <FileSystemProvider>
           <EditorProvider>
             <div className="flex flex-col h-full w-full bg-editor text-foreground">
-              <Toaster position="top-right" />
+              <Toaster position="bottom-right" />
               <TopBar />
               
               <div className="flex-1 flex overflow-hidden">
@@ -79,14 +79,14 @@ const CodeEditorIDE: React.FC = () => {
                   )}
                   
                   {/* Main Content Area */}
-                  <ResizablePanel defaultSize={showLeftSidebar ? 60 : 80}>
+                  <ResizablePanel defaultSize={showLeftSidebar ? 80 : 100}>
                     <ResizablePanelGroup direction="vertical">
                       {/* Editor Area */}
                       <ResizablePanel defaultSize={showTerminal ? 70 : 100}>
                         <EditorArea />
                       </ResizablePanel>
                       
-                      {/* Terminal */}
+                      {/* AI Terminal and Logs Container */}
                       {showTerminal && (
                         <>
                           <ResizableHandle withHandle />
@@ -96,7 +96,7 @@ const CodeEditorIDE: React.FC = () => {
                             maxSize={90}
                             onResize={size => setTerminalSize(size)}
                           >
-                            <TerminalPanel 
+                            <AITerminalContainer 
                               maximizeTerminal={maximizeTerminal}
                               minimizeTerminal={minimizeTerminal}
                             />
