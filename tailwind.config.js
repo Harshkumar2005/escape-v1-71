@@ -52,16 +52,4 @@ export default {
     },
   },
   plugins: [],
-  utilities: {
-    '.scrollbar-hide': {
-      /* Firefox */
-      'scrollbar-width': 'none',
-      /* IE and Edge */
-      '-ms-overflow-style': 'none',
-      /* Chrome, Safari and Opera */
-      '&::-webkit-scrollbar': {
-        display: 'none'
-      }
-    }
-  }
 }

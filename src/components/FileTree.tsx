@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { File, Folder } from 'lucide-react';
-import { ScrollArea } from './ui/scroll-area';
 
 type FileItem = {
   name: string;
@@ -44,7 +43,7 @@ const FileTree: React.FC<FileTreeProps> = ({ items, selectedFile, onSelectFile }
               {item.icon || <Folder size={16} className="folder-icon mr-1.5" />}
               <span className="file-text truncate">{item.name}</span>
             </div>
-            <div className="pl-4 scrollbar-hide">
+            <div className="pl-4">
               {renderItems(item.children)}
             </div>
           </div>
@@ -54,11 +53,9 @@ const FileTree: React.FC<FileTreeProps> = ({ items, selectedFile, onSelectFile }
   };
 
   return (
-    <ScrollArea className="h-full py-1.5">
-      <div className="scrollbar-hide">
-        {renderItems(items)}
-      </div>
-    </ScrollArea>
+    <div className="h-full overflow-y-auto py-1">
+      {renderItems(items)}
+    </div>
   );
 };
 
