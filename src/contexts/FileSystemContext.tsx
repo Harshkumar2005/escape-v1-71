@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Types
@@ -28,7 +27,7 @@ interface FileSystemContextType {
   files: FileSystemItem[];
   selectedFile: string | null;
   logs: Log[];
-  createFile: (parentPath: string, name: string, type: FileType) => void;
+  createFile: (parentPath: string, name: string, type: FileType) => string | undefined;
   renameFile: (id: string, newName: string) => void;
   deleteFile: (id: string) => void;
   updateFileContent: (id: string, content: string) => void;
@@ -40,6 +39,7 @@ interface FileSystemContextType {
   addLogMessage: (type: 'info' | 'success' | 'error' | 'warning', message: string) => void;
   clearLogs: () => void;
   removeLog: (id: string) => void;
+  resetFileSystem: () => void;
 }
 
 const FileSystemContext = createContext<FileSystemContextType | undefined>(undefined);
@@ -148,6 +148,18 @@ const findParentById = (files: FileSystemItem[], childId: string): FileSystemIte
   }
   return undefined;
 };
+
+// Empty file system for new projects
+const emptyFileSystem: FileSystemItem[] = [
+  {
+    id: 'root',
+    name: 'new-project',
+    type: 'folder',
+    path: '/new-project',
+    isOpen: true,
+    children: []
+  }
+];
 
 export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [files, setFiles] = useState<FileSystemItem[]>(initialFileSystem);
@@ -474,6 +486,13 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setLogs(prev => prev.filter(log => log.id !== id));
   };
 
+  // Reset file system to create a new project
+  const resetFileSystem = () => {
+    setFiles(emptyFileSystem);
+    setSelectedFile(null);
+    addLogMessage('info', 'Created new empty project');
+  };
+
   return (
     <FileSystemContext.Provider value={{
       files,
@@ -490,7 +509,8 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       moveFile,
       addLogMessage,
       clearLogs,
-      removeLog
+      removeLog,
+      resetFileSystem
     }}>
       {children}
     </FileSystemContext.Provider>

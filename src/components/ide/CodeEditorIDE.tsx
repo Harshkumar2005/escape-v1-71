@@ -12,6 +12,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { FontProvider } from '@/contexts/FontContext';
 import TopBar from './TopBar';
 import { Toaster } from 'sonner';
+import { ProjectStartup } from './ProjectStartup';
 
 const CodeEditorIDE: React.FC = () => {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
@@ -84,6 +85,9 @@ const CodeEditorIDE: React.FC = () => {
                   onClose={() => setShowCommandPalette(false)}
                 />
               )}
+
+              {/* Project Startup Dialog */}
+              <ProjectStartup />
             </div>
           </EditorProvider>
         </FileSystemProvider>
