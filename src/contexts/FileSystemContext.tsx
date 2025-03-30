@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Types
@@ -40,6 +41,7 @@ interface FileSystemContextType {
   clearLogs: () => void;
   removeLog: (id: string) => void;
   resetFileSystem: () => void;
+  replaceFileSystem: (newRootName: string) => void;
 }
 
 const FileSystemContext = createContext<FileSystemContextType | undefined>(undefined);
@@ -150,16 +152,18 @@ const findParentById = (files: FileSystemItem[], childId: string): FileSystemIte
 };
 
 // Empty file system for new projects
-const emptyFileSystem: FileSystemItem[] = [
-  {
-    id: 'root',
-    name: 'new-project',
-    type: 'folder',
-    path: '/new-project',
-    isOpen: true,
-    children: []
-  }
-];
+const createEmptyFileSystem = (rootName: string = 'new-project'): FileSystemItem[] => {
+  return [
+    {
+      id: 'root',
+      name: rootName,
+      type: 'folder',
+      path: `/${rootName}`,
+      isOpen: true,
+      children: []
+    }
+  ];
+};
 
 export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [files, setFiles] = useState<FileSystemItem[]>(initialFileSystem);
@@ -237,135 +241,55 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setSelectedFile(newId);
     }
     
-    // Add log entry for file creation
-    addLogMessage('success', `Created new ${type}: ${path}`);
-    
     return newId;
   };
 
-  // Rename file or folder
+  // Rename a file or folder
   const renameFile = (id: string, newName: string) => {
-    let oldPath = '';
-    let newPath = '';
-    
     setFiles(prevFiles => {
       const newFiles = [...prevFiles];
       
-      const processItems = (items: FileSystemItem[]): boolean => {
+      const updateItem = (items: FileSystemItem[]) => {
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
           
           if (item.id === id) {
-            // Update name and path
-            oldPath = item.path;
-            const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName;
+            const oldPathParts = item.path.split('/');
+            oldPathParts[oldPathParts.length - 1] = newName;
+            const newPath = oldPathParts.join('/');
+            
+            // Update item
             item.name = newName;
             item.path = newPath;
             
-            // If this is a file, update language based on new extension
+            // Update language if file extension changed
             if (item.type === 'file') {
               item.language = newName.split('.').pop() || 'plaintext';
             }
             
-            // Update paths of all children if this is a folder
-            if (item.type === 'folder' && item.children) {
-              const updateChildPaths = (children: FileSystemItem[], oldParentPath: string, newParentPath: string) => {
-                for (const child of children) {
-                  child.path = child.path.replace(oldParentPath, newParentPath);
-                  if (child.children) {
-                    updateChildPaths(child.children, oldParentPath, newParentPath);
-                  }
-                }
-              };
+            // Update paths of all children recursively
+            const updateChildrenPaths = (parentItem: FileSystemItem, oldParentPath: string, newParentPath: string) => {
+              if (!parentItem.children) return;
               
-              updateChildPaths(item.children, oldPath, newPath);
+              for (const child of parentItem.children) {
+                child.path = child.path.replace(oldParentPath, newParentPath);
+                
+                if (child.children) {
+                  updateChildrenPaths(child, oldParentPath, newParentPath);
+                }
+              }
+            };
+            
+            if (item.children) {
+              const oldItemPath = item.path.split('/').slice(0, -1).join('/') + '/' + item.name;
+              updateChildrenPaths(item, oldItemPath, newPath);
             }
             
             return true;
           }
           
           if (item.children) {
-            const renamed = processItems(item.children);
-            if (renamed) return true;
-          }
-        }
-        
-        return false;
-      };
-      
-      processItems(newFiles);
-      return newFiles;
-    });
-    
-    // Add log entry for file rename
-    addLogMessage('info', `Renamed: ${oldPath} → ${newPath || newName}`);
-  };
-
-  // Delete file or folder
-  const deleteFile = (id: string) => {
-    let deletedItem: FileSystemItem | undefined;
-    
-    setFiles(prevFiles => {
-      const newFiles = [...prevFiles];
-      
-      const processItems = (items: FileSystemItem[]): boolean => {
-        for (let i = 0; i < items.length; i++) {
-          // Check if this item has the child we want to delete
-          if (items[i].children) {
-            const childIndex = items[i].children.findIndex(child => child.id === id);
-            
-            if (childIndex !== -1) {
-              // Found the item to delete
-              deletedItem = items[i].children[childIndex];
-              items[i].children?.splice(childIndex, 1);
-              return true;
-            }
-            
-            // Recurse into children
-            const deleted = processItems(items[i].children);
-            if (deleted) return true;
-          }
-        }
-        
-        return false;
-      };
-      
-      processItems(newFiles);
-      return newFiles;
-    });
-    
-    // If the deleted file was selected, deselect it
-    if (selectedFile === id) {
-      setSelectedFile(null);
-    }
-    
-    // Add log entry for file deletion
-    if (deletedItem) {
-      addLogMessage('warning', `Deleted ${deletedItem.type}: ${deletedItem.path}`);
-    }
-  };
-
-  // Update file content
-  const updateFileContent = (id: string, content: string) => {
-    let updatedFile: FileSystemItem | undefined;
-    
-    setFiles(prevFiles => {
-      const newFiles = [...prevFiles];
-      
-      const processItems = (items: FileSystemItem[]): boolean => {
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          
-          if (item.id === id) {
-            // Update content and mark as modified
-            item.content = content;
-            item.isModified = true;
-            updatedFile = item;
-            return true;
-          }
-          
-          if (item.children) {
-            const updated = processItems(item.children);
+            const updated = updateItem(item.children);
             if (updated) return true;
           }
         }
@@ -373,71 +297,120 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return false;
       };
       
-      processItems(newFiles);
+      updateItem(newFiles);
       return newFiles;
     });
-    
-    // Add log entry for content update
-    if (updatedFile) {
-      addLogMessage('info', `Updated content in: ${updatedFile.path}`);
-    }
   };
 
-  // Select a file
-  const selectFile = (id: string) => {
-    setSelectedFile(id);
-    
-    const file = getFileById(id);
-    if (file && file.type === 'file') {
-      addLogMessage('info', `Selected file: ${file.path}`);
-    }
-  };
-
-  // Toggle folder open/closed state
-  const toggleFolder = (id: string) => {
-    let toggled = false;
-    let folderPath = '';
-    
+  // Delete a file or folder
+  const deleteFile = (id: string) => {
     setFiles(prevFiles => {
       const newFiles = [...prevFiles];
       
-      const processItems = (items: FileSystemItem[]): boolean => {
+      const removeItem = (items: FileSystemItem[]) => {
         for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          
-          if (item.id === id && item.type === 'folder') {
-            item.isOpen = !item.isOpen;
-            toggled = item.isOpen;
-            folderPath = item.path;
+          if (items[i].id === id) {
+            items.splice(i, 1);
             return true;
           }
           
-          if (item.children) {
-            const found = processItems(item.children);
-            if (found) return true;
+          if (items[i].children) {
+            const removed = removeItem(items[i].children!);
+            if (removed) return true;
           }
         }
         
         return false;
       };
       
-      processItems(newFiles);
+      // Don't allow deleting the root folder
+      if (id !== 'root') {
+        removeItem(newFiles);
+      }
+      
       return newFiles;
     });
     
-    // Add log entry for folder toggle
-    if (folderPath) {
-      addLogMessage('info', `${toggled ? 'Opened' : 'Closed'} folder: ${folderPath}`);
+    if (selectedFile === id) {
+      setSelectedFile(null);
     }
   };
 
-  // Search files
-  const searchFiles = (query: string): FileSystemItem[] => {
+  // Update file content
+  const updateFileContent = (id: string, content: string) => {
+    setFiles(prevFiles => {
+      const newFiles = [...prevFiles];
+      
+      const updateItem = (items: FileSystemItem[]) => {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          
+          if (item.id === id && item.type === 'file') {
+            const isContentChanged = item.content !== content;
+            
+            item.content = content;
+            item.isModified = isContentChanged;
+            
+            return true;
+          }
+          
+          if (item.children) {
+            const updated = updateItem(item.children);
+            if (updated) return true;
+          }
+        }
+        
+        return false;
+      };
+      
+      updateItem(newFiles);
+      return newFiles;
+    });
+  };
+
+  // Select a file
+  const selectFile = (id: string) => {
+    setSelectedFile(id);
+  };
+
+  // Toggle folder open/closed
+  const toggleFolder = (id: string) => {
+    setFiles(prevFiles => {
+      const newFiles = [...prevFiles];
+      
+      const toggleItem = (items: FileSystemItem[]) => {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          
+          if (item.id === id && item.type === 'folder') {
+            item.isOpen = !item.isOpen;
+            return true;
+          }
+          
+          if (item.children) {
+            const toggled = toggleItem(item.children);
+            if (toggled) return true;
+          }
+        }
+        
+        return false;
+      };
+      
+      toggleItem(newFiles);
+      return newFiles;
+    });
+  };
+
+  // Search files by name
+  const searchFiles = (query: string) => {
+    if (!query.trim()) return [];
+    
     const results: FileSystemItem[] = [];
+    const searchQuery = query.toLowerCase();
     
     const searchInItems = (items: FileSystemItem[]) => {
       for (const item of items) {
-        if (item.name.toLowerCase().includes(query.toLowerCase())) {
+        if (item.name.toLowerCase().includes(searchQuery)) {
           results.push(item);
         }
         
@@ -448,22 +421,54 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
     
     searchInItems(files);
-    
-    // Add log entry for search operation
-    if (query.trim() !== '') {
-      addLogMessage('info', `Searched for: "${query}" (${results.length} results)`);
-    }
-    
     return results;
   };
 
-  // Move file
+  // Move a file or folder to a new parent
   const moveFile = (fileId: string, newParentId: string) => {
-    // Implementation...
-    // We'll add logs in a more complete implementation
+    setFiles(prevFiles => {
+      const newFiles = [...prevFiles];
+      
+      // Find the item to move
+      const fileToMove = findItemById(newFiles, fileId);
+      if (!fileToMove) return prevFiles;
+      
+      // Find the new parent
+      const newParent = findItemById(newFiles, newParentId);
+      if (!newParent || newParent.type !== 'folder') return prevFiles;
+      
+      // Find the current parent
+      const currentParent = findParentById(newFiles, fileId);
+      if (!currentParent) return prevFiles;
+      
+      // Remove from current parent
+      currentParent.children = currentParent.children!.filter(child => child.id !== fileId);
+      
+      // Update path and parentId
+      const oldPath = fileToMove.path;
+      fileToMove.path = `${newParent.path}/${fileToMove.name}`;
+      fileToMove.parentId = newParentId;
+      
+      // Update paths of all children
+      const updateChildPaths = (item: FileSystemItem, oldBasePath: string, newBasePath: string) => {
+        if (item.children) {
+          for (const child of item.children) {
+            child.path = child.path.replace(oldBasePath, newBasePath);
+            updateChildPaths(child, oldBasePath, newBasePath);
+          }
+        }
+      };
+      
+      updateChildPaths(fileToMove, oldPath, fileToMove.path);
+      
+      // Add to new parent
+      newParent.children = [...(newParent.children || []), fileToMove];
+      
+      return newFiles;
+    });
   };
 
-  // Add log message
+  // Add a log message
   const addLogMessage = (type: 'info' | 'success' | 'error' | 'warning', message: string) => {
     const newLog: Log = {
       id: generateId(),
@@ -472,25 +477,31 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       timestamp: new Date()
     };
     
-    setLogs(prev => [newLog, ...prev].slice(0, 100)); // Keep only the most recent 100 logs
+    setLogs(prevLogs => [...prevLogs, newLog]);
   };
 
   // Clear all logs
   const clearLogs = () => {
     setLogs([]);
-    addLogMessage('info', 'Logs cleared');
   };
 
-  // Remove specific log
+  // Remove a specific log
   const removeLog = (id: string) => {
-    setLogs(prev => prev.filter(log => log.id !== id));
+    setLogs(prevLogs => prevLogs.filter(log => log.id !== id));
   };
 
-  // Reset file system to create a new project
+  // Reset file system to default empty state
   const resetFileSystem = () => {
-    setFiles(emptyFileSystem);
+    setFiles(createEmptyFileSystem());
     setSelectedFile(null);
-    addLogMessage('info', 'Created new empty project');
+    addLogMessage('info', 'File system reset to default empty state');
+  };
+
+  // Replace file system with a completely new one (for imports)
+  const replaceFileSystem = (newRootName: string) => {
+    setFiles(createEmptyFileSystem(newRootName));
+    setSelectedFile(null);
+    addLogMessage('info', `Prepared new file system for ${newRootName}`);
   };
 
   return (
@@ -510,7 +521,8 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       addLogMessage,
       clearLogs,
       removeLog,
-      resetFileSystem
+      resetFileSystem,
+      replaceFileSystem
     }}>
       {children}
     </FileSystemContext.Provider>
