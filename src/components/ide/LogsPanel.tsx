@@ -1,13 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, Info, X, Trash, Maximize2, Minimize2 } from 'lucide-react';
-
-interface Log {
-  id: string;
-  type: 'info' | 'success' | 'error' | 'warning';
-  message: string;
-  timestamp: Date;
-}
+import { useFileSystem } from '@/contexts/FileSystemContext';
 
 interface LogsPanelProps {
   maximizePanel?: () => void;
@@ -15,69 +9,8 @@ interface LogsPanelProps {
 }
 
 const LogsPanel: React.FC<LogsPanelProps> = ({ maximizePanel, minimizePanel }) => {
-  const [logs, setLogs] = useState<Log[]>([]);
   const [isMaximized, setIsMaximized] = useState(false);
-
-  // Demo logs for initial state
-  useEffect(() => {
-    const initialLogs: Log[] = [
-      {
-        id: '1',
-        type: 'info',
-        message: 'IDE initialized successfully',
-        timestamp: new Date()
-      },
-      {
-        id: '2',
-        type: 'success',
-        message: 'Project files loaded',
-        timestamp: new Date(Date.now() - 60000)
-      }
-    ];
-    
-    setLogs(initialLogs);
-    
-    // Mock log generation
-    const interval = setInterval(() => {
-      const types: ('info' | 'success' | 'error' | 'warning')[] = ['info', 'success', 'error', 'warning'];
-      const messages = [
-        'File saved successfully',
-        'Syntax error in line 42',
-        'Git pull completed',
-        'Connection to server established',
-        'Package installation completed',
-        'Build process started',
-        'Warning: Unused variable detected',
-        'Terminal process exited with code 0'
-      ];
-      
-      const randomType = types[Math.floor(Math.random() * types.length)];
-      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-      
-      addLog(randomType, randomMessage);
-    }, 30000); // Add random log every 30 seconds
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  const addLog = (type: 'info' | 'success' | 'error' | 'warning', message: string) => {
-    const newLog: Log = {
-      id: Date.now().toString(),
-      type,
-      message,
-      timestamp: new Date()
-    };
-    
-    setLogs(prev => [newLog, ...prev].slice(0, 100)); // Keep only the most recent 100 logs
-  };
-
-  const clearLogs = () => {
-    setLogs([]);
-  };
-
-  const removeLog = (id: string) => {
-    setLogs(prev => prev.filter(log => log.id !== id));
-  };
+  const { logs, clearLogs, removeLog } = useFileSystem();
 
   const toggleMaximize = () => {
     setIsMaximized(!isMaximized);
@@ -123,14 +56,14 @@ const LogsPanel: React.FC<LogsPanelProps> = ({ maximizePanel, minimizePanel }) =
         </div>
         <div className="flex items-center space-x-1">
           <button 
-            className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+            className="p-1 text-slate-400 hover:text-white hover:bg-[#cccccc29] rounded transition-colors"
             onClick={clearLogs}
             title="Clear all logs"
           >
             <Trash size={14} />
           </button>
           <button 
-            className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+            className="p-1 text-slate-400 hover:text-white hover:bg-[#cccccc29] rounded transition-colors"
             onClick={toggleMaximize}
             title={isMaximized ? "Restore Panel" : "Maximize Panel"}
           >
@@ -148,7 +81,7 @@ const LogsPanel: React.FC<LogsPanelProps> = ({ maximizePanel, minimizePanel }) =
         ) : (
           <div className="divide-y divide-border">
             {logs.map(log => (
-              <div key={log.id} className="px-3 py-2 hover:bg-sidebar-foreground hover:bg-opacity-5 group">
+              <div key={log.id} className="px-3 py-2 hover:bg-[#cccccc29] group">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     {getLogIcon(log.type)}

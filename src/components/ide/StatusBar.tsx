@@ -4,7 +4,6 @@ import { GitBranch, Terminal, Columns, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
-import FontSelector from './FontSelector';
 
 interface StatusBarProps {
   toggleTerminal: () => void;
@@ -19,7 +18,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
 }) => {
   const { theme, toggleTheme } = useTheme();
   const { activeTabId } = useEditor();
-  const { getFileById } = useFileSystem();
+  const { getFileById, addLogMessage } = useFileSystem();
   const [time, setTime] = useState<string>('');
   const [activeFileInfo, setActiveFileInfo] = useState({ 
     language: 'Text', 
@@ -68,7 +67,10 @@ const StatusBar: React.FC<StatusBarProps> = ({
         
         <button 
           className="flex items-center hover:text-white transition-colors"
-          onClick={toggleLeftSidebar}
+          onClick={() => {
+            toggleLeftSidebar();
+            addLogMessage('info', 'Toggled explorer sidebar');
+          }}
         >
           <Columns size={14} className="mr-1" />
           <span>Explorer</span>
@@ -76,7 +78,10 @@ const StatusBar: React.FC<StatusBarProps> = ({
         
         <button
           className="flex items-center hover:text-white transition-colors"
-          onClick={toggleTerminal}
+          onClick={() => {
+            toggleTerminal();
+            addLogMessage('info', 'Toggled terminal panel');
+          }}
         >
           <Terminal size={14} className="mr-1" />
           <span>Terminal</span>
@@ -94,11 +99,12 @@ const StatusBar: React.FC<StatusBarProps> = ({
         
         <span>{time}</span>
         
-        <FontSelector />
-        
         <button
           className="flex items-center hover:text-white transition-colors"
-          onClick={toggleTheme}
+          onClick={() => {
+            toggleTheme();
+            addLogMessage('info', `Switched to ${theme === 'dark' ? 'light' : 'dark'} theme`);
+          }}
           title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
         >
           {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}

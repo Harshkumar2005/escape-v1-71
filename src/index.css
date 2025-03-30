@@ -5,60 +5,48 @@
 
 @layer base {
   :root {
-    /* Dark theme (default) */
-    --background: 220 19% 18%;
-    --foreground: 0 0% 90%;
-    
-    --sidebar: 220 21% 16%;
-    --sidebar-foreground: 0 0% 80%;
-    
-    --editor: 220 19% 18%;
-    --editor-line: 220 19% 20%;
-    
-    --terminal: 220 19% 18%;
-    --terminal-foreground: 0 0% 80%;
-    
-    --tab-active: 220 19% 18%;
-    --tab-inactive: 220 21% 16%;
-    
-    --border: 220 15% 25%;
-    
-    --syntax-string: 85 65% 65%;
-    --syntax-keyword: 210 50% 70%;
-    --syntax-function: 35 90% 75%;
-    --syntax-comment: 220 15% 50%;
-    
-    --status-bar: 220 21% 16%;
-    
-    --ui-font-family: "Inter";
-    --editor-font-family: "JetBrains Mono";
-    --font-family: "Inter";
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+    --primary: 220.9 39.3% 11%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71.4% 4.1%;
+    --radius: 0.5rem;
   }
 
-  .light {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    
-    --sidebar: 220 13% 95%;
-    --sidebar-foreground: 220 10% 30%;
-    
-    --editor: 0 0% 100%;
-    --editor-line: 220 13% 95%;
-    
-    --terminal: 0 0% 100%;
-    --terminal-foreground: 220 10% 20%;
-    
-    --tab-active: 0 0% 100%;
-    --tab-inactive: 220 13% 95%;
-    
-    --border: 220 13% 85%;
-    
-    --syntax-string: 110 50% 40%;
-    --syntax-keyword: 210 80% 50%;
-    --syntax-function: 20 90% 45%;
-    --syntax-comment: 220 10% 50%;
-    
-    --status-bar: 220 13% 95%;
+  .dark {
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 210 20% 98%;
+    --primary-foreground: 220.9 39.3% 11%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 216 12.2% 83.9%;
   }
 }
 
@@ -66,172 +54,50 @@
   * {
     @apply border-border;
   }
-  
   body {
-    @apply bg-background text-foreground m-0 p-0 overflow-hidden;
-    font-family: var(--ui-font-family), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Global hover styles for dark mode */
+  .file-explorer-item:hover,
+  .menu-item:hover,
+  button:hover:not(.bg-blue-500):not(.bg-green-500):not(.bg-red-500) {
+    background-color: #cccccc29 !important;
   }
   
-  pre, code, .monaco-editor {
-    font-family: var(--editor-font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  /* Selected file background */
+  .active-file,
+  .file-explorer-item.selected {
+    background-color: #cccccc29 !important;
   }
-}
-
-.line-number {
-  @apply text-right pr-4 text-slate-500 select-none;
-  min-width: 2.5rem;
-}
-
-.syntax-keyword {
-  color: hsl(var(--syntax-keyword));
-}
-
-.syntax-string {
-  color: hsl(var(--syntax-string));
-}
-
-.syntax-function {
-  color: hsl(var(--syntax-function));
-}
-
-.syntax-comment {
-  color: hsl(var(--syntax-comment));
-}
-
-.terminal-line {
-  @apply text-terminal-foreground font-mono text-sm;
-}
-
-.terminal-prompt {
-  @apply text-teal-400;
-}
-
-.terminal-command {
-  @apply text-blue-400;
-}
-
-.terminal-path {
-  @apply text-purple-400;
-}
-
-.terminal-highlight {
-  @apply text-yellow-400;
-}
-
-/* XTerm styling */
-.xterm {
-  padding: 4px;
-}
-
-/* Monaco editor styling */
-.monaco-editor .margin {
-  background-color: transparent !important;
-}
-
-/* Resizable panels */
-.resize-handle {
-  @apply bg-border;
-}
-
-.resize-handle:hover {
-  @apply bg-slate-500;
-}
-
-/* File explorer styling */
-.file-explorer-item {
-  @apply transition-colors duration-150;
-}
-
-.file-explorer-item:hover {
-  @apply bg-sidebar-foreground bg-opacity-10;
-}
-
-.file-explorer-item.active {
-  @apply bg-sidebar-foreground bg-opacity-20;
-}
-
-/* Menu dropdown styling */
-.menu-dropdown {
-  @apply absolute z-50 bg-sidebar border border-border rounded shadow-lg py-1 min-w-40;
-}
-
-.menu-item {
-  @apply px-4 py-1.5 text-sm text-sidebar-foreground opacity-90 hover:bg-sidebar-foreground hover:bg-opacity-10 cursor-pointer flex items-center transition-colors;
-}
-
-.menu-separator {
-  @apply my-1 border-t border-border;
-}
-
-/* Nice scrollbars for file tree and other scrollable areas */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsla(var(--border) / 0.5);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsla(var(--border) / 0.8);
-}
-
-/* React Contexify custom styles */
-.react-contexify {
-  background-color: hsl(var(--sidebar)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  min-width: 160px;
-}
-
-.react-contexify__item {
-  color: hsl(var(--sidebar-foreground)) !important;
-  font-size: 0.875rem;
-  opacity: 0.9;
-}
-
-.react-contexify__item:hover {
-  background-color: hsla(var(--sidebar-foreground) / 0.1) !important;
-}
-
-.react-contexify__item:not(:last-child) {
-  border-bottom: 1px solid hsla(var(--border) / 0.5);
-}
-
-/* Drag handle for resizable panels */
-[data-panel-group-direction="horizontal"] > [data-panel-handle] {
-  width: 1px !important;
-}
-
-[data-panel-group-direction="horizontal"] > [data-panel-handle]:hover,
-[data-panel-group-direction="horizontal"] > [data-panel-handle]:focus {
-  width: 2px !important;
-}
-
-[data-panel-group-direction="vertical"] > [data-panel-handle] {
-  height: 1px !important;
-}
-
-[data-panel-group-direction="vertical"] > [data-panel-handle]:hover,
-[data-panel-group-direction="vertical"] > [data-panel-handle]:focus {
-  height: 2px !important;
-}
-
-/* Monaco Editor theme overrides */
-.monaco-editor .monaco-scrollable-element {
-  border-radius: 4px;
-}
-
-/* Fix for sidebar resize issue */
-[data-panel-group-direction="horizontal"] .resize-handle {
-  cursor: col-resize !important;
-}
-
-[data-panel-group-direction="vertical"] .resize-handle {
-  cursor: row-resize !important;
+  
+  /* Chat styles for AI Coworker */
+  .chat-bubble-user {
+    @apply bg-blue-600 text-white rounded-2xl rounded-tr-none px-4 py-2 ml-auto max-w-[80%];
+  }
+  
+  .chat-bubble-ai {
+    @apply bg-gray-700 text-white rounded-2xl rounded-tl-none px-4 py-2 mr-auto w-full;
+  }
+  
+  /* Terminal style chat input */
+  .terminal-input {
+    @apply w-full bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono;
+  }
+  
+  /* Menu dropdown styles */
+  .menu-dropdown {
+    @apply absolute z-50 min-w-48 bg-sidebar border border-border rounded shadow-lg py-1;
+  }
+  
+  .menu-item {
+    @apply px-3 py-1.5 flex items-center text-sm text-sidebar-foreground hover:bg-[#cccccc29] cursor-pointer;
+  }
+  
+  .menu-separator {
+    @apply border-t border-border my-1;
+  }
 }

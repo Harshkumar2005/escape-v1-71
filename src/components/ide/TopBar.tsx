@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
-import { toast } from 'sonner';
+import FontSelector from './FontSelector';
 
 const TopBar: React.FC = () => {
   const { saveActiveFile, activeTabId } = useEditor();
-  const { createFile, deleteFile } = useFileSystem();
+  const { createFile, deleteFile, addLogMessage } = useFileSystem();
   
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   
@@ -25,46 +25,46 @@ const TopBar: React.FC = () => {
     switch (action) {
       case 'new-file':
         createFile('/my-project', 'untitled.txt', 'file');
-        toast.success('New file created');
+        addLogMessage('success', 'New file created');
         break;
       case 'save':
         saveActiveFile();
-        toast.success('File saved');
+        addLogMessage('success', 'File saved');
         break;
       case 'delete':
         if (activeTabId) {
           deleteFile(activeTabId);
-          toast.success('File deleted');
+          addLogMessage('success', 'File deleted');
         } else {
-          toast.error('No file selected');
+          addLogMessage('error', 'No file selected');
         }
         break;
       case 'copy':
-        toast.success('Content copied to clipboard');
+        addLogMessage('success', 'Content copied to clipboard');
         break;
       case 'cut':
-        toast.success('Content cut to clipboard');
+        addLogMessage('success', 'Content cut to clipboard');
         break;
       case 'paste':
-        toast.success('Content pasted from clipboard');
+        addLogMessage('success', 'Content pasted from clipboard');
         break;
       case 'undo':
-        toast.success('Undo operation');
+        addLogMessage('success', 'Undo operation');
         break;
       case 'redo':
-        toast.success('Redo operation');
+        addLogMessage('success', 'Redo operation');
         break;
       case 'toggle-minimap':
-        toast.success('Minimap toggled');
+        addLogMessage('success', 'Minimap toggled');
         break;
       case 'toggle-wrap':
-        toast.success('Word wrap toggled');
+        addLogMessage('success', 'Word wrap toggled');
         break;
       case 'keyboard-shortcuts':
-        toast.info('Keyboard shortcuts coming soon');
+        addLogMessage('info', 'Keyboard shortcuts coming soon');
         break;
       case 'about':
-        toast.info('Code Editor IDE - Version 1.0.0');
+        addLogMessage('info', 'Code Editor IDE - Version 1.0.0');
         break;
       default:
         break;
@@ -189,6 +189,9 @@ const TopBar: React.FC = () => {
       </div>
       
       <div className="flex items-center space-x-2">
+        {/* Moved FontSelector to the top right */}
+        <FontSelector />
+        
         <button 
           className="p-1 hover:text-white transition-colors"
           onClick={() => handleAction('save')}

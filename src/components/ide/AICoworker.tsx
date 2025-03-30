@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, User, Bot, Paperclip, ArrowUp, ArrowDown, Maximize2, Minimize2 } from 'lucide-react';
+import { useFileSystem } from '@/contexts/FileSystemContext';
 
 interface AICoworkerProps {
   maximizePanel?: () => void;
@@ -27,6 +28,7 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
   const [isMaximized, setIsMaximized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { addLogMessage } = useFileSystem();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -39,6 +41,12 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
+    
+    // Auto-resize textarea based on content
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -61,6 +69,14 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
+    
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
+
+    // Log the message
+    addLogMessage('info', `User: ${inputValue}`);
 
     // Simulate AI response
     setTimeout(() => {
@@ -84,6 +100,9 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
       };
 
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Log the AI response
+      addLogMessage('success', `AI: ${response}`);
     }, 1000);
   };
 
@@ -94,6 +113,9 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
     } else {
       if (minimizePanel) minimizePanel();
     }
+    
+    // Log the panel state change
+    addLogMessage('info', isMaximized ? 'AI Panel minimized' : 'AI Panel maximized');
   };
 
   const formatTimestamp = (date: Date) => {
@@ -113,7 +135,7 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
         </div>
         <div className="flex items-center">
           <button 
-            className="p-1 ml-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+            className="p-1 ml-1 text-slate-400 hover:text-white hover:bg-[#cccccc29] rounded transition-colors"
             onClick={toggleMaximize}
             title={isMaximized ? "Restore Panel" : "Maximize Panel"}
           >
@@ -130,11 +152,7 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div 
-              className={`max-w-3/4 rounded-lg px-4 py-2 ${
-                message.type === 'user' 
-                  ? 'bg-blue-500 bg-opacity-20 text-white' 
-                  : 'bg-sidebar-foreground bg-opacity-10 text-terminal-foreground'
-              }`}
+              className={message.type === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}
             >
               <div className="flex items-center mb-1">
                 {message.type === 'assistant' ? (
@@ -163,12 +181,12 @@ const AICoworker: React.FC<AICoworkerProps> = ({ maximizePanel, minimizePanel })
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Ask something or type a command..."
-            className="w-full rounded-lg bg-sidebar-foreground bg-opacity-10 text-terminal-foreground border border-border p-2 pr-10 text-sm resize-none outline-none min-h-[60px] max-h-[150px]"
-            rows={2}
+            placeholder="Type your message..."
+            className="terminal-input min-h-[60px] max-h-[150px] resize-none pr-10"
+            rows={1}
           />
           <button 
-            className="absolute right-3 bottom-3 p-1.5 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded-full transition-colors"
+            className="absolute right-3 bottom-3 p-1.5 text-slate-400 hover:text-white hover:bg-[#cccccc29] rounded-full transition-colors"
             onClick={handleSendMessage}
             disabled={!inputValue.trim()}
           >

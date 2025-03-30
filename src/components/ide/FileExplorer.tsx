@@ -1,6 +1,9 @@
-
 import React, { useState, useRef } from 'react';
-import { File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X } from 'lucide-react';
+import { 
+  File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
+  FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
+  FileCog, FileSpreadsheet
+} from 'lucide-react';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { Menu, Item, useContextMenu } from 'react-contexify';
@@ -9,6 +12,80 @@ import 'react-contexify/ReactContexify.css';
 const CONTEXT_MENU_ID = 'file-explorer-context-menu';
 const FILE_ITEM_MENU_ID = 'file-item-context-menu';
 const FOLDER_ITEM_MENU_ID = 'folder-item-context-menu';
+
+const getFileIcon = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  
+  switch(extension) {
+    case 'js':
+    case 'jsx':
+    case 'ts':
+    case 'tsx':
+    case 'html':
+    case 'css':
+    case 'php':
+    case 'py':
+    case 'rb':
+    case 'java':
+    case 'go':
+    case 'c':
+    case 'cpp':
+    case 'cs':
+      return <FileCode size={16} className="file-icon" />;
+    
+    case 'txt':
+    case 'md':
+    case 'rtf':
+    case 'log':
+      return <FileText size={16} className="file-icon" />;
+    
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+    case 'svg':
+    case 'bmp':
+    case 'ico':
+      return <FileImage size={16} className="file-icon" />;
+    
+    case 'mp4':
+    case 'avi':
+    case 'mov':
+    case 'wmv':
+    case 'webm':
+      return <FileVideo size={16} className="file-icon" />;
+    
+    case 'mp3':
+    case 'wav':
+    case 'ogg':
+    case 'flac':
+      return <FileAudio size={16} className="file-icon" />;
+    
+    case 'json':
+      return <FileJson size={16} className="file-icon" />;
+    
+    case 'yml':
+    case 'yaml':
+    case 'toml':
+    case 'ini':
+    case 'env':
+    case 'config':
+      return <FileCog size={16} className="file-icon" />;
+    
+    case 'csv':
+    case 'xls':
+    case 'xlsx':
+      return <FileSpreadsheet size={16} className="file-icon" />;
+    
+    case 'exe':
+    case 'bat':
+    case 'sh':
+      return <FileCheck size={16} className="file-icon" />;
+    
+    default:
+      return <File size={16} className="file-icon" />;
+  }
+};
 
 const FileExplorer: React.FC = () => {
   const { files, createFile, renameFile, deleteFile, toggleFolder } = useFileSystem();
@@ -23,13 +100,11 @@ const FileExplorer: React.FC = () => {
   
   const { show } = useContextMenu();
 
-  // Handle file explorer background context menu
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     show({ event: e, id: CONTEXT_MENU_ID });
   };
 
-  // Handle file/folder item context menu
   const handleItemContextMenu = (e: React.MouseEvent, item: FileSystemItem) => {
     e.preventDefault();
     e.stopPropagation();
@@ -41,7 +116,6 @@ const FileExplorer: React.FC = () => {
     }
   };
 
-  // Handle search
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     
@@ -53,7 +127,6 @@ const FileExplorer: React.FC = () => {
     
     setIsSearching(true);
     
-    // Simple search implementation
     const results: FileSystemItem[] = [];
     
     const searchInItems = (items: FileSystemItem[]) => {
@@ -72,12 +145,10 @@ const FileExplorer: React.FC = () => {
     setSearchResults(results);
   };
 
-  // Create new file or folder
   const startCreatingNewItem = (parentPath: string, type: FileType) => {
     setNewItemType(type);
     setNewItemParentPath(parentPath);
     
-    // Focus the input after it's rendered
     setTimeout(() => {
       if (newItemInputRef.current) {
         newItemInputRef.current.focus();
@@ -85,7 +156,6 @@ const FileExplorer: React.FC = () => {
     }, 50);
   };
 
-  // Handle new item creation
   const handleCreateNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && newItemType) {
       const name = e.currentTarget.value.trim();
@@ -99,11 +169,9 @@ const FileExplorer: React.FC = () => {
     }
   };
 
-  // Start renaming a file or folder
   const startRenaming = (itemId: string) => {
     setRenamingItemId(itemId);
     
-    // Focus the input after it's rendered
     setTimeout(() => {
       if (renameInputRef.current) {
         renameInputRef.current.focus();
@@ -112,7 +180,6 @@ const FileExplorer: React.FC = () => {
     }, 50);
   };
 
-  // Handle rename
   const handleRename = (e: React.KeyboardEvent<HTMLInputElement>, itemId: string) => {
     if (e.key === 'Enter') {
       const newName = e.currentTarget.value.trim();
@@ -126,7 +193,6 @@ const FileExplorer: React.FC = () => {
     }
   };
 
-  // Recursive component to render the file tree
   const renderFileTree = (items: FileSystemItem[], depth = 0) => {
     return items.map(item => (
       <FileExplorerItem 
@@ -151,18 +217,17 @@ const FileExplorer: React.FC = () => {
       className="h-full overflow-auto bg-sidebar flex flex-col"
       onContextMenu={handleContextMenu}
     >
-      {/* Explorer Header */}
       <div className="px-2 py-1 flex justify-between items-center border-b border-border">
         <h2 className="text-sm font-medium text-sidebar-foreground">EXPLORER</h2>
         <div className="flex space-x-1">
           <button 
-            className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+            className="p-1 text-slate-400 hover:text-white hover:bg-[#cccccc29] rounded transition-colors"
             onClick={() => setIsSearching(!isSearching)}
           >
             <Search size={16} />
           </button>
           <button 
-            className="p-1 text-slate-400 hover:text-white hover:bg-sidebar-foreground hover:bg-opacity-10 rounded transition-colors"
+            className="p-1 text-slate-400 hover:text-white hover:bg-[#cccccc29] rounded transition-colors"
             onClick={() => startCreatingNewItem(files[0].path, 'file')}
           >
             <Plus size={16} />
@@ -170,7 +235,6 @@ const FileExplorer: React.FC = () => {
         </div>
       </div>
       
-      {/* Search Bar */}
       {isSearching && (
         <div className="px-2 py-2 border-b border-border">
           <div className="relative">
@@ -197,7 +261,6 @@ const FileExplorer: React.FC = () => {
         </div>
       )}
       
-      {/* File Tree */}
       <div className="flex-1 overflow-auto">
         {isSearching ? (
           <div className="px-2 py-1">
@@ -222,7 +285,6 @@ const FileExplorer: React.FC = () => {
         )}
       </div>
       
-      {/* Context Menus */}
       <Menu id={CONTEXT_MENU_ID}>
         <Item onClick={() => startCreatingNewItem(files[0].path, 'file')}>
           New File
@@ -259,7 +321,6 @@ const FileExplorer: React.FC = () => {
   );
 };
 
-// File Explorer Item Component
 interface FileExplorerItemProps {
   item: FileSystemItem;
   depth: number;
@@ -290,7 +351,6 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
   const { toggleFolder, selectedFile } = useFileSystem();
   const { openTab } = useEditor();
   
-  // Handle item click
   const handleItemClick = () => {
     if (item.type === 'folder') {
       toggleFolder(item.id);
@@ -304,10 +364,9 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
   
   return (
     <div>
-      {/* File/Folder Item */}
       <div
         className={`file-explorer-item flex items-center py-0.5 px-1 cursor-pointer rounded ${
-          isSelected ? 'bg-sidebar-foreground bg-opacity-20' : ''
+          isSelected ? 'selected' : ''
         }`}
         style={{ paddingLeft: `${(depth * 12) + 4}px` }}
         onClick={handleItemClick}
@@ -322,7 +381,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
         <span className="mr-1 text-slate-400">
           {item.type === 'folder' 
             ? (item.isOpen ? <FolderOpen size={16} /> : <Folder size={16} />)
-            : <File size={16} />
+            : getFileIcon(item.name)
           }
         </span>
         
@@ -340,7 +399,6 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
         )}
       </div>
       
-      {/* New Item Input (if this folder is selected for a new item) */}
       {showNewItemInput && (
         <div 
           className="flex items-center py-0.5 px-1"
@@ -359,7 +417,6 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
         </div>
       )}
       
-      {/* Render children if folder is open */}
       {item.type === 'folder' && item.isOpen && item.children && (
         <div>
           {item.children.map(child => (
@@ -384,7 +441,6 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
   );
 };
 
-// Search Result Item Component
 interface SearchResultItemProps {
   item: FileSystemItem;
   handleItemContextMenu: (e: React.MouseEvent, item: FileSystemItem) => void;
@@ -401,12 +457,12 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ item, handleItemCon
   
   return (
     <div
-      className="file-explorer-item flex items-center py-0.5 px-2 cursor-pointer rounded hover:bg-sidebar-foreground hover:bg-opacity-10 transition-colors"
+      className="file-explorer-item flex items-center py-0.5 px-2 cursor-pointer rounded hover:bg-[#cccccc29] transition-colors"
       onClick={handleClick}
       onContextMenu={(e) => handleItemContextMenu(e, item)}
     >
       <span className="mr-2 text-slate-400">
-        {item.type === 'folder' ? <Folder size={16} /> : <File size={16} />}
+        {item.type === 'folder' ? <Folder size={16} /> : getFileIcon(item.name)}
       </span>
       <span className="text-sm text-sidebar-foreground opacity-90 truncate">{item.name}</span>
       <span className="text-xs text-slate-500 ml-2 truncate opacity-70">{item.path}</span>
