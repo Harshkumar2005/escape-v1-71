@@ -66,9 +66,9 @@ const CodeEditorIDE: React.FC = () => {
                   <ResizableHandle withHandle />
                   
                   {/* AI Coworker (fixed on the right) */}
-                  <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                    {/* <AICoworker />*/}
-                  </ResizablePanel>
+                 {/* <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                    {/* <AICoworker />
+                  </ResizablePanel>*/}
                 </ResizablePanelGroup>
               </div>
               
