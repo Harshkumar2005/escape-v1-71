@@ -175,14 +175,14 @@ const EditorArea: React.FC = () => {
       }
     });
 
-    // Set up undo/redo shortcuts
+   /* // Set up undo/redo shortcuts
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyZ, () => {
       undoLastAction();
     });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyZ, () => {
       redoLastAction();
-    });
+    });*/
   };
   
   // Get active file content
