@@ -62,9 +62,9 @@ const getLanguageFromExtension = (filename: string): string => {
     
     // JavaScript family
     'js': 'javascript',
-    'jsx': 'jsx',
+    'jsx': 'javascript',
     'ts': 'typescript',
-    'tsx': 'tsx',
+    'tsx': 'typescript',
     'json': 'json',
     
     // Python
