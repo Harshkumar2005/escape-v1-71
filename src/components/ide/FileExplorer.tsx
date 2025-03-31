@@ -218,7 +218,7 @@ const FileExplorer: React.FC = () => {
       className="h-full overflow-auto bg-sidebar flex flex-col"
       onContextMenu={handleContextMenu}
     >
-      <div className="px-2 py-1 flex justify-between items-center border-b border-border">
+      <div className="px-2 py-0.5 flex justify-between items-center border-b border-border">
         <h2 className="text-sm font-medium text-sidebar-foreground">EXPLORER</h2>
         <div className="flex space-x-1">
           <button 
