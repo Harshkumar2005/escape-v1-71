@@ -243,9 +243,38 @@ const EditorArea: React.FC = () => {
           'editorHoverWidget.border': '#383E4C',
         }
       });
+
+monaco.editor.defineTheme('custom-light', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [
+          { token: 'comment', foreground: '6A737D' },
+          { token: 'keyword', foreground: 'C678DD' },
+          { token: 'string', foreground: '98C379' },
+          { token: 'number', foreground: 'D19A66' },
+          { token: 'operator', foreground: '56B6C2' },
+          { token: 'function', foreground: '61AFEF' },
+          { token: 'variable', foreground: 'E06C75' },
+          { token: 'type', foreground: 'E5C07B' },
+        ],
+        colors: {
+          'editor.background': '#1a1e26',
+          'editor.foreground': '#D4D4D4',
+          'editorCursor.foreground': '#AEAFAD',
+          'editor.lineHighlightBackground': '#2C313C',
+          'editorLineNumber.foreground': '#858585',
+          'editor.selectionBackground': '#264F78',
+          'editor.inactiveSelectionBackground': '#3A3D41',
+          'editorSuggestWidget.background': '#1a1e26',
+          'editorSuggestWidget.border': '#383E4C',
+          'editorSuggestWidget.selectedBackground': '#2C313C',
+          'editorHoverWidget.background': '#1a1e26',
+          'editorHoverWidget.border': '#383E4C',
+        }
+      });
       
       // Define custom light theme for the editor
-      monaco.editor.defineTheme('custom-light', {
+     /* monaco.editor.defineTheme('custom-light', {
         base: 'vs',
         inherit: true,
         rules: [
@@ -272,7 +301,7 @@ const EditorArea: React.FC = () => {
           'editorHoverWidget.background': '#FFFFFF',
           'editorHoverWidget.border': '#E1E4E8',
         }
-      });
+      });*/
     }
   }, [monaco]);
   
