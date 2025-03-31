@@ -229,17 +229,17 @@ const EditorArea: React.FC = () => {
           { token: 'type', foreground: 'E5C07B' },
         ],
         colors: {
-          'editor.background': '#1A1E2B',
+          'editor.background': '#1a1e26',
           'editor.foreground': '#D4D4D4',
           'editorCursor.foreground': '#AEAFAD',
           'editor.lineHighlightBackground': '#2C313C',
           'editorLineNumber.foreground': '#858585',
           'editor.selectionBackground': '#264F78',
           'editor.inactiveSelectionBackground': '#3A3D41',
-          'editorSuggestWidget.background': '#1A1E2B',
+          'editorSuggestWidget.background': '#1a1e26',
           'editorSuggestWidget.border': '#383E4C',
           'editorSuggestWidget.selectedBackground': '#2C313C',
-          'editorHoverWidget.background': '#1A1E2B',
+          'editorHoverWidget.background': '#1a1e26',
           'editorHoverWidget.border': '#383E4C',
         }
       });
