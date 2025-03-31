@@ -52,14 +52,14 @@ const CodeEditorIDE: React.FC = () => {
               <div className="flex-1 flex overflow-hidden">
                 <ResizablePanelGroup direction="horizontal">
                   {/* Left Sidebar - File Explorer (fixed on the left) */}
-                  <ResizablePanel defaultSize={18} minSize={15} maxSize={30}>
+                  <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
                     <FileExplorer />
                   </ResizablePanel>
                   
                   <ResizableHandle withHandle />
                   
                   {/* Main Editor Area (center) */}
-                  <ResizablePanel defaultSize={82}>
+                  <ResizablePanel defaultSize={80}>
                     <EditorArea />
                   </ResizablePanel>
                   
