@@ -46,6 +46,87 @@ interface FileSystemContextType {
 
 const FileSystemContext = createContext<FileSystemContextType | undefined>(undefined);
 
+
+// Helper function to determine language based on file extension
+const getLanguageFromExtension = (filename: string): string => {
+  const extension = filename.split('.').pop()?.toLowerCase() || '';
+  
+  const extensionMap: Record<string, string> = {
+    // Web
+    'html': 'html',
+    'htm': 'html',
+    'css': 'css',
+    'scss': 'scss',
+    'sass': 'sass',
+    'less': 'less',
+    
+    // JavaScript family
+    'js': 'javascript',
+    'jsx': 'jsx',
+    'ts': 'typescript',
+    'tsx': 'tsx',
+    'json': 'json',
+    
+    // Python
+    'py': 'python',
+    'pyc': 'python',
+    'pyd': 'python',
+    'pyo': 'python',
+    
+    // Java
+    'java': 'java',
+    
+    // C family
+    'c': 'c',
+    'cpp': 'cpp',
+    'h': 'c',
+    'hpp': 'cpp',
+    'cs': 'csharp',
+    
+    // Ruby
+    'rb': 'ruby',
+    
+    // PHP
+    'php': 'php',
+    
+    // Go
+    'go': 'go',
+    
+    // Rust
+    'rs': 'rust',
+    
+    // Swift
+    'swift': 'swift',
+    
+    // Kotlin
+    'kt': 'kotlin',
+    
+    // Shell
+    'sh': 'shell',
+    'bash': 'bash',
+    
+    // SQL
+    'sql': 'sql',
+    
+    // Markup and config
+    'md': 'markdown',
+    'yml': 'yaml',
+    'yaml': 'yaml',
+    'xml': 'xml',
+    'toml': 'toml',
+    'ini': 'ini',
+    
+    // Other
+    'graphql': 'graphql',
+    'dockerfile': 'dockerfile',
+  };
+  
+  return extensionMap[extension] || 'plaintext';
+};
+
+
+
+
 // Sample initial file system
 const initialFileSystem: FileSystemItem[] = [
   {
@@ -216,7 +297,8 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               newItem.children = [];
             } else {
               newItem.content = '';
-              newItem.language = name.split('.').pop() || 'plaintext';
+              newItem.language = getLanguageFromExtension(name);
+
               newItem.isModified = false;
             }
             
@@ -264,7 +346,7 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             
             // Update language if file extension changed
             if (item.type === 'file') {
-              item.language = newName.split('.').pop() || 'plaintext';
+              item.language = getLanguageFromExtension(newName);
             }
             
             // Update paths of all children recursively
