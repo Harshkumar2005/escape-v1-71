@@ -83,7 +83,7 @@ const CodeEditorIDE: React.FC = () => {
               <div className="flex-1 flex overflow-hidden">
 
    <ResizablePanelGroup direction="horizontal">
-                {/* Left Sidebar */}
+                {/* Left Sidebar
                 {showLeftSidebar && (
                   <>
                    <ResizablePanel defaultSize={19} minSize={15} maxSize={30}>
@@ -92,12 +92,18 @@ const CodeEditorIDE: React.FC = () => {
                     <ResizableHandle withHandle />
                   </>
                 )}
-                
+                */}
+      <ResizablePanel defaultSize={19} minSize={15} maxSize={25}>
+                    <FileExplorer />
+                  </ResizablePanel>
+                  
+                  <ResizableHandle withHandle />
+                  
                 {/* Main Content Area */}
                 <ResizablePanel defaultSize={showLeftSidebar ? 81 : 100}>
                   <ResizablePanelGroup direction="vertical">
                     {/* Editor Area */}
-                    <ResizablePanel defaultSize={74}>
+                    <ResizablePanel defaultSize={75}>
                       <EditorArea />
                     </ResizablePanel>
                     
@@ -105,7 +111,7 @@ const CodeEditorIDE: React.FC = () => {
                     {showTerminal && (
                       <>
                          <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={22} maxSize={22}>
+                        <ResizablePanel defaultSize={25} maxSize={28}>
                           <TerminalPanel />
                         </ResizablePanel>
                       </>
