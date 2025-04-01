@@ -5,6 +5,7 @@ import FileExplorer from './FileExplorer';
 import EditorArea from './EditorArea';
 import AICoworker from './AICoworker';
 import StatusBar from './StatusBar';
+import TerminalPanel from './TerminalPanel';
 import CommandPalette from './CommandPalette';
 import { FileSystemProvider } from '@/contexts/FileSystemContext';
 import { EditorProvider } from '@/contexts/EditorContext';
@@ -60,7 +61,29 @@ const CodeEditorIDE: React.FC = () => {
                   
                   {/* Main Editor Area (center) */}
                   <ResizablePanel defaultSize={81}>
+                    
                     <EditorArea />
+
+
+
+
+
+                    
+                    
+                    <ResizablePanelGroup direction="verticle">
+                    <ResizablePanel defaultSize={15} minSize={0} maxSize={25}>
+                    <TerminalPanel />
+                    </ResizablePanel>
+                    </ResizablePanelGroup>
+
+
+
+
+
+
+
+                    
+                    
                   </ResizablePanel>
                   
                   {/*<ResizableHandle withHandle />*/}
