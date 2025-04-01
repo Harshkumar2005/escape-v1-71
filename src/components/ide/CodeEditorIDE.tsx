@@ -96,6 +96,9 @@ const CodeEditorIDE: React.FC = () => {
                   </ResizablePanel>*/}
                 </ResizablePanelGroup>
 
+                
+              </div>
+              
 <ResizablePanelGroup direction="verticle">
                     <ResizablePanel defaultSize={15} minSize={0} maxSize={25}>
                     <TerminalPanel />
@@ -103,9 +106,6 @@ const CodeEditorIDE: React.FC = () => {
                     <ResizableHandle withHandle />
                     </ResizablePanelGroup>
 
-                
-              </div>
-              
               {/* Status Bar */}
               <StatusBar 
                 toggleTerminal={() => setShowTerminal(prev => !prev)}
