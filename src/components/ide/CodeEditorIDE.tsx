@@ -86,12 +86,7 @@ const CodeEditorIDE: React.FC = () => {
 
 
                   
-                  <ResizablePanelGroup direction="verticle">
-                    <ResizablePanel defaultSize={15} minSize={0} maxSize={25}>
-                    <TerminalPanel />
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    </ResizablePanelGroup>
+            
                   
                   {/*<ResizableHandle withHandle />*/}
                   
@@ -100,6 +95,15 @@ const CodeEditorIDE: React.FC = () => {
                     {/* <AICoworker />
                   </ResizablePanel>*/}
                 </ResizablePanelGroup>
+
+<ResizablePanelGroup direction="verticle">
+                    <ResizablePanel defaultSize={15} minSize={0} maxSize={25}>
+                    <TerminalPanel />
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                    </ResizablePanelGroup>
+
+                
               </div>
               
               {/* Status Bar */}
