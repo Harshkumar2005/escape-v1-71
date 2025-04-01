@@ -40,6 +40,36 @@ const CodeEditorIDE: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+
+  /*
+ <ResizablePanelGroup direction="horizontal">
+                  // {/* Left Sidebar - File Explorer (fixed on the left) 
+                  <ResizablePanel defaultSize={19} minSize={15} maxSize={30}>
+                    <FileExplorer />
+                  </ResizablePanel>
+                  
+                  <ResizableHandle withHandle />
+                  
+                 // {/* Main Editor Area (center) 
+                  <ResizablePanel defaultSize={81}>
+                    
+                    <EditorArea />
+
+
+                  </ResizablePanel>
+
+
+               //   {/*<ResizableHandle withHandle />
+                  
+               //   {/* AI Coworker (fixed on the right) 
+             //    {/* <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                    {/* <AICoworker />
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+
+                
+  */
   
   return (
     <ThemeProvider>
@@ -51,60 +81,40 @@ const CodeEditorIDE: React.FC = () => {
               <TopBar />
               
               <div className="flex-1 flex overflow-hidden">
-                <ResizablePanelGroup direction="horizontal">
-                  {/* Left Sidebar - File Explorer (fixed on the left) */}
-                  <ResizablePanel defaultSize={19} minSize={15} maxSize={30}>
-                    <FileExplorer />
-                  </ResizablePanel>
-                  
-                  <ResizableHandle withHandle />
-                  
-                  {/* Main Editor Area (center) */}
-                  <ResizablePanel defaultSize={81}>
-                    
-                    <EditorArea />
 
-
-
-
-
-                    
-                    
-                    
-
-
-
-
-
-
-
-                    
-                    
-                  </ResizablePanel>
-
-
-
-
-                  
-            
-                  
-                  {/*<ResizableHandle withHandle />*/}
-                  
-                  {/* AI Coworker (fixed on the right) */}
-                 {/* <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                    {/* <AICoworker />
-                  </ResizablePanel>*/}
-                </ResizablePanelGroup>
-
-                
-              </div>
-              
-<ResizablePanelGroup direction="verticle">
-                    <ResizablePanel defaultSize={15} minSize={0} maxSize={25}>
-                    <TerminalPanel />
+   <ResizablePanelGroup direction="horizontal">
+                {/* Left Sidebar */}
+                {showLeftSidebar && (
+                  <>
+                   <ResizablePanel defaultSize={19} minSize={15} maxSize={30}>
+                      <FileExplorer />
                     </ResizablePanel>
                     <ResizableHandle withHandle />
-                    </ResizablePanelGroup>
+                  </>
+                )}
+                
+                {/* Main Content Area */}
+                <ResizablePanel defaultSize={showLeftSidebar ? 81 : 100}>
+                  <ResizablePanelGroup direction="vertical">
+                    {/* Editor Area */}
+                    <ResizablePanel defaultSize={81}>
+                      <EditorArea />
+                    </ResizablePanel>
+                    
+                    {/* Terminal */}
+                    {showTerminal && (
+                      <>
+                        <ResizableHandle withHandle />
+                        <ResizablePanel defaultSize={25}>
+                          <TerminalPanel />
+                        </ResizablePanel>
+                      </>
+                    )}
+                  </ResizablePanelGroup>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+                
+              </div>
 
               {/* Status Bar */}
               <StatusBar 
