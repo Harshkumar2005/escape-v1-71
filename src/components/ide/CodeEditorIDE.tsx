@@ -104,8 +104,8 @@ const CodeEditorIDE: React.FC = () => {
                     {/* Terminal */}
                     {showTerminal && (
                       <>
-                        {/* <ResizableHandle withHandle />*/}
-                        <ResizablePanel defaultSize={26} maxSize={26}>
+                         <ResizableHandle withHandle />
+                        <ResizablePanel defaultSize={22} maxSize={22}>
                           <TerminalPanel />
                         </ResizablePanel>
                       </>
