@@ -308,7 +308,7 @@ monaco.editor.defineTheme('custom-light', {
   return (
     <div className="h-full flex flex-col">
       {/* Tabs bar */}
-      <div className="flex items-center bg-sidebar border-b border-border overflow-x-auto">
+      <div className="flex items-center bg-sidebar border-b border-border">
         {openedTabs.map(tab => (
           <Tab
             key={tab.id}
