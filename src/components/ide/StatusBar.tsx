@@ -75,6 +75,13 @@ const StatusBar: React.FC<StatusBarProps> = ({
           <Columns size={14} className="mr-1" />
           <span>Explorer</span>
         </button>
+        <button
+          className="flex items-center hover:text-white transition-colors"
+          onClick={toggleTerminal}
+        >
+          <Terminal size={14} className="mr-1" />
+          <span>Terminal</span>
+        </button>
       </div>
       
       <div className="flex items-center space-x-4">
