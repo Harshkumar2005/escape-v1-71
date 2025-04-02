@@ -1,14 +1,15 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
   FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
   FileCog, FileSpreadsheet, Edit, Trash, FolderPlus
 } from 'lucide-react';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
+import { useWebContainer } from '@/contexts/WebContainerContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 import 'react-contexify/ReactContexify.css';
+import { toast } from 'sonner';
 
 const CONTEXT_MENU_ID = 'file-explorer-context-menu';
 const FILE_ITEM_MENU_ID = 'file-item-context-menu';
@@ -90,6 +91,7 @@ const getFileIcon = (fileName: string) => {
 
 const FileExplorer: React.FC = () => {
   const { files, createFile, renameFile, deleteFile, toggleFolder } = useFileSystem();
+  const { isReady, writeFile } = useWebContainer();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FileSystemItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -157,13 +159,24 @@ const FileExplorer: React.FC = () => {
     }, 50);
   };
 
-  const handleCreateNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleCreateNewItem = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && newItemType) {
       const name = e.currentTarget.value.trim();
       
       if (name) {
-        createFile(newItemParentPath, name, newItemType);
+        const newId = createFile(newItemParentPath, name, newItemType);
         setNewItemType(null);
+        
+        if (isReady && newId && newItemType === 'file') {
+          try {
+            const fullPath = `${newItemParentPath === '/' ? '' : newItemParentPath}/${name}`;
+            await writeFile(fullPath, '');
+            toast.success(`Created ${name} in WebContainer`);
+          } catch (error) {
+            toast.error(`Failed to create ${name} in WebContainer`);
+            console.error('WebContainer file creation error:', error);
+          }
+        }
       }
     } else if (e.key === 'Escape') {
       setNewItemType(null);

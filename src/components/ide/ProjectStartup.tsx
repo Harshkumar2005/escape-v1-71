@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useFileSystem } from '@/contexts/FileSystemContext';
+import { useWebContainer } from '@/contexts/WebContainerContext';
+import { convertToWebContainerFormat } from '@/utils/webContainerUtils';
 import { toast } from 'sonner';
 import { GithubRepoLoader } from './GithubRepoLoader';
 
@@ -17,22 +19,40 @@ export const ProjectStartup: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [showGithubLoader, setShowGithubLoader] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { resetFileSystem } = useFileSystem();
+  const { resetFileSystem, files } = useFileSystem();
+  const { mountFiles } = useWebContainer();
 
   const handleClose = () => {
     setIsOpen(false);
   };
 
-  const handleStartNewProject = () => {
+  const handleStartNewProject = async () => {
     setIsLoading(true);
     
-    // Add a small delay to show loading state
-    setTimeout(() => {
+    try {
+      // Reset file system to default state
       resetFileSystem();
-      toast.success('New project created successfully');
+      
+      // Wait for file system state to update
+      setTimeout(async () => {
+        try {
+          // Convert file system to WebContainer format and mount
+          const webContainerFiles = convertToWebContainerFormat(files);
+          await mountFiles(webContainerFiles);
+          
+          toast.success('New project created successfully');
+          handleClose();
+        } catch (error: any) {
+          toast.error('Failed to initialize WebContainer: ' + error.message);
+          console.error('WebContainer error:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }, 800);
+    } catch (error) {
       setIsLoading(false);
-      handleClose();
-    }, 800);
+      toast.error('Failed to create new project');
+    }
   };
 
   const handleLoadFromGithub = () => {

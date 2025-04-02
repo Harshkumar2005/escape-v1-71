@@ -1,10 +1,11 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import { Plus, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useWebContainer } from '@/contexts/WebContainerContext';
 import { toast } from 'sonner';
 
 interface TerminalTabProps {
@@ -41,6 +42,7 @@ interface TerminalInstance {
   terminal: XTerm;
   fitAddon: FitAddon;
   containerRef: React.RefObject<HTMLDivElement>;
+  lineBuffer: string;
 }
 
 interface TerminalPanelProps {
@@ -52,8 +54,10 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
   const [terminals, setTerminals] = useState<TerminalInstance[]>([]);
   const [activeTerminalId, setActiveTerminalId] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { terminalTheme } = useTheme();
+  const { webcontainerInstance, isReady, error, executeCommand } = useWebContainer();
   
   // Initialize a new terminal
   const createTerminal = () => {
@@ -75,10 +79,18 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     
     const newTermRef = React.createRef<HTMLDivElement>();
     
-    setTerminals(prev => [...prev, { id, terminal, fitAddon, containerRef: newTermRef }]);
+    const newTerminal: TerminalInstance = { 
+      id, 
+      terminal, 
+      fitAddon, 
+      containerRef: newTermRef,
+      lineBuffer: '',
+    };
+    
+    setTerminals(prev => [...prev, newTerminal]);
     setActiveTerminalId(id);
     
-    return { id, terminal, fitAddon, containerRef: newTermRef };
+    return newTerminal;
   };
   
   // Initialize the first terminal
@@ -92,26 +104,129 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
           newTerm.terminal.open(newTerm.containerRef.current);
           newTerm.fitAddon.fit();
           
-          // Set up some initial terminal content
-          newTerm.terminal.writeln('Welcome to the IDE Terminal!');
-          newTerm.terminal.writeln('');
-          newTerm.terminal.write('$ ');
+          // Set up initial terminal content
+          if (error) {
+            newTerm.terminal.writeln('WebContainer initialization failed:');
+            newTerm.terminal.writeln(`Error: ${error}`);
+            newTerm.terminal.writeln('');
+            newTerm.terminal.writeln('Terminal is in limited functionality mode.');
+            newTerm.terminal.writeln('');
+            newTerm.terminal.write('$ ');
+          } else if (!isReady) {
+            newTerm.terminal.writeln('WebContainer is initializing...');
+            newTerm.terminal.writeln('Please wait...');
+          } else {
+            newTerm.terminal.writeln('WebContainer initialized successfully!');
+            newTerm.terminal.writeln('');
+            newTerm.terminal.write('$ ');
+          }
           
-          // Set up basic terminal input handling
-          newTerm.terminal.onData(data => {
-            // Echo back input
-            newTerm.terminal.write(data);
-            
-            // Handle Enter key
-            if (data === '\r') {
-              newTerm.terminal.writeln('');
-              newTerm.terminal.write('$ ');
-            }
-          });
+          setupTerminalInputHandling(newTerm);
         }
       }, 0);
     }
   }, []);
+  
+  // Update terminal when WebContainer status changes
+  useEffect(() => {
+    const currentTerminal = terminals.find(t => t.id === activeTerminalId);
+    
+    if (currentTerminal && currentTerminal.terminal) {
+      if (error) {
+        currentTerminal.terminal.writeln('');
+        currentTerminal.terminal.writeln('WebContainer initialization failed:');
+        currentTerminal.terminal.writeln(`Error: ${error}`);
+        currentTerminal.terminal.writeln('');
+        currentTerminal.terminal.writeln('Terminal is in limited functionality mode.');
+        currentTerminal.terminal.writeln('');
+        currentTerminal.terminal.write('$ ');
+      } else if (isReady) {
+        currentTerminal.terminal.writeln('');
+        currentTerminal.terminal.writeln('WebContainer is ready!');
+        currentTerminal.terminal.writeln('');
+        currentTerminal.terminal.write('$ ');
+      }
+    }
+  }, [isReady, error]);
+  
+  // Set up terminal input handling
+  const setupTerminalInputHandling = (termInstance: TerminalInstance) => {
+    termInstance.terminal.onData(data => {
+      // Ignore input if there's a process running
+      if (isProcessing) return;
+      
+      // Handle special keys
+      if (data === '\r') {
+        // Enter key pressed - execute command
+        termInstance.terminal.writeln('');
+        
+        const command = termInstance.lineBuffer.trim();
+        if (command) {
+          executeTerminalCommand(termInstance, command);
+        } else {
+          termInstance.terminal.write('$ ');
+        }
+        
+        termInstance.lineBuffer = '';
+      } else if (data === '\u007F') {
+        // Backspace key pressed
+        if (termInstance.lineBuffer.length > 0) {
+          termInstance.lineBuffer = termInstance.lineBuffer.slice(0, -1);
+          termInstance.terminal.write('\b \b');
+        }
+      } else if (data === '\u0003') {
+        // Ctrl+C pressed
+        termInstance.terminal.writeln('^C');
+        termInstance.lineBuffer = '';
+        termInstance.terminal.write('$ ');
+      } else if (!data.match(/[\u0000-\u001F]/)) {
+        // Regular character input
+        termInstance.lineBuffer += data;
+        termInstance.terminal.write(data);
+      }
+    });
+  };
+  
+  // Execute command in terminal
+  const executeTerminalCommand = async (termInstance: TerminalInstance, commandLine: string) => {
+    if (!isReady || !webcontainerInstance) {
+      termInstance.terminal.writeln('WebContainer is not ready. Command cannot be executed.');
+      termInstance.terminal.write('$ ');
+      return;
+    }
+    
+    setIsProcessing(true);
+    
+    // Parse command and arguments
+    const parts = commandLine.split(' ');
+    const command = parts[0];
+    const args = parts.slice(1);
+    
+    try {
+      if (command === 'clear' || command === 'cls') {
+        termInstance.terminal.clear();
+      } else {
+        termInstance.terminal.writeln(`Executing: ${commandLine}`);
+        
+        const result = await executeCommand(command, args);
+        
+        if (result.stdout) {
+          termInstance.terminal.writeln(result.stdout);
+        }
+        
+        if (result.stderr) {
+          termInstance.terminal.writeln(`Error: ${result.stderr}`);
+        }
+        
+        termInstance.terminal.writeln(`Exit code: ${result.exitCode}`);
+      }
+    } catch (error: any) {
+      termInstance.terminal.writeln(`Error: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsProcessing(false);
+      termInstance.terminal.write('$ ');
+    }
+  };
   
   // Resize terminals when window resizes
   useEffect(() => {
@@ -134,27 +249,27 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
       currentTerminal.terminal.open(currentTerminal.containerRef.current);
       currentTerminal.fitAddon.fit();
       
-      // Set up some initial terminal content if this is a new terminal
-      const isNewTerminal = !currentTerminal.containerRef.current.querySelector('.xterm-cursor');
-      if (isNewTerminal) {
-        currentTerminal.terminal.writeln('Terminal session started.');
+      // Set up initial terminal content if this is a new terminal
+      if (!currentTerminal.containerRef.current.querySelector('.xterm-cursor')) {
+        if (error) {
+          currentTerminal.terminal.writeln('WebContainer initialization failed:');
+          currentTerminal.terminal.writeln(`Error: ${error}`);
+          currentTerminal.terminal.writeln('');
+          currentTerminal.terminal.writeln('Terminal is in limited functionality mode.');
+        } else if (!isReady) {
+          currentTerminal.terminal.writeln('WebContainer is initializing...');
+          currentTerminal.terminal.writeln('Please wait...');
+        } else {
+          currentTerminal.terminal.writeln('WebContainer initialized successfully!');
+        }
+        
         currentTerminal.terminal.writeln('');
         currentTerminal.terminal.write('$ ');
         
-        // Set up basic terminal input handling
-        currentTerminal.terminal.onData(data => {
-          // Echo back input
-          currentTerminal.terminal.write(data);
-          
-          // Handle Enter key
-          if (data === '\r') {
-            currentTerminal.terminal.writeln('');
-            currentTerminal.terminal.write('$ ');
-          }
-        });
+        setupTerminalInputHandling(currentTerminal);
       }
     }
-  }, [terminals, activeTerminalId]);
+  }, [terminals, activeTerminalId, isReady, error]);
 
   // Apply theme changes to existing terminals
   useEffect(() => {
