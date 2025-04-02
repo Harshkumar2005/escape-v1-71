@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { WebContainer } from '@webcontainer/api';
 import { FileSystemItem, useFileSystem } from './FileSystemContext';
@@ -32,7 +31,7 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setError(null);
         
         // Check if WebContainer is supported in current environment
-        if (!(WebContainer as any).isSupported()) {
+        if (!WebContainer.isSupported()) {
           throw new Error("WebContainer is not supported in this environment");
         }
         
@@ -182,7 +181,10 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         })
       );
       
-      // Process error stream exists on WebContainer process
+      // In the WebContainerProcess, stderr might not be directly accessible
+      // We'll handle this by only using stderr if it's available
+      // Otherwise, we'll capture errors from the exit code or other means
+      
       if (process.stderr) {
         process.stderr.pipeTo(
           new WritableStream({
@@ -198,7 +200,7 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return {
         exitCode,
         stdout: stdoutChunks.join(''),
-        stderr: stderrChunks.join('')
+        stderr: stderrChunks.join('') // This might be empty if stderr is not available
       };
     } catch (err: any) {
       console.error(`Failed to execute command ${command}:`, err);
