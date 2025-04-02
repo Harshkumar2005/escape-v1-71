@@ -40,3 +40,18 @@
 .read-the-docs {
   color: #888;
 }
+
+input, 
+input:focus, 
+input:hover, 
+input:active {
+  outline: none !important;        /* Default outline हटाएं */
+  border: 0px solid transparent !important; /* Border transparent करें */ 
+}
+
+/* यदि input पर किसी state (जैसे focus) में outline आता हो */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important; /* Chrome autofill background fix */
+}
