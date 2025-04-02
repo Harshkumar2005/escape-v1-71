@@ -150,8 +150,9 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
         input.write(data);
       });
 
-      // Handle process exit
-      shellProcess.on('exit', (code: number) => {
+      // Handle process exit - using addEventListener instead of .on
+      shellProcess.addEventListener('exit', (event: any) => {
+        const code = event.detail || 0;
         terminalInstance.terminal.writeln(`\r\nProcess exited with code ${code}`);
         terminalInstance.terminal.writeln('Starting new shell...');
         

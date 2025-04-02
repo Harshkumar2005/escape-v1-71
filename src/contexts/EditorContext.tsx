@@ -45,7 +45,7 @@ const ACTIVE_TAB_KEY = 'code-editor-active-tab';
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
 export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { getFileById, updateFileContent, selectFile } = useFileSystem();
+  const { getFileById, updateFileContent } = useFileSystem();
   const [openedTabs, setOpenedTabs] = useState<TabInfo[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [monacoInstance, setMonacoInstance] = useState<editor.IStandaloneCodeEditor | null>(null);
@@ -74,7 +74,6 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         if (savedActiveTab) {
           setActiveTabId(savedActiveTab);
-          selectFile(savedActiveTab);
         }
       }
     } catch (error) {
@@ -185,7 +184,6 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     
     // Set as active tab
     setActiveTabId(fileId);
-    selectFile(fileId);
   };
 
   // Close a tab
@@ -213,16 +211,12 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         null;
       
       setActiveTabId(newActiveTab);
-      if (newActiveTab) {
-        selectFile(newActiveTab);
-      }
     }
   };
 
   // Set active tab
   const setActiveTab = (tabId: string) => {
     setActiveTabId(tabId);
-    selectFile(tabId);
   };
 
   // Update Monaco editor instance

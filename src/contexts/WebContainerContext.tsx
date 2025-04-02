@@ -149,19 +149,50 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
       // Mount the files
       await mountFiles(webContainerFiles);
       
-      // Install dependencies if package.json exists
-      const packageJsonExists = await webcontainer.fs.exists('/package.json');
-      if (packageJsonExists) {
-        addLogMessage('info', 'Installing dependencies...');
-        const installProcess = await webcontainer.spawn('npm', ['install']);
-        const installOutput = await installProcess.output.timeout(60000);
+      // Check if package.json exists
+      try {
+        const packageJsonExists = await webcontainer.fs.stat('/package.json').then(() => true).catch(() => false);
         
-        if (installProcess.exit !== 0) {
-          addLogMessage('error', `Failed to install dependencies: ${installOutput}`);
-          throw new Error(`Failed to install dependencies: ${installOutput}`);
+        if (packageJsonExists) {
+          addLogMessage('info', 'Installing dependencies...');
+          const installProcess = await webcontainer.spawn('npm', ['install']);
+          
+          // Create a Promise to handle the output stream
+          const outputPromise = new Promise<string>((resolve, reject) => {
+            let output = '';
+            const timeoutId = setTimeout(() => {
+              reject(new Error('Dependency installation timed out after 60 seconds'));
+            }, 60000);
+            
+            const reader = installProcess.output.getReader();
+            
+            function processText({ done, value }: ReadableStreamReadResult<string>): void {
+              if (done) {
+                clearTimeout(timeoutId);
+                resolve(output);
+                return;
+              }
+              
+              output += value;
+              reader.read().then(processText);
+            }
+            
+            reader.read().then(processText);
+          });
+          
+          const installOutput = await outputPromise;
+          const exitCode = await installProcess.exit;
+          
+          if (exitCode !== 0) {
+            addLogMessage('error', `Failed to install dependencies: ${installOutput}`);
+            throw new Error(`Failed to install dependencies: ${installOutput}`);
+          }
+          
+          addLogMessage('success', 'Dependencies installed successfully');
         }
-        
-        addLogMessage('success', 'Dependencies installed successfully');
+      } catch (error) {
+        console.error('Error checking for package.json:', error);
+        addLogMessage('warning', 'Could not verify package.json. Skipping dependency installation.');
       }
       
       setIsLoading(false);
@@ -183,8 +214,34 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
     try {
       addLogMessage('info', `Executing command: ${command} ${args.join(' ')}`);
       const process = await webcontainer.spawn(command, args);
-      const output = await process.output.timeout(30000);
-      return { exitCode: process.exit, output };
+      
+      // Create a Promise to handle the output stream
+      const outputPromise = new Promise<string>((resolve, reject) => {
+        let output = '';
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Command execution timed out after 30 seconds'));
+        }, 30000);
+        
+        const reader = process.output.getReader();
+        
+        function processText({ done, value }: ReadableStreamReadResult<string>): void {
+          if (done) {
+            clearTimeout(timeoutId);
+            resolve(output);
+            return;
+          }
+          
+          output += value;
+          reader.read().then(processText);
+        }
+        
+        reader.read().then(processText);
+      });
+      
+      const output = await outputPromise;
+      const exitCode = await process.exit;
+      
+      return { exitCode, output };
     } catch (error) {
       console.error('Error executing command:', error);
       addLogMessage('error', `Command execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
