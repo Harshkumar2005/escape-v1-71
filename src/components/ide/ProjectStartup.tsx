@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useFileSystem } from '@/contexts/FileSystemContext';
+import { useWebContainer } from '@/contexts/WebContainerContext';
 import { toast } from 'sonner';
 import { GithubRepoLoader } from './GithubRepoLoader';
 
@@ -18,21 +19,30 @@ export const ProjectStartup: React.FC = () => {
   const [showGithubLoader, setShowGithubLoader] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { resetFileSystem } = useFileSystem();
+  const { bootstrapProject } = useWebContainer();
 
   const handleClose = () => {
     setIsOpen(false);
   };
 
-  const handleStartNewProject = () => {
+  const handleStartNewProject = async () => {
     setIsLoading(true);
     
-    // Add a small delay to show loading state
-    setTimeout(() => {
+    try {
+      // Reset the file system first
       resetFileSystem();
-      toast.success('New project created successfully');
+      
+      // Then bootstrap the project in WebContainer
+      await bootstrapProject();
+      
+      toast.success('New project created and loaded in WebContainer environment');
+    } catch (error) {
+      console.error('Error starting new project:', error);
+      toast.error('Failed to initialize project in WebContainer. Using editor-only mode.');
+    } finally {
       setIsLoading(false);
       handleClose();
-    }, 800);
+    }
   };
 
   const handleLoadFromGithub = () => {
@@ -44,9 +54,9 @@ export const ProjectStartup: React.FC = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md bg-sidebar border-border">
           <DialogHeader>
-            <DialogTitle className="text-sidebar-foreground">Welcome to Code Editor</DialogTitle>
+            <DialogTitle className="text-sidebar-foreground">Welcome to WebContainer IDE</DialogTitle>
             <DialogDescription className="text-sidebar-foreground opacity-70">
-              Choose how you want to get started with your project
+              Choose how you want to get started with your in-browser development environment
             </DialogDescription>
           </DialogHeader>
           
@@ -65,7 +75,7 @@ export const ProjectStartup: React.FC = () => {
               <div className="text-left">
                 <div className="font-medium">Load from GitHub</div>
                 <div className="text-sm text-muted-foreground">
-                  Import code from an existing public repository
+                  Import code from an existing public repository into WebContainer
                 </div>
               </div>
             </Button>
@@ -84,10 +94,15 @@ export const ProjectStartup: React.FC = () => {
               <div className="text-left">
                 <div className="font-medium">Start New Project</div>
                 <div className="text-sm text-muted-foreground">
-                  Begin with a blank workspace
+                  Begin with a basic project template in WebContainer
                 </div>
               </div>
             </Button>
+          </div>
+
+          <div className="text-xs text-slate-400 mt-2">
+            <p>WebContainer allows you to run Node.js directly in your browser.</p>
+            <p>You can edit files, run commands in the terminal, and execute your code - all in this browser tab.</p>
           </div>
         </DialogContent>
       </Dialog>

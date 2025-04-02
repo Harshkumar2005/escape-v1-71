@@ -2,9 +2,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
 import { Plus, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useWebContainer } from '@/contexts/WebContainerContext';
+import { useFileSystem } from '@/contexts/FileSystemContext';
 import { toast } from 'sonner';
 
 interface TerminalTabProps {
@@ -41,6 +44,7 @@ interface TerminalInstance {
   terminal: XTerm;
   fitAddon: FitAddon;
   containerRef: React.RefObject<HTMLDivElement>;
+  shellProcess?: any;
 }
 
 interface TerminalPanelProps {
@@ -54,6 +58,8 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
   const [maximized, setMaximized] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { terminalTheme } = useTheme();
+  const { webcontainer, isReady } = useWebContainer();
+  const { addLogMessage } = useFileSystem();
   
   // Initialize a new terminal
   const createTerminal = () => {
@@ -67,11 +73,13 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
         foreground: terminalTheme.foreground,
         cursor: terminalTheme.cursor,
         selectionBackground: terminalTheme.selection,
-      }
+      },
+      convertEol: true
     });
     
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
+    terminal.loadAddon(new WebLinksAddon());
     
     const newTermRef = React.createRef<HTMLDivElement>();
     
@@ -92,26 +100,90 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
           newTerm.terminal.open(newTerm.containerRef.current);
           newTerm.fitAddon.fit();
           
-          // Set up some initial terminal content
-          newTerm.terminal.writeln('Welcome to the IDE Terminal!');
-          newTerm.terminal.writeln('');
-          newTerm.terminal.write('$ ');
-          
-          // Set up basic terminal input handling
-          newTerm.terminal.onData(data => {
-            // Echo back input
-            newTerm.terminal.write(data);
-            
-            // Handle Enter key
-            if (data === '\r') {
-              newTerm.terminal.writeln('');
-              newTerm.terminal.write('$ ');
-            }
-          });
+          if (!isReady) {
+            newTerm.terminal.writeln('Welcome to the IDE Terminal!');
+            newTerm.terminal.writeln('WebContainer is initializing...');
+            newTerm.terminal.writeln('');
+          } else {
+            initializeShell(newTerm);
+          }
         }
       }, 0);
     }
   }, []);
+
+  // When WebContainer becomes ready, initialize shells in all terminals
+  useEffect(() => {
+    if (isReady && webcontainer && terminals.length > 0) {
+      terminals.forEach(term => {
+        if (!term.shellProcess && term.containerRef.current) {
+          initializeShell(term);
+        }
+      });
+    }
+  }, [isReady, webcontainer, terminals]);
+
+  // Initialize shell in terminal
+  const initializeShell = async (terminalInstance: TerminalInstance) => {
+    if (!webcontainer || !isReady) {
+      terminalInstance.terminal.writeln('WebContainer not ready. Please wait...');
+      return;
+    }
+
+    try {
+      addLogMessage('info', 'Starting shell process...');
+      
+      // Start a shell process
+      const shellProcess = await webcontainer.spawn('bash', []);
+      terminalInstance.shellProcess = shellProcess;
+
+      // Write the output to the terminal
+      shellProcess.output.pipeTo(new WritableStream({
+        write(data) {
+          terminalInstance.terminal.write(data);
+        }
+      }));
+
+      // Set up input handling
+      const input = shellProcess.input.getWriter();
+      terminalInstance.terminal.onData((data) => {
+        input.write(data);
+      });
+
+      // Handle process exit
+      shellProcess.on('exit', (code: number) => {
+        terminalInstance.terminal.writeln(`\r\nProcess exited with code ${code}`);
+        terminalInstance.terminal.writeln('Starting new shell...');
+        
+        // Start a new shell
+        setTimeout(() => {
+          initializeShell(terminalInstance);
+        }, 1000);
+      });
+
+    } catch (error) {
+      console.error('Error starting shell:', error);
+      addLogMessage('error', `Failed to start shell: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Fall back to simulated terminal
+      terminalInstance.terminal.writeln('Failed to start WebContainer shell.');
+      terminalInstance.terminal.writeln('Using simulated terminal instead.');
+      terminalInstance.terminal.writeln('');
+      terminalInstance.terminal.write('$ ');
+      
+      // Set up simulated terminal
+      terminalInstance.terminal.onData(data => {
+        // Echo back input
+        terminalInstance.terminal.write(data);
+        
+        // Handle Enter key
+        if (data === '\r') {
+          terminalInstance.terminal.writeln('');
+          terminalInstance.terminal.write('$ ');
+        }
+      });
+    }
+  };
   
   // Resize terminals when window resizes
   useEffect(() => {
@@ -134,27 +206,16 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
       currentTerminal.terminal.open(currentTerminal.containerRef.current);
       currentTerminal.fitAddon.fit();
       
-      // Set up some initial terminal content if this is a new terminal
-      const isNewTerminal = !currentTerminal.containerRef.current.querySelector('.xterm-cursor');
-      if (isNewTerminal) {
-        currentTerminal.terminal.writeln('Terminal session started.');
+      // Set up the shell if WebContainer is ready
+      if (isReady && webcontainer && !currentTerminal.shellProcess) {
+        initializeShell(currentTerminal);
+      } else if (!isReady) {
+        currentTerminal.terminal.writeln('Welcome to the IDE Terminal!');
+        currentTerminal.terminal.writeln('WebContainer is initializing...');
         currentTerminal.terminal.writeln('');
-        currentTerminal.terminal.write('$ ');
-        
-        // Set up basic terminal input handling
-        currentTerminal.terminal.onData(data => {
-          // Echo back input
-          currentTerminal.terminal.write(data);
-          
-          // Handle Enter key
-          if (data === '\r') {
-            currentTerminal.terminal.writeln('');
-            currentTerminal.terminal.write('$ ');
-          }
-        });
       }
     }
-  }, [terminals, activeTerminalId]);
+  }, [terminals, activeTerminalId, isReady, webcontainer]);
 
   // Apply theme changes to existing terminals
   useEffect(() => {
@@ -172,6 +233,15 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
   const closeTerminal = (id: string) => {
     const terminalToClose = terminals.find(t => t.id === id);
     if (terminalToClose) {
+      // Clean up shell process if exists
+      if (terminalToClose.shellProcess) {
+        try {
+          terminalToClose.shellProcess.kill();
+        } catch (error) {
+          console.error('Error killing shell process:', error);
+        }
+      }
+      
       terminalToClose.terminal.dispose();
     }
     
@@ -237,7 +307,16 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
           <button 
             className="p-1 text-slate-400 hover:text-white rounded-sm"
             onClick={() => {
-              createTerminal();
+              const newTerm = createTerminal();
+              setTimeout(() => {
+                if (newTerm.containerRef.current) {
+                  newTerm.terminal.open(newTerm.containerRef.current);
+                  newTerm.fitAddon.fit();
+                  if (isReady && webcontainer) {
+                    initializeShell(newTerm);
+                  }
+                }
+              }, 0);
               toast.success("New terminal created");
             }}
             title="New Terminal"
