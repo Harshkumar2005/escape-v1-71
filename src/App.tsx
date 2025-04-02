@@ -5,6 +5,7 @@ import { FontProvider } from "@/contexts/FontContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { WebContainerProvider } from "@/contexts/WebContainerContext";
 import { FileSystemProvider } from "@/contexts/FileSystemContext";
+import { EditorProvider } from "@/contexts/EditorContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -23,13 +24,15 @@ const App = () => (
       <FontProvider>
         <FileSystemProvider>
           <WebContainerProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
+            <EditorProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </EditorProvider>
           </WebContainerProvider>
         </FileSystemProvider>
       </FontProvider>

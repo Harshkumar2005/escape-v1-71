@@ -6,8 +6,6 @@ import EditorArea from './EditorArea';
 import StatusBar from './StatusBar';
 import TerminalPanel from './TerminalPanel';
 import CommandPalette from './CommandPalette';
-import { FileSystemProvider } from '@/contexts/FileSystemContext';
-import { EditorProvider } from '@/contexts/EditorContext';
 import TopBar from './TopBar';
 import { Toaster } from 'sonner';
 import { ProjectStartup } from './ProjectStartup';
