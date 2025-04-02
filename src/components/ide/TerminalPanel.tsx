@@ -1,14 +1,11 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
-import { Plus, X, Maximize2, Minimize2, AlertTriangle } from 'lucide-react';
+import { Plus, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useWebContainer } from '@/contexts/WebContainerContext';
-import { useFileSystem } from '@/contexts/FileSystemContext';
 import { toast } from 'sonner';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface TerminalTabProps {
   terminalId: string;
@@ -44,7 +41,6 @@ interface TerminalInstance {
   terminal: XTerm;
   fitAddon: FitAddon;
   containerRef: React.RefObject<HTMLDivElement>;
-  shellProcess?: any;
 }
 
 interface TerminalPanelProps {
@@ -58,9 +54,8 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
   const [maximized, setMaximized] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { terminalTheme } = useTheme();
-  const { webcontainer, isReady, hasWebContainerError } = useWebContainer();
-  const { addLogMessage } = useFileSystem();
   
+  // Initialize a new terminal
   const createTerminal = () => {
     const id = `term-${Date.now()}`;
     const terminal = new XTerm({
@@ -72,13 +67,11 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
         foreground: terminalTheme.foreground,
         cursor: terminalTheme.cursor,
         selectionBackground: terminalTheme.selection,
-      },
-      convertEol: true
+      }
     });
     
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
-    terminal.loadAddon(new WebLinksAddon());
     
     const newTermRef = React.createRef<HTMLDivElement>();
     
@@ -88,106 +81,39 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     return { id, terminal, fitAddon, containerRef: newTermRef };
   };
   
+  // Initialize the first terminal
   useEffect(() => {
     if (terminals.length === 0) {
       const newTerm = createTerminal();
       
+      // Wait for the DOM to update
       setTimeout(() => {
         if (newTerm.containerRef.current) {
           newTerm.terminal.open(newTerm.containerRef.current);
           newTerm.fitAddon.fit();
           
-          if (hasWebContainerError) {
-            newTerm.terminal.writeln('Welcome to the IDE Terminal!');
-            newTerm.terminal.writeln('\r\n\x1b[31mWebContainer initialization failed. Running in editor-only mode.\x1b[0m');
-            newTerm.terminal.writeln('Terminal functionality is limited without WebContainer.');
-            newTerm.terminal.writeln('');
-            simulateShell(newTerm);
-          } else if (!isReady) {
-            newTerm.terminal.writeln('Welcome to the IDE Terminal!');
-            newTerm.terminal.writeln('WebContainer is initializing...');
-            newTerm.terminal.writeln('');
-          } else {
-            initializeShell(newTerm);
-          }
+          // Set up some initial terminal content
+          newTerm.terminal.writeln('Welcome to the IDE Terminal!');
+          newTerm.terminal.writeln('');
+          newTerm.terminal.write('$ ');
+          
+          // Set up basic terminal input handling
+          newTerm.terminal.onData(data => {
+            // Echo back input
+            newTerm.terminal.write(data);
+            
+            // Handle Enter key
+            if (data === '\r') {
+              newTerm.terminal.writeln('');
+              newTerm.terminal.write('$ ');
+            }
+          });
         }
       }, 0);
     }
   }, []);
-
-  useEffect(() => {
-    if (isReady && webcontainer && terminals.length > 0 && !hasWebContainerError) {
-      terminals.forEach(term => {
-        if (!term.shellProcess && term.containerRef.current) {
-          initializeShell(term);
-        }
-      });
-    }
-  }, [isReady, webcontainer, terminals, hasWebContainerError]);
-
-  const simulateShell = (terminalInstance: TerminalInstance) => {
-    terminalInstance.terminal.writeln('Simulated terminal mode (WebContainer not available)');
-    terminalInstance.terminal.write('\r\n$ ');
-    
-    terminalInstance.terminal.onData(data => {
-      if (data === '\r') {
-        terminalInstance.terminal.writeln('');
-        terminalInstance.terminal.writeln('\x1b[33mCommand execution is not available in editor-only mode.\x1b[0m');
-        terminalInstance.terminal.write('$ ');
-      } else if (data === '\x7f') {
-        // Backspace handling
-        terminalInstance.terminal.write('\b \b');
-      } else {
-        terminalInstance.terminal.write(data);
-      }
-    });
-  };
-
-  const initializeShell = async (terminalInstance: TerminalInstance) => {
-    if (!webcontainer || !isReady || hasWebContainerError) {
-      terminalInstance.terminal.writeln('WebContainer not available. Using simulated terminal.');
-      simulateShell(terminalInstance);
-      return;
-    }
-
-    try {
-      addLogMessage('info', 'Starting shell process...');
-      
-      const shellProcess = await webcontainer.spawn('bash', []);
-      terminalInstance.shellProcess = shellProcess;
-
-      shellProcess.output.pipeTo(new WritableStream({
-        write(data) {
-          terminalInstance.terminal.write(data);
-        }
-      }));
-
-      const input = shellProcess.input.getWriter();
-      terminalInstance.terminal.onData((data) => {
-        input.write(data);
-      });
-
-      shellProcess.exit.then(code => {
-        terminalInstance.terminal.writeln(`\r\nProcess exited with code ${code}`);
-        terminalInstance.terminal.writeln('Starting new shell...');
-        
-        setTimeout(() => {
-          initializeShell(terminalInstance);
-        }, 1000);
-      });
-
-    } catch (error) {
-      console.error('Error starting shell:', error);
-      addLogMessage('error', `Failed to start shell: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
-      terminalInstance.terminal.writeln('Failed to start WebContainer shell.');
-      terminalInstance.terminal.writeln('Using simulated terminal instead.');
-      terminalInstance.terminal.writeln('');
-      
-      simulateShell(terminalInstance);
-    }
-  };
   
+  // Resize terminals when window resizes
   useEffect(() => {
     const handleResize = () => {
       terminals.forEach(term => {
@@ -199,6 +125,7 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     return () => window.removeEventListener('resize', handleResize);
   }, [terminals]);
   
+  // Set up new terminal when created
   useEffect(() => {
     const currentTerminal = terminals.find(t => t.id === activeTerminalId);
     
@@ -207,16 +134,29 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
       currentTerminal.terminal.open(currentTerminal.containerRef.current);
       currentTerminal.fitAddon.fit();
       
-      if (isReady && webcontainer && !currentTerminal.shellProcess) {
-        initializeShell(currentTerminal);
-      } else if (!isReady) {
-        currentTerminal.terminal.writeln('Welcome to the IDE Terminal!');
-        currentTerminal.terminal.writeln('WebContainer is initializing...');
+      // Set up some initial terminal content if this is a new terminal
+      const isNewTerminal = !currentTerminal.containerRef.current.querySelector('.xterm-cursor');
+      if (isNewTerminal) {
+        currentTerminal.terminal.writeln('Terminal session started.');
         currentTerminal.terminal.writeln('');
+        currentTerminal.terminal.write('$ ');
+        
+        // Set up basic terminal input handling
+        currentTerminal.terminal.onData(data => {
+          // Echo back input
+          currentTerminal.terminal.write(data);
+          
+          // Handle Enter key
+          if (data === '\r') {
+            currentTerminal.terminal.writeln('');
+            currentTerminal.terminal.write('$ ');
+          }
+        });
       }
     }
-  }, [terminals, activeTerminalId, isReady, webcontainer]);
+  }, [terminals, activeTerminalId]);
 
+  // Apply theme changes to existing terminals
   useEffect(() => {
     terminals.forEach(term => {
       term.terminal.options.theme = {
@@ -228,47 +168,46 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     });
   }, [terminalTheme, terminals]);
   
+  // Handle close terminal
   const closeTerminal = (id: string) => {
     const terminalToClose = terminals.find(t => t.id === id);
     if (terminalToClose) {
-      if (terminalToClose.shellProcess) {
-        try {
-          terminalToClose.shellProcess.kill();
-        } catch (error) {
-          console.error('Error killing shell process:', error);
-        }
-      }
-      
       terminalToClose.terminal.dispose();
     }
     
     setTerminals(prev => prev.filter(t => t.id !== id));
     
+    // Set a new active terminal if needed
     if (activeTerminalId === id) {
       const remainingTerminals = terminals.filter(t => t.id !== id);
       if (remainingTerminals.length > 0) {
         setActiveTerminalId(remainingTerminals[0].id);
       } else {
+        // Create a new terminal if we closed the last one
         createTerminal();
       }
     }
   };
   
+  // Toggle maximize
   const toggleMaximize = () => {
     setMaximized(prev => !prev);
     
     if (!maximized) {
+      // Maximize the terminal panel
       if (maximizeTerminal) {
         maximizeTerminal();
       }
       toast.info("Terminal maximized");
     } else {
+      // Restore the terminal panel
       if (minimizeTerminal) {
         minimizeTerminal();
       }
       toast.info("Terminal restored");
     }
     
+    // Resize terminals after the animation completes
     setTimeout(() => {
       terminals.forEach(term => {
         term.fitAddon.fit();
@@ -281,6 +220,7 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
       ref={containerRef}
       className="h-full flex flex-col bg-terminal text-terminal-foreground"
     >
+      {/* Terminal tabs */}
       <div className="flex items-center justify-between bg-sidebar border-b border-border">
         <div className="flex overflow-x-auto">
           {terminals.map(term => (
@@ -297,18 +237,7 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
           <button 
             className="p-1 text-slate-400 hover:text-white rounded-sm"
             onClick={() => {
-              const newTerm = createTerminal();
-              setTimeout(() => {
-                if (newTerm.containerRef.current) {
-                  newTerm.terminal.open(newTerm.containerRef.current);
-                  newTerm.fitAddon.fit();
-                  if (isReady && webcontainer && !hasWebContainerError) {
-                    initializeShell(newTerm);
-                  } else {
-                    simulateShell(newTerm);
-                  }
-                }
-              }, 0);
+              createTerminal();
               toast.success("New terminal created");
             }}
             title="New Terminal"
@@ -325,17 +254,8 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
         </div>
       </div>
       
-      {hasWebContainerError && (
-        <Alert variant="destructive" className="mx-2 mt-2 bg-red-900/20 border-red-900/50">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Limited Terminal Functionality</AlertTitle>
-          <AlertDescription className="text-xs">
-            WebContainer is not available. Terminal is in simulated mode and cannot execute real commands.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <div className={`flex-1 relative ${hasWebContainerError ? 'mt-2' : ''}`}>
+      {/* Terminal containers */}
+      <div className="flex-1 relative">
         {terminals.map(term => (
           <div
             key={term.id}

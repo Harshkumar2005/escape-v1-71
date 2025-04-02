@@ -11,7 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFileSystem } from '@/contexts/FileSystemContext';
-import { useWebContainer } from '@/contexts/WebContainerContext';
 import { toast } from 'sonner';
 
 // Types for GitHub API responses
@@ -43,7 +42,6 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string>('');
   const { replaceFileSystem, createFile, updateFileContent, addLogMessage } = useFileSystem();
-  const { bootstrapProject } = useWebContainer();
 
   const parseGithubUrl = (url: string) => {
     try {
@@ -107,10 +105,6 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
       // Process repository contents
       setProgress('Processing repository files...');
       await processGithubContents(contents, `/${repoData.name}`);
-
-      // Bootstrap the project in WebContainer
-      setProgress('Setting up WebContainer environment...');
-      await bootstrapProject(repoData.name);
       
       toast.success(`Repository ${repoData.name} imported successfully!`);
       setLoading(false);
@@ -224,7 +218,6 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
 
           <div className="mt-4 text-xs text-slate-400">
             <p>Note: Only public repositories are supported. Large files and binary files may be skipped.</p>
-            <p>The repository will be loaded into a WebContainer environment for fully functional in-browser development.</p>
           </div>
         </div>
       </DialogContent>
