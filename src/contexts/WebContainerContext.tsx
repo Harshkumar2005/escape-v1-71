@@ -3,6 +3,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { WebContainer } from '@webcontainer/api';
 import { useFileSystem, FileSystemItem } from './FileSystemContext';
 import { toast } from 'sonner';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 interface WebContainerContextType {
   webcontainer: WebContainer | null;
@@ -12,6 +14,8 @@ interface WebContainerContextType {
   mountFiles: (files: Record<string, any>) => Promise<void>;
   executeCommand: (command: string, args?: string[]) => Promise<{ exitCode: number, output: string }>;
   bootstrapProject: (projectName?: string) => Promise<void>;
+  hasWebContainerError: boolean;
+  webContainerError: string | null;
 }
 
 const WebContainerContext = createContext<WebContainerContextType | null>(null);
@@ -33,6 +37,8 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
   const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [terminal, setTerminal] = useState<any | null>(null);
+  const [hasWebContainerError, setHasWebContainerError] = useState(false);
+  const [webContainerError, setWebContainerError] = useState<string | null>(null);
   const { files, addLogMessage } = useFileSystem();
 
   useEffect(() => {
@@ -69,9 +75,25 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
         addLogMessage('success', 'WebContainer initialized successfully!');
       } catch (error) {
         console.error('Error initializing WebContainer:', error);
-        addLogMessage('error', `Failed to initialize WebContainer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        
+        // Handle the "Unable to create more instances" error specifically
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        setWebContainerError(errorMessage);
+        setHasWebContainerError(true);
+        
+        addLogMessage('error', `Failed to initialize WebContainer: ${errorMessage}`);
         setIsLoading(false);
-        toast.error('Failed to initialize WebContainer. Please try again.');
+        
+        if (errorMessage.includes('Unable to create more instances')) {
+          toast.error('WebContainer limit reached. Running in editor-only mode.', {
+            duration: 10000,
+            description: "You've reached the limit of WebContainer instances. Try closing other tabs or refreshing."
+          });
+        } else {
+          toast.error('Failed to initialize WebContainer. Running in editor-only mode.', {
+            duration: 5000
+          });
+        }
       }
     };
 
@@ -248,7 +270,9 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
     terminal,
     mountFiles,
     executeCommand,
-    bootstrapProject
+    bootstrapProject,
+    hasWebContainerError,
+    webContainerError
   };
 
   return (
