@@ -151,7 +151,8 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
       
       // Check if package.json exists
       try {
-        const packageJsonExists = await webcontainer.fs.stat('/package.json').then(() => true).catch(() => false);
+        // Use webcontainer.fs methods to check file existence
+        const packageJsonExists = await webcontainer.fs.exists('/package.json');
         
         if (packageJsonExists) {
           addLogMessage('info', 'Installing dependencies...');
@@ -166,7 +167,7 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
             
             const reader = installProcess.output.getReader();
             
-            function processText({ done, value }: ReadableStreamReadResult<string>): void {
+            function processText({ done, value }: ReadableStreamReadResult<any>): void {
               if (done) {
                 clearTimeout(timeoutId);
                 resolve(output);
@@ -224,7 +225,7 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
         
         const reader = process.output.getReader();
         
-        function processText({ done, value }: ReadableStreamReadResult<string>): void {
+        function processText({ done, value }: ReadableStreamReadResult<any>): void {
           if (done) {
             clearTimeout(timeoutId);
             resolve(output);
