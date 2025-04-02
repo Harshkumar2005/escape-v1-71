@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -61,7 +60,6 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
   const { webcontainer, isReady } = useWebContainer();
   const { addLogMessage } = useFileSystem();
   
-  // Initialize a new terminal
   const createTerminal = () => {
     const id = `term-${Date.now()}`;
     const terminal = new XTerm({
@@ -89,12 +87,10 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     return { id, terminal, fitAddon, containerRef: newTermRef };
   };
   
-  // Initialize the first terminal
   useEffect(() => {
     if (terminals.length === 0) {
       const newTerm = createTerminal();
       
-      // Wait for the DOM to update
       setTimeout(() => {
         if (newTerm.containerRef.current) {
           newTerm.terminal.open(newTerm.containerRef.current);
@@ -112,7 +108,6 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     }
   }, []);
 
-  // When WebContainer becomes ready, initialize shells in all terminals
   useEffect(() => {
     if (isReady && webcontainer && terminals.length > 0) {
       terminals.forEach(term => {
@@ -123,7 +118,6 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     }
   }, [isReady, webcontainer, terminals]);
 
-  // Initialize shell in terminal
   const initializeShell = async (terminalInstance: TerminalInstance) => {
     if (!webcontainer || !isReady) {
       terminalInstance.terminal.writeln('WebContainer not ready. Please wait...');
@@ -133,30 +127,25 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     try {
       addLogMessage('info', 'Starting shell process...');
       
-      // Start a shell process
       const shellProcess = await webcontainer.spawn('bash', []);
       terminalInstance.shellProcess = shellProcess;
 
-      // Write the output to the terminal
       shellProcess.output.pipeTo(new WritableStream({
         write(data) {
           terminalInstance.terminal.write(data);
         }
       }));
 
-      // Set up input handling
       const input = shellProcess.input.getWriter();
       terminalInstance.terminal.onData((data) => {
         input.write(data);
       });
 
-      // Handle process exit - using addEventListener instead of .on
-      shellProcess.addEventListener('exit', (event: any) => {
+      shellProcess.on('exit', (event: any) => {
         const code = event.detail || 0;
         terminalInstance.terminal.writeln(`\r\nProcess exited with code ${code}`);
         terminalInstance.terminal.writeln('Starting new shell...');
         
-        // Start a new shell
         setTimeout(() => {
           initializeShell(terminalInstance);
         }, 1000);
@@ -166,18 +155,14 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
       console.error('Error starting shell:', error);
       addLogMessage('error', `Failed to start shell: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // Fall back to simulated terminal
       terminalInstance.terminal.writeln('Failed to start WebContainer shell.');
       terminalInstance.terminal.writeln('Using simulated terminal instead.');
       terminalInstance.terminal.writeln('');
       terminalInstance.terminal.write('$ ');
       
-      // Set up simulated terminal
       terminalInstance.terminal.onData(data => {
-        // Echo back input
         terminalInstance.terminal.write(data);
         
-        // Handle Enter key
         if (data === '\r') {
           terminalInstance.terminal.writeln('');
           terminalInstance.terminal.write('$ ');
@@ -186,7 +171,6 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     }
   };
   
-  // Resize terminals when window resizes
   useEffect(() => {
     const handleResize = () => {
       terminals.forEach(term => {
@@ -198,7 +182,6 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     return () => window.removeEventListener('resize', handleResize);
   }, [terminals]);
   
-  // Set up new terminal when created
   useEffect(() => {
     const currentTerminal = terminals.find(t => t.id === activeTerminalId);
     
@@ -207,7 +190,6 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
       currentTerminal.terminal.open(currentTerminal.containerRef.current);
       currentTerminal.fitAddon.fit();
       
-      // Set up the shell if WebContainer is ready
       if (isReady && webcontainer && !currentTerminal.shellProcess) {
         initializeShell(currentTerminal);
       } else if (!isReady) {
@@ -218,7 +200,6 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     }
   }, [terminals, activeTerminalId, isReady, webcontainer]);
 
-  // Apply theme changes to existing terminals
   useEffect(() => {
     terminals.forEach(term => {
       term.terminal.options.theme = {
@@ -230,11 +211,9 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     });
   }, [terminalTheme, terminals]);
   
-  // Handle close terminal
   const closeTerminal = (id: string) => {
     const terminalToClose = terminals.find(t => t.id === id);
     if (terminalToClose) {
-      // Clean up shell process if exists
       if (terminalToClose.shellProcess) {
         try {
           terminalToClose.shellProcess.kill();
@@ -248,37 +227,31 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     
     setTerminals(prev => prev.filter(t => t.id !== id));
     
-    // Set a new active terminal if needed
     if (activeTerminalId === id) {
       const remainingTerminals = terminals.filter(t => t.id !== id);
       if (remainingTerminals.length > 0) {
         setActiveTerminalId(remainingTerminals[0].id);
       } else {
-        // Create a new terminal if we closed the last one
         createTerminal();
       }
     }
   };
   
-  // Toggle maximize
   const toggleMaximize = () => {
     setMaximized(prev => !prev);
     
     if (!maximized) {
-      // Maximize the terminal panel
       if (maximizeTerminal) {
         maximizeTerminal();
       }
       toast.info("Terminal maximized");
     } else {
-      // Restore the terminal panel
       if (minimizeTerminal) {
         minimizeTerminal();
       }
       toast.info("Terminal restored");
     }
     
-    // Resize terminals after the animation completes
     setTimeout(() => {
       terminals.forEach(term => {
         term.fitAddon.fit();
@@ -291,7 +264,6 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
       ref={containerRef}
       className="h-full flex flex-col bg-terminal text-terminal-foreground"
     >
-      {/* Terminal tabs */}
       <div className="flex items-center justify-between bg-sidebar border-b border-border">
         <div className="flex overflow-x-auto">
           {terminals.map(term => (
@@ -334,7 +306,6 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
         </div>
       </div>
       
-      {/* Terminal containers */}
       <div className="flex-1 relative">
         {terminals.map(term => (
           <div

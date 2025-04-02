@@ -152,7 +152,7 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
       // Check if package.json exists
       try {
         // Use webcontainer.fs methods to check file existence
-        const packageJsonExists = await webcontainer.fs.exists('/package.json');
+        const packageJsonExists = await webcontainer.fs.stat('/package.json').then(() => true).catch(() => false);
         
         if (packageJsonExists) {
           addLogMessage('info', 'Installing dependencies...');
