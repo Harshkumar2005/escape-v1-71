@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { WebContainer } from '@webcontainer/api';
 import { FileSystemItem, useFileSystem } from './FileSystemContext';
@@ -31,19 +32,20 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setError(null);
         
         // Check if WebContainer is supported in current environment
-        if (!WebContainer.isSupported()) {
+        // Use a try-catch block instead of isSupported() method
+        try {
+          // Boot the WebContainer
+          const instance = await WebContainer.boot();
+          setWebcontainerInstance(instance);
+          
+          // Install base packages
+          await setupBasePackages(instance);
+          
+          setIsReady(true);
+          toast.success("WebContainer initialized successfully");
+        } catch (error) {
           throw new Error("WebContainer is not supported in this environment");
         }
-        
-        // Boot the WebContainer
-        const instance = await WebContainer.boot();
-        setWebcontainerInstance(instance);
-        
-        // Install base packages
-        await setupBasePackages(instance);
-        
-        setIsReady(true);
-        toast.success("WebContainer initialized successfully");
       } catch (err: any) {
         console.error("Failed to initialize WebContainer:", err);
         setError(err.message || "Failed to initialize WebContainer");
@@ -181,26 +183,18 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         })
       );
       
-      // In the WebContainerProcess, stderr might not be directly accessible
-      // We'll handle this by only using stderr if it's available
-      // Otherwise, we'll capture errors from the exit code or other means
-      
-      if (process.stderr) {
-        process.stderr.pipeTo(
-          new WritableStream({
-            write(data) {
-              stderrChunks.push(data);
-            }
-          })
-        );
-      }
+      // WebContainerProcess doesn't have a direct stderr property in the type definition
+      // We'll capture errors from the exit code instead
       
       const exitCode = await process.exit;
+      
+      // If exit code is non-zero, there was an error
+      const stderrOutput = exitCode !== 0 ? `Process exited with code ${exitCode}` : '';
       
       return {
         exitCode,
         stdout: stdoutChunks.join(''),
-        stderr: stderrChunks.join('') // This might be empty if stderr is not available
+        stderr: stderrOutput
       };
     } catch (err: any) {
       console.error(`Failed to execute command ${command}:`, err);
