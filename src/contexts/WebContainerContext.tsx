@@ -32,7 +32,7 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setError(null);
         
         // Check if WebContainer is supported in current environment
-        if (!WebContainer.isSupported()) {
+        if (!(WebContainer as any).isSupported()) {
           throw new Error("WebContainer is not supported in this environment");
         }
         
@@ -182,13 +182,16 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         })
       );
       
-      process.error.pipeTo(
-        new WritableStream({
-          write(data) {
-            stderrChunks.push(data);
-          }
-        })
-      );
+      // Process error stream exists on WebContainer process
+      if (process.stderr) {
+        process.stderr.pipeTo(
+          new WritableStream({
+            write(data) {
+              stderrChunks.push(data);
+            }
+          })
+        );
+      }
       
       const exitCode = await process.exit;
       

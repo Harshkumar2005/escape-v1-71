@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FontProvider } from "@/contexts/FontContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { WebContainerProvider } from "@/contexts/WebContainerContext";
+import { FileSystemProvider } from "@/contexts/FileSystemContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -20,15 +21,17 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <FontProvider>
-        <WebContainerProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </WebContainerProvider>
+        <FileSystemProvider>
+          <WebContainerProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </WebContainerProvider>
+        </FileSystemProvider>
       </FontProvider>
     </ThemeProvider>
   </QueryClientProvider>
