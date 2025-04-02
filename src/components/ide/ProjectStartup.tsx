@@ -20,7 +20,7 @@ export const ProjectStartup: React.FC = () => {
   const [showGithubLoader, setShowGithubLoader] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { resetFileSystem, files } = useFileSystem();
-  const { mountFiles } = useWebContainer();
+  const { mountFiles, isFallbackMode } = useWebContainer();
 
   const handleClose = () => {
     setIsOpen(false);
@@ -36,15 +36,17 @@ export const ProjectStartup: React.FC = () => {
       // Wait for file system state to update
       setTimeout(async () => {
         try {
-          // Convert file system to WebContainer format and mount
-          const webContainerFiles = convertToWebContainerFormat(files);
-          await mountFiles(webContainerFiles);
+          if (!isFallbackMode) {
+            // Convert file system to WebContainer format and mount
+            const webContainerFiles = convertToWebContainerFormat(files);
+            await mountFiles(webContainerFiles);
+          }
           
-          toast.success('New project created successfully');
+          toast.success('New project created successfully' + (isFallbackMode ? ' (fallback mode)' : ''));
           handleClose();
         } catch (error: any) {
-          toast.error('Failed to initialize WebContainer: ' + error.message);
-          console.error('WebContainer error:', error);
+          toast.error('Failed to initialize project: ' + error.message);
+          console.error('Project initialization error:', error);
         } finally {
           setIsLoading(false);
         }
@@ -56,6 +58,9 @@ export const ProjectStartup: React.FC = () => {
   };
 
   const handleLoadFromGithub = () => {
+    if (isFallbackMode) {
+      toast.warning('GitHub loading is limited in fallback mode');
+    }
     setShowGithubLoader(true);
   };
 
@@ -64,9 +69,13 @@ export const ProjectStartup: React.FC = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md bg-sidebar border-border">
           <DialogHeader>
-            <DialogTitle className="text-sidebar-foreground">Welcome to Code Editor</DialogTitle>
+            <DialogTitle className="text-sidebar-foreground">
+              Welcome to Code Editor {isFallbackMode && "(Fallback Mode)"}
+            </DialogTitle>
             <DialogDescription className="text-sidebar-foreground opacity-70">
-              Choose how you want to get started with your project
+              {isFallbackMode 
+                ? "Running in fallback mode with limited functionality. Some features may be simulated."
+                : "Choose how you want to get started with your project"}
             </DialogDescription>
           </DialogHeader>
           
@@ -85,7 +94,9 @@ export const ProjectStartup: React.FC = () => {
               <div className="text-left">
                 <div className="font-medium">Load from GitHub</div>
                 <div className="text-sm text-muted-foreground">
-                  Import code from an existing public repository
+                  {isFallbackMode 
+                    ? "Limited functionality in fallback mode"
+                    : "Import code from an existing public repository"}
                 </div>
               </div>
             </Button>
@@ -104,7 +115,9 @@ export const ProjectStartup: React.FC = () => {
               <div className="text-left">
                 <div className="font-medium">Start New Project</div>
                 <div className="text-sm text-muted-foreground">
-                  Begin with a blank workspace
+                  {isFallbackMode
+                    ? "Some features will be simulated"
+                    : "Begin with a blank workspace"}
                 </div>
               </div>
             </Button>

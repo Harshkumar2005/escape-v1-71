@@ -57,7 +57,7 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
   const [isProcessing, setIsProcessing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { terminalTheme } = useTheme();
-  const { webcontainerInstance, isReady, error, executeCommand } = useWebContainer();
+  const { webcontainerInstance, isReady, error, executeCommand, isFallbackMode } = useWebContainer();
   
   // Initialize a new terminal
   const createTerminal = () => {
@@ -105,7 +105,15 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
           newTerm.fitAddon.fit();
           
           // Set up initial terminal content
-          if (error) {
+          if (isFallbackMode) {
+            newTerm.terminal.writeln('Running in fallback mode:');
+            newTerm.terminal.writeln(`WebContainer is not supported in this environment.`);
+            newTerm.terminal.writeln('');
+            newTerm.terminal.writeln('Terminal is in limited functionality mode.');
+            newTerm.terminal.writeln('Some features will be simulated instead of actually executed.');
+            newTerm.terminal.writeln('');
+            newTerm.terminal.write('$ ');
+          } else if (error && !isReady) {
             newTerm.terminal.writeln('WebContainer initialization failed:');
             newTerm.terminal.writeln(`Error: ${error}`);
             newTerm.terminal.writeln('');
@@ -132,7 +140,16 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     const currentTerminal = terminals.find(t => t.id === activeTerminalId);
     
     if (currentTerminal && currentTerminal.terminal) {
-      if (error) {
+      if (isFallbackMode) {
+        currentTerminal.terminal.writeln('');
+        currentTerminal.terminal.writeln('Running in fallback mode:');
+        currentTerminal.terminal.writeln('WebContainer is not supported in this environment.');
+        currentTerminal.terminal.writeln('');
+        currentTerminal.terminal.writeln('Terminal is in limited functionality mode.');
+        currentTerminal.terminal.writeln('Some features will be simulated instead of actually executed.');
+        currentTerminal.terminal.writeln('');
+        currentTerminal.terminal.write('$ ');
+      } else if (error && !isReady) {
         currentTerminal.terminal.writeln('');
         currentTerminal.terminal.writeln('WebContainer initialization failed:');
         currentTerminal.terminal.writeln(`Error: ${error}`);
@@ -147,7 +164,7 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
         currentTerminal.terminal.write('$ ');
       }
     }
-  }, [isReady, error]);
+  }, [isReady, error, isFallbackMode]);
   
   // Set up terminal input handling
   const setupTerminalInputHandling = (termInstance: TerminalInstance) => {
@@ -189,7 +206,7 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
   
   // Execute command in terminal
   const executeTerminalCommand = async (termInstance: TerminalInstance, commandLine: string) => {
-    if (!isReady || !webcontainerInstance) {
+    if (!isReady) {
       termInstance.terminal.writeln('WebContainer is not ready. Command cannot be executed.');
       termInstance.terminal.write('$ ');
       return;
@@ -205,6 +222,24 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
     try {
       if (command === 'clear' || command === 'cls') {
         termInstance.terminal.clear();
+      } else if (isFallbackMode) {
+        // Special handling for fallback mode
+        termInstance.terminal.writeln(`Simulating: ${commandLine}`);
+        
+        // Simulate some common commands
+        if (command === 'ls' || command === 'dir') {
+          termInstance.terminal.writeln('package.json');
+          termInstance.terminal.writeln('index.js');
+          termInstance.terminal.writeln('node_modules/');
+        } else if (command === 'cat' || command === 'type') {
+          termInstance.terminal.writeln(`// Simulated content of ${args[0]}`);
+          termInstance.terminal.writeln('// In fallback mode, actual file content cannot be displayed');
+        } else if (command === 'npm') {
+          termInstance.terminal.writeln(`Simulating npm ${args.join(' ')}`);
+          termInstance.terminal.writeln('Done');
+        } else {
+          termInstance.terminal.writeln(`Command executed in simulation mode`);
+        }
       } else {
         termInstance.terminal.writeln(`Executing: ${commandLine}`);
         
@@ -251,7 +286,13 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
       
       // Set up initial terminal content if this is a new terminal
       if (!currentTerminal.containerRef.current.querySelector('.xterm-cursor')) {
-        if (error) {
+        if (isFallbackMode) {
+          currentTerminal.terminal.writeln('Running in fallback mode:');
+          currentTerminal.terminal.writeln('WebContainer is not supported in this environment.');
+          currentTerminal.terminal.writeln('');
+          currentTerminal.terminal.writeln('Terminal is in limited functionality mode.');
+          currentTerminal.terminal.writeln('Some features will be simulated instead of actually executed.');
+        } else if (error) {
           currentTerminal.terminal.writeln('WebContainer initialization failed:');
           currentTerminal.terminal.writeln(`Error: ${error}`);
           currentTerminal.terminal.writeln('');
@@ -269,7 +310,7 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
         setupTerminalInputHandling(currentTerminal);
       }
     }
-  }, [terminals, activeTerminalId, isReady, error]);
+  }, [terminals, activeTerminalId, isReady, error, isFallbackMode]);
 
   // Apply theme changes to existing terminals
   useEffect(() => {

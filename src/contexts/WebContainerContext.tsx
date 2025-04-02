@@ -13,6 +13,7 @@ interface WebContainerContextType {
   writeFile: (path: string, contents: string) => Promise<void>;
   readFile: (path: string) => Promise<string>;
   executeCommand: (command: string, args?: string[]) => Promise<{ exitCode: number; stdout: string; stderr: string }>;
+  isFallbackMode: boolean; // New property to indicate fallback mode
 }
 
 const WebContainerContext = createContext<WebContainerContextType | undefined>(undefined);
@@ -22,6 +23,7 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFallbackMode, setIsFallbackMode] = useState(false);
   const { files } = useFileSystem();
 
   // Initialize WebContainer
@@ -31,10 +33,8 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setIsLoading(true);
         setError(null);
         
-        // Check if WebContainer is supported in current environment
-        // Use a try-catch block instead of isSupported() method
+        // Boot the WebContainer
         try {
-          // Boot the WebContainer
           const instance = await WebContainer.boot();
           setWebcontainerInstance(instance);
           
@@ -43,13 +43,21 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
           
           setIsReady(true);
           toast.success("WebContainer initialized successfully");
-        } catch (error) {
-          throw new Error("WebContainer is not supported in this environment");
+        } catch (err) {
+          // Set fallback mode and continue
+          console.warn("WebContainer is not supported in this environment, entering fallback mode");
+          setIsFallbackMode(true);
+          setError("WebContainer is not supported in this environment");
+          toast.warning("Running in limited functionality mode");
+          // Allow the app to continue in fallback mode
+          setIsReady(true);
         }
       } catch (err: any) {
         console.error("Failed to initialize WebContainer:", err);
         setError(err.message || "Failed to initialize WebContainer");
         toast.error("Failed to initialize WebContainer");
+        // Enable fallback mode
+        setIsFallbackMode(true);
       } finally {
         setIsLoading(false);
       }
@@ -121,6 +129,11 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Mount files to WebContainer
   const mountFiles = async (files: Record<string, any>) => {
     if (!webcontainerInstance) {
+      if (isFallbackMode) {
+        console.log("Fallback mode: Mount files operation simulated");
+        toast.success("Files processed in fallback mode");
+        return;
+      }
       throw new Error("WebContainer is not initialized");
     }
     
@@ -137,6 +150,10 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Write a file to WebContainer
   const writeFile = async (path: string, contents: string) => {
     if (!webcontainerInstance) {
+      if (isFallbackMode) {
+        console.log(`Fallback mode: Write file ${path} operation simulated`);
+        return;
+      }
       throw new Error("WebContainer is not initialized");
     }
     
@@ -152,6 +169,10 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Read a file from WebContainer
   const readFile = async (path: string) => {
     if (!webcontainerInstance) {
+      if (isFallbackMode) {
+        console.log(`Fallback mode: Read file ${path} operation simulated`);
+        return "// Fallback mode: File content not available";
+      }
       throw new Error("WebContainer is not initialized");
     }
     
@@ -173,7 +194,6 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const process = await instance.spawn(command, args);
       
       const stdoutChunks: string[] = [];
-      const stderrChunks: string[] = [];
       
       process.output.pipeTo(
         new WritableStream({
@@ -209,6 +229,14 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Public function to execute commands
   const executeCommand = async (command: string, args: string[] = []) => {
     if (!webcontainerInstance) {
+      if (isFallbackMode) {
+        console.log(`Fallback mode: Execute command ${command} ${args.join(' ')} operation simulated`);
+        return {
+          exitCode: 0,
+          stdout: `Fallback mode: Command '${command} ${args.join(' ')}' simulated`,
+          stderr: ''
+        };
+      }
       throw new Error("WebContainer is not initialized");
     }
     
@@ -225,7 +253,8 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         mountFiles,
         writeFile,
         readFile,
-        executeCommand
+        executeCommand,
+        isFallbackMode
       }}
     >
       {children}
