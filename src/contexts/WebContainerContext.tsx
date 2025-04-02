@@ -13,7 +13,7 @@ interface WebContainerContextType {
   writeFile: (path: string, contents: string) => Promise<void>;
   readFile: (path: string) => Promise<string>;
   executeCommand: (command: string, args?: string[]) => Promise<{ exitCode: number; stdout: string; stderr: string }>;
-  isFallbackMode: boolean; // New property to indicate fallback mode
+  isFallbackMode: boolean;
 }
 
 const WebContainerContext = createContext<WebContainerContextType | undefined>(undefined);
@@ -35,7 +35,9 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         
         // Boot the WebContainer
         try {
+          console.log("Attempting to boot WebContainer...");
           const instance = await WebContainer.boot();
+          console.log("WebContainer booted successfully");
           setWebcontainerInstance(instance);
           
           // Install base packages
@@ -43,9 +45,9 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
           
           setIsReady(true);
           toast.success("WebContainer initialized successfully");
-        } catch (err) {
+        } catch (err: any) {
           // Set fallback mode and continue
-          console.warn("WebContainer is not supported in this environment, entering fallback mode");
+          console.warn("WebContainer is not supported in this environment, entering fallback mode", err);
           setIsFallbackMode(true);
           setError("WebContainer is not supported in this environment");
           toast.warning("Running in limited functionality mode");
@@ -58,6 +60,7 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         toast.error("Failed to initialize WebContainer");
         // Enable fallback mode
         setIsFallbackMode(true);
+        setIsReady(true); // Still mark as ready so the app can run in fallback mode
       } finally {
         setIsLoading(false);
       }
@@ -73,56 +76,30 @@ export const WebContainerProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Setup base packages
   const setupBasePackages = async (instance: WebContainer) => {
-    // Create basic package.json
-    const packageJson = {
-      name: "web-editor-project",
-      version: "1.0.0",
-      description: "Web editor project",
-      main: "index.js",
-      type: "module",
-      scripts: {
-        start: "node index.js"
-      }
-    };
-    
-    await instance.fs.writeFile('/package.json', JSON.stringify(packageJson, null, 2));
-    
-    // Install basic packages
-    // We'll use a minimal set of packages to avoid long installation times
-    // Users can install more packages as needed
-    await executeCommandInternal(instance, 'npm', ['install', '--quiet']);
-  };
-  
-  // Convert FileSystemItem tree to WebContainer format
-  const convertToWebContainerFormat = useCallback((items: FileSystemItem[]): Record<string, any> => {
-    const result: Record<string, any> = {};
-    
-    for (const item of items) {
-      const name = item.name;
-      
-      if (item.type === 'folder') {
-        result[name] = {
-          directory: convertToWebContainerFormat(item.children || [])
-        };
-      } else {
-        result[name] = {
-          file: {
-            contents: item.content || ''
-          }
-        };
-      }
-    }
-    
-    return result;
-  }, []);
-
-  // Check if a file exists in the WebContainer
-  const fileExists = async (instance: WebContainer, path: string): Promise<boolean> => {
     try {
-      await instance.fs.readFile(path);
-      return true;
-    } catch (error) {
-      return false;
+      console.log("Setting up base packages...");
+      // Create basic package.json
+      const packageJson = {
+        name: "web-editor-project",
+        version: "1.0.0",
+        description: "Web editor project",
+        main: "index.js",
+        type: "module",
+        scripts: {
+          start: "node index.js"
+        }
+      };
+      
+      await instance.fs.writeFile('/package.json', JSON.stringify(packageJson, null, 2));
+      console.log("Package.json created");
+      
+      // Install basic packages
+      // We'll use a minimal set of packages to avoid long installation times
+      await executeCommandInternal(instance, 'npm', ['install', '--quiet']);
+      console.log("Base packages installed");
+    } catch (err) {
+      console.error("Error setting up base packages:", err);
+      throw err;
     }
   };
   

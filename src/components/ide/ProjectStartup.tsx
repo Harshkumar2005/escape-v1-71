@@ -40,6 +40,9 @@ export const ProjectStartup: React.FC = () => {
             // Convert file system to WebContainer format and mount
             const webContainerFiles = convertToWebContainerFormat(files);
             await mountFiles(webContainerFiles);
+          } else {
+            // In fallback mode, just simulate mounting
+            await mountFiles({});
           }
           
           toast.success('New project created successfully' + (isFallbackMode ? ' (fallback mode)' : ''));
