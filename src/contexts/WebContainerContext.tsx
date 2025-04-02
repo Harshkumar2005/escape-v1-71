@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { WebContainer } from '@webcontainer/api';
 import { useFileSystem, FileSystemItem } from './FileSystemContext';
@@ -138,7 +139,14 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
       await mountFiles(webContainerFiles);
       
       try {
-        const packageJsonExists = await webcontainer.fs.exists('/package.json');
+        // Using a try-catch approach to check file existence
+        let packageJsonExists = false;
+        try {
+          await webcontainer.fs.readFile('/package.json');
+          packageJsonExists = true;
+        } catch (error) {
+          packageJsonExists = false;
+        }
         
         if (packageJsonExists) {
           addLogMessage('info', 'Installing dependencies...');
