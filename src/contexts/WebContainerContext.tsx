@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { WebContainer } from '@webcontainer/api';
 import { useFileSystem, FileSystemItem } from './FileSystemContext';
@@ -35,18 +34,15 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
   const [terminal, setTerminal] = useState<any | null>(null);
   const { files, addLogMessage } = useFileSystem();
 
-  // Initialize WebContainer
   useEffect(() => {
     const initWebContainer = async () => {
       try {
         setIsLoading(true);
         addLogMessage('info', 'Initializing WebContainer...');
         
-        // Create the WebContainer instance
         const wc = await WebContainer.boot();
         setWebcontainer(wc);
         
-        // Create a basic file system to start with
         await wc.mount({
           'package.json': {
             file: {
@@ -80,15 +76,12 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
 
     initWebContainer();
 
-    // Cleanup function
     return () => {
-      // WebContainer doesn't have a direct shutdown method, but we can clean up resources
       setWebcontainer(null);
       setIsReady(false);
     };
   }, [addLogMessage]);
 
-  // Convert FileSystemItem array to WebContainer compatible file structure
   const convertToWebContainerFormat = (items: FileSystemItem[], parentPath = ''): Record<string, any> => {
     const result: Record<string, any> = {};
     
@@ -104,7 +97,6 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
           result[itemName] = { directory: {} };
         }
       } else {
-        // For files
         result[itemName] = {
           file: {
             contents: item.content || ''
@@ -116,7 +108,6 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
     return result;
   };
 
-  // Mount files to WebContainer
   const mountFiles = async (filesObj: Record<string, any>) => {
     if (!webcontainer) {
       throw new Error('WebContainer not initialized');
@@ -133,7 +124,6 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
     }
   };
 
-  // Bootstrap a project
   const bootstrapProject = async (projectName = 'webcontainer-project') => {
     if (!webcontainer) {
       throw new Error('WebContainer not initialized');
@@ -143,22 +133,17 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
       setIsLoading(true);
       addLogMessage('info', 'Bootstrapping project...');
 
-      // Convert current file system to WebContainer format
       const webContainerFiles = convertToWebContainerFormat(files);
       
-      // Mount the files
       await mountFiles(webContainerFiles);
       
-      // Check if package.json exists
       try {
-        // Use webcontainer.fs methods to check file existence
-        const packageJsonExists = await webcontainer.fs.stat('/package.json').then(() => true).catch(() => false);
+        const packageJsonExists = await webcontainer.fs.exists('/package.json');
         
         if (packageJsonExists) {
           addLogMessage('info', 'Installing dependencies...');
           const installProcess = await webcontainer.spawn('npm', ['install']);
           
-          // Create a Promise to handle the output stream
           const outputPromise = new Promise<string>((resolve, reject) => {
             let output = '';
             const timeoutId = setTimeout(() => {
@@ -206,7 +191,6 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
     }
   };
 
-  // Execute commands in the WebContainer
   const executeCommand = async (command: string, args: string[] = []): Promise<{ exitCode: number, output: string }> => {
     if (!webcontainer) {
       throw new Error('WebContainer not initialized');
@@ -216,7 +200,6 @@ export const WebContainerProvider: React.FC<WebContainerProviderProps> = ({ chil
       addLogMessage('info', `Executing command: ${command} ${args.join(' ')}`);
       const process = await webcontainer.spawn(command, args);
       
-      // Create a Promise to handle the output stream
       const outputPromise = new Promise<string>((resolve, reject) => {
         let output = '';
         const timeoutId = setTimeout(() => {
