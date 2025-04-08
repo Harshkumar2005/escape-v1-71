@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 const CONTEXT_MENU_ID = 'file-explorer-context-menu';
 const FILE_ITEM_MENU_ID = 'file-item-context-menu';
 const FOLDER_ITEM_MENU_ID = 'folder-item-context-menu';
+const DRAG_OVER_CLASS = 'bg-primary/20 border border-primary/40';
 
 const getFileIcon = (fileName: string) => {
   const extension = fileName.split('.').pop()?.toLowerCase();
@@ -90,7 +91,7 @@ const getFileIcon = (fileName: string) => {
 };
 
 const FileExplorer: React.FC = () => {
-  const { files, createFile, renameFile, deleteFile, toggleFolder } = useFileSystem();
+  const { files, createFile, renameFile, deleteFile, toggleFolder, moveFile } = useFileSystem();
   const { isReady, writeFile } = useWebContainer();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FileSystemItem[]>([]);
@@ -98,8 +99,10 @@ const FileExplorer: React.FC = () => {
   const [newItemType, setNewItemType] = useState<FileType | null>(null);
   const [newItemParentPath, setNewItemParentPath] = useState<string>('');
   const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
+  const [draggedOverId, setDraggedOverId] = useState<string | null>(null);
   const newItemInputRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const fileExplorerRef = useRef<HTMLDivElement>(null);
   
   const { show } = useContextMenu();
 
@@ -207,6 +210,104 @@ const FileExplorer: React.FC = () => {
     }
   };
 
+  const handleFileDrop = (droppedItem: FileSystemItem, targetItem: FileSystemItem) => {
+    if (droppedItem.type === 'folder') {
+      const isChildOfDropped = (item: FileSystemItem, potentialParentId: string): boolean => {
+        if (item.id === potentialParentId) return true;
+        
+        if (item.parentId === potentialParentId) return true;
+        
+        const parent = files.find(f => f.id === item.parentId) || 
+                     files.flatMap(f => f.children || []).find(f => f.id === item.parentId);
+        
+        if (parent) {
+          return isChildOfDropped(parent, potentialParentId);
+        }
+        
+        return false;
+      };
+      
+      if (isChildOfDropped(targetItem, droppedItem.id)) {
+        toast.error("Cannot move a folder into itself or its children");
+        return;
+      }
+    }
+    
+    if (droppedItem.parentId === targetItem.id) {
+      return;
+    }
+    
+    try {
+      moveFile(droppedItem.id, targetItem.id);
+      toast.success(`Moved ${droppedItem.name} to ${targetItem.name}`);
+    } catch (error) {
+      toast.error(`Failed to move ${droppedItem.name}`);
+      console.error('Move operation failed:', error);
+    }
+  };
+
+  const handleExternalFileDrop = async (files: FileList, targetPath: string) => {
+    if (!isReady) {
+      toast.error('WebContainer is not ready to accept files');
+      return;
+    }
+    
+    let successCount = 0;
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
+      try {
+        const newId = createFile(targetPath, file.name, 'file');
+        
+        if (newId) {
+          const content = await readFileAsText(file);
+          
+          const fullPath = `${targetPath === '/' ? '' : targetPath}/${file.name}`;
+          await writeFile(fullPath, content);
+          
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Error uploading ${file.name}:`, error);
+        toast.error(`Failed to upload ${file.name}`);
+      }
+    }
+    
+    if (successCount > 0) {
+      toast.success(`Successfully uploaded ${successCount} file${successCount > 1 ? 's' : ''}`);
+    }
+  };
+
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target && typeof event.target.result === 'string') {
+          resolve(event.target.result);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = () => reject(new Error('File reading error'));
+      reader.readAsText(file);
+    });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleExplorerDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.dataTransfer.files.length > 0) {
+      await handleExternalFileDrop(e.dataTransfer.files, files[0].path);
+    }
+  };
+
   const renderFileTree = (items: FileSystemItem[], depth = 0) => {
     return items.map(item => (
       <FileExplorerItem 
@@ -222,6 +323,10 @@ const FileExplorer: React.FC = () => {
         newItemInputRef={newItemInputRef}
         handleCreateNewItem={handleCreateNewItem}
         setRenamingItemId={setRenamingItemId}
+        onFileDrop={handleFileDrop}
+        onExternalFileDrop={handleExternalFileDrop}
+        draggedOverId={draggedOverId}
+        setDraggedOverId={setDraggedOverId}
       />
     ));
   };
@@ -230,6 +335,9 @@ const FileExplorer: React.FC = () => {
     <div 
       className="h-full overflow-auto bg-sidebar flex flex-col"
       onContextMenu={handleContextMenu}
+      ref={fileExplorerRef}
+      onDragOver={handleDragOver}
+      onDrop={handleExplorerDrop}
     >
       <div className="px-2 py-0.5 flex justify-between items-center border-b border-border">
         <h2 className="text-sm font-medium text-sidebar-foreground">EXPLORER</h2>
@@ -371,6 +479,10 @@ interface FileExplorerItemProps {
   newItemInputRef: React.RefObject<HTMLInputElement>;
   handleCreateNewItem: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   setRenamingItemId: React.Dispatch<React.SetStateAction<string | null>>;
+  onFileDrop: (droppedItem: FileSystemItem, targetItem: FileSystemItem) => void;
+  onExternalFileDrop: (files: FileList, targetPath: string) => void;
+  draggedOverId: string | null;
+  setDraggedOverId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const FileExplorerItem: React.FC<FileExplorerItemProps> = ({ 
@@ -384,7 +496,11 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
   newItemParentPath,
   newItemInputRef,
   handleCreateNewItem,
-  setRenamingItemId
+  setRenamingItemId,
+  onFileDrop,
+  onExternalFileDrop,
+  draggedOverId,
+  setDraggedOverId
 }) => {
   const { toggleFolder, selectedFile } = useFileSystem();
   const { openTab } = useEditor();
@@ -397,7 +513,48 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
     }
   };
   
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('application/json', JSON.stringify(item));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (item.type === 'folder') {
+      setDraggedOverId(item.id);
+      e.dataTransfer.dropEffect = 'move';
+    }
+  };
+  
+  const handleDragLeave = () => {
+    setDraggedOverId(null);
+  };
+  
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggedOverId(null);
+    
+    if (e.dataTransfer.files.length > 0 && item.type === 'folder') {
+      onExternalFileDrop(e.dataTransfer.files, item.path);
+      return;
+    }
+    
+    try {
+      const droppedItemData = e.dataTransfer.getData('application/json');
+      if (droppedItemData && item.type === 'folder') {
+        const droppedItem = JSON.parse(droppedItemData);
+        onFileDrop(droppedItem, item);
+      }
+    } catch (error) {
+      console.error('Error processing dropped item:', error);
+    }
+  };
+  
   const isSelected = selectedFile === item.id;
+  const isBeingDraggedOver = draggedOverId === item.id;
   const showNewItemInput = newItemType && newItemParentPath === item.path;
   
   return (
@@ -405,10 +562,17 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
       <div
         className={`file-explorer-item flex items-center py-0.5 px-1 cursor-pointer rounded ${
           isSelected ? 'selected' : ''
+        } ${
+          isBeingDraggedOver && item.type === 'folder' ? DRAG_OVER_CLASS : ''
         }`}
         style={{ paddingLeft: `${(depth * 12) + 4}px` }}
         onClick={handleItemClick}
         onContextMenu={(e) => handleItemContextMenu(e, item)}
+        draggable={true}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         {item.type === 'folder' && (
           <span className="mr-1 text-slate-400">
@@ -471,6 +635,10 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
               newItemInputRef={newItemInputRef}
               handleCreateNewItem={handleCreateNewItem}
               setRenamingItemId={setRenamingItemId}
+              onFileDrop={onFileDrop}
+              onExternalFileDrop={onExternalFileDrop}
+              draggedOverId={draggedOverId}
+              setDraggedOverId={setDraggedOverId}
             />
           ))}
         </div>

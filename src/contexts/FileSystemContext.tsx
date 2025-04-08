@@ -512,12 +512,17 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const newFiles = [...prevFiles];
       
       // Find the item to move
-      const fileToMove = findItemById(newFiles, fileId);
-      if (!fileToMove) return prevFiles;
+      const itemToMove = findItemById(newFiles, fileId);
+      if (!itemToMove) return prevFiles;
       
       // Find the new parent
       const newParent = findItemById(newFiles, newParentId);
       if (!newParent || newParent.type !== 'folder') return prevFiles;
+      
+      // Check if file/folder with the same name exists in the target folder
+      if (newParent.children?.some(child => child.name === itemToMove.name)) {
+        throw new Error(`A file or folder named '${itemToMove.name}' already exists in the destination folder`);
+      }
       
       // Find the current parent
       const currentParent = findParentById(newFiles, fileId);
@@ -527,11 +532,11 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       currentParent.children = currentParent.children!.filter(child => child.id !== fileId);
       
       // Update path and parentId
-      const oldPath = fileToMove.path;
-      fileToMove.path = `${newParent.path}/${fileToMove.name}`;
-      fileToMove.parentId = newParentId;
+      const oldPath = itemToMove.path;
+      itemToMove.path = `${newParent.path}/${itemToMove.name}`;
+      itemToMove.parentId = newParentId;
       
-      // Update paths of all children
+      // Update paths of all children recursively
       const updateChildPaths = (item: FileSystemItem, oldBasePath: string, newBasePath: string) => {
         if (item.children) {
           for (const child of item.children) {
@@ -541,10 +546,18 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       };
       
-      updateChildPaths(fileToMove, oldPath, fileToMove.path);
+      if (itemToMove.type === 'folder' && itemToMove.children) {
+        updateChildPaths(itemToMove, oldPath, itemToMove.path);
+      }
       
       // Add to new parent
-      newParent.children = [...(newParent.children || []), fileToMove];
+      if (!newParent.children) {
+        newParent.children = [];
+      }
+      newParent.children.push(itemToMove);
+      
+      // Ensure the parent folder is open to show the new item
+      newParent.isOpen = true;
       
       return newFiles;
     });
