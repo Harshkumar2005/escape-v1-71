@@ -46,9 +46,9 @@ const availableAgents: AIAgent[] = [
     description: 'Fast responses, good for quick questions and code generation'
   },
   { 
-    id: 'gemini-1.5-pro',
-    name: 'Gemini Pro', 
-    model: 'gemini-1.5-pro',
+    id: 'gemini-2.0-flash-thinking-exp-01-21',
+    name: 'Gemini Exp.', 
+    model: 'gemini-2.0-flash-thinking-exp-01-21',
     description: 'More powerful reasoning and code optimization capabilities'
   },
   { 
@@ -69,7 +69,7 @@ export function CodeBuddyChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedAgent, setSelectedAgent] = useState<AIAgent>(availableAgents[0]);
+  const [selectedAgent, setSelectedAgent] = useState<AIAgent>(availableAgents[1]);
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
   const [copiedCodeBlockIndex, setCopiedCodeBlockIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -243,7 +243,7 @@ export function CodeBuddyChat() {
   return (
     <div className="flex flex-col h-full bg-sidebar text-gray-100 overflow-hidden">
       <div class="px-2 py-0.5 flex justify-between items-center border-b border-border">
-        <h2 class="text-sm font-medium text-sidebar-foreground">EXPLORER</h2>
+        <h1 class="text-slate-400 text-sm font-medium mr-4">AI Code Assistant</h1>
         <div class="flex space-x-1">
          <div className="flex items-center gap-2 relative">
               <span className="text-gray-400 text-sm">Agent:</span>
