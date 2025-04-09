@@ -339,7 +339,7 @@ export function CodeBuddyChat() {
       <div className="bg-sidebar p-2 border-t border-gray-800">
         {/* Current file indicator */}
         {getCurrentFileName() && (
-          <div className="w-fit mb-2 px-2 py-0.5 rounded-md bg-[#cccccc15] text-sm flex items-center">
+          <div className="mb-2 px-2 py-0.5 rounded-md bg-[#cccccc15] text-sm flex items-center" style={{ width: "fit-content" }}>
             <span className="text-gray-400">@{getCurrentFileName()}</span>
           </div>
         )}
@@ -352,18 +352,18 @@ export function CodeBuddyChat() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask something about your code..."
-              className="w-full text-gray-100 px-1 py-0.5 focus:outline-none bg-transparent resize-none min-h-[60px] max-h-[150px]"
+              className="text-sm w-full text-gray-100 px-1 py-0.5 focus:outline-none bg-transparent resize-none min-h-[60px] max-h-[150px]"
               disabled={isLoading}
               rows={1}
             />
           </div>
           
           {/* Agent selector and send button */}
-          <div className="flex items-center justify-between mt-2 border-t border-gray-800 pt-2">
+          <div className="flex items-center justify-between border-t border-gray-800 pt-2">
             <div className="flex items-center gap-2 relative">
               <span className="text-gray-400 text-sm">Agent</span>
               <button 
-                className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-2 py-1 text-sm"
+                className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-1.5 py-0.5 text-sm"
                 onClick={() => setShowAgentDropdown(!showAgentDropdown)}
                 type="button"
               >
@@ -397,7 +397,7 @@ export function CodeBuddyChat() {
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-2 py-1 text-sm disabled:opacity-50 disabled:hover:bg-[#333333]"
+              className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-1.5 py-0.5 text-sm disabled:opacity-50 disabled:hover:bg-[#333333]"
             >
               <span>Send</span>
               <Send size={14} />
