@@ -10,8 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useFileSystem } from '@/contexts/FileSystemContext';
-import { useWebContainer } from '@/contexts/WebContainerContext';
-import { convertToWebContainerFormat } from '@/utils/webContainerUtils';
 import { toast } from 'sonner';
 import { GithubRepoLoader } from './GithubRepoLoader';
 
@@ -19,51 +17,25 @@ export const ProjectStartup: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [showGithubLoader, setShowGithubLoader] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { resetFileSystem, files } = useFileSystem();
-  const { mountFiles, isFallbackMode } = useWebContainer();
+  const { resetFileSystem } = useFileSystem();
 
   const handleClose = () => {
     setIsOpen(false);
   };
 
-  const handleStartNewProject = async () => {
+  const handleStartNewProject = () => {
     setIsLoading(true);
     
-    try {
-      // Reset file system to default state
+    // Add a small delay to show loading state
+    setTimeout(() => {
       resetFileSystem();
-      
-      // Wait for file system state to update
-      setTimeout(async () => {
-        try {
-          if (!isFallbackMode) {
-            // Convert file system to WebContainer format and mount
-            const webContainerFiles = convertToWebContainerFormat(files);
-            await mountFiles(webContainerFiles);
-          } else {
-            // In fallback mode, just simulate mounting
-            await mountFiles({});
-          }
-          
-          toast.success('New project created successfully' + (isFallbackMode ? ' (fallback mode)' : ''));
-          handleClose();
-        } catch (error: any) {
-          toast.error('Failed to initialize project: ' + error.message);
-          console.error('Project initialization error:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }, 800);
-    } catch (error) {
+      toast.success('New project created successfully');
       setIsLoading(false);
-      toast.error('Failed to create new project');
-    }
+      handleClose();
+    }, 800);
   };
 
   const handleLoadFromGithub = () => {
-    if (isFallbackMode) {
-      toast.warning('GitHub loading is limited in fallback mode');
-    }
     setShowGithubLoader(true);
   };
 
@@ -72,13 +44,9 @@ export const ProjectStartup: React.FC = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md bg-sidebar border-border">
           <DialogHeader>
-            <DialogTitle className="text-sidebar-foreground">
-              Welcome to Code Editor {isFallbackMode && "(Fallback Mode)"}
-            </DialogTitle>
+            <DialogTitle className="text-sidebar-foreground">Welcome to Code Editor</DialogTitle>
             <DialogDescription className="text-sidebar-foreground opacity-70">
-              {isFallbackMode 
-                ? "Running in fallback mode with limited functionality. Some features may be simulated."
-                : "Choose how you want to get started with your project"}
+              Choose how you want to get started with your project
             </DialogDescription>
           </DialogHeader>
           
@@ -97,9 +65,7 @@ export const ProjectStartup: React.FC = () => {
               <div className="text-left">
                 <div className="font-medium">Load from GitHub</div>
                 <div className="text-sm text-muted-foreground">
-                  {isFallbackMode 
-                    ? "Limited functionality in fallback mode"
-                    : "Import code from an existing public repository"}
+                  Import code from an existing public repository
                 </div>
               </div>
             </Button>
@@ -118,9 +84,7 @@ export const ProjectStartup: React.FC = () => {
               <div className="text-left">
                 <div className="font-medium">Start New Project</div>
                 <div className="text-sm text-muted-foreground">
-                  {isFallbackMode
-                    ? "Some features will be simulated"
-                    : "Begin with a blank workspace"}
+                  Begin with a blank workspace
                 </div>
               </div>
             </Button>

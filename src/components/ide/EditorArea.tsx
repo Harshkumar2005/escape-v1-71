@@ -1,12 +1,11 @@
+
 import React, { useRef, useEffect, useCallback } from 'react';
 import { Editor, OnMount, useMonaco } from '@monaco-editor/react';
 import { X, Circle } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
-import { useWebContainer } from '@/contexts/WebContainerContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useFont } from '@/contexts/FontContext';
-import { toast } from 'sonner';
 
 // Tab component for the editor
 interface TabProps {
@@ -53,43 +52,17 @@ const EditorArea: React.FC = () => {
     redoLastAction
   } = useEditor();
   
-  const { getFileById } = useFileSystem();
-  const { isReady, writeFile } = useWebContainer();
   const { editorTheme } = useTheme();
   const { editorFont } = useFont();
   const monaco = useMonaco();
   const editorRef = useRef<any>(null);
-  
-  // Save active file to WebContainer
-  const saveToWebContainer = useCallback(async (fileId: string, content: string) => {
-    if (!isReady) return;
-    
-    try {
-      const file = getFileById(fileId);
-      if (!file) return;
-      
-      // Write the file content to WebContainer
-      await writeFile(file.path, content);
-    } catch (error) {
-      console.error('Error saving to WebContainer:', error);
-      toast.error('Failed to save file to WebContainer');
-    }
-  }, [isReady, writeFile, getFileById]);
   
   // Handle keyboard shortcuts
   const handleKeyboardShortcuts = useCallback((e: KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
       if (e.key === 's') {
         e.preventDefault();
-        
-        if (activeTabId) {
-          // Save locally
-          saveActiveFile();
-          
-          // Also save to WebContainer
-          const content = getTabContent(activeTabId);
-          saveToWebContainer(activeTabId, content);
-        }
+        saveActiveFile();
       } else if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         undoLastAction();
@@ -98,7 +71,7 @@ const EditorArea: React.FC = () => {
         redoLastAction();
       }
     }
-  }, [saveActiveFile, undoLastAction, redoLastAction, activeTabId, saveToWebContainer, getTabContent]);
+  }, [saveActiveFile, undoLastAction, redoLastAction]);
 
   // Set up global keyboard shortcut listeners
   useEffect(() => {
@@ -351,20 +324,6 @@ monaco.editor.defineTheme('custom-light', {
       });*/
     }
   }, [monaco]);
-  
-  // Auto-save to WebContainer when content changes (debounced)
-  useEffect(() => {
-    if (!activeTabId) return;
-    
-    const timer = setTimeout(() => {
-      if (isReady) {
-        const content = getTabContent(activeTabId);
-        saveToWebContainer(activeTabId, content);
-      }
-    }, 1000); // 1 second debounce
-    
-    return () => clearTimeout(timer);
-  }, [activeTabId, getTabContent, isReady, saveToWebContainer]);
   
   return (
     <div className="h-full flex flex-col">
