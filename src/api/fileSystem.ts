@@ -1,3 +1,4 @@
+
 // Mock implementation for file system operations
 import EventEmitter from 'events';
 import mime from 'mime-types';
@@ -133,6 +134,11 @@ export async function createDirectory(dirPath: string): Promise<void> {
   }
 }
 
+interface FilePayload {
+  path: string;
+  content: string;
+}
+
 // API route handlers - these will be used by the server
 export async function handleListFiles(req: Request): Promise<Response> {
   return new Response(JSON.stringify(Array.from(mockFileSystem.files.keys())), {
@@ -152,8 +158,8 @@ export async function handleReadFile(req: Request): Promise<Response> {
 }
 
 export async function handleWriteFile(req: Request): Promise<Response> {
-  const { path, content } = await req.json();
-  mockFileSystem.files.set(path, content);
+  const body = await req.json() as FilePayload;
+  mockFileSystem.files.set(body.path, body.content);
   
   return new Response(JSON.stringify({ success: true }), {
     headers: { 'Content-Type': 'application/json' }
@@ -171,8 +177,8 @@ export async function handleDeleteFile(req: Request): Promise<Response> {
 }
 
 export async function handleCreateDirectory(req: Request): Promise<Response> {
-  const { path } = await req.json();
-  mockFileSystem.directories.add(path);
+  const body = await req.json() as FilePayload;
+  mockFileSystem.directories.add(body.path);
   
   return new Response(JSON.stringify({ success: true }), {
     headers: { 'Content-Type': 'application/json' }
