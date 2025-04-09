@@ -29,7 +29,7 @@ export function CodeBuddyChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { files, selectedFile } = useFileContext();
 
-  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+  const genAI = new GoogleGenerativeAI("AIzaSyBUSTc2Ux0c8iNu66zSc-v43Ie36te6q3Y");
   const model = genAI.getGenerativeModel({
     model: "gemini-pro",
     generationConfig: {
