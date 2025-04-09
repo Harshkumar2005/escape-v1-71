@@ -339,8 +339,8 @@ export function CodeBuddyChat() {
       <div className="bg-sidebar p-2 border-t border-gray-800">
         {/* Current file indicator */}
         {getCurrentFileName() && (
-          <div className="mb-2 px-3 py-1.5 rounded-md bg-[#cccccc15] text-sm flex items-center">
-            <span className="text-blue-400">@{getCurrentFileName()}</span>
+          <div className="mb-2 px-2 py-0.5 rounded-md bg-[#cccccc15] text-sm flex items-center">
+            <span className="text-gray-400">@{getCurrentFileName()}</span>
           </div>
         )}
 
