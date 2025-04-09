@@ -90,11 +90,11 @@ export function CodeBuddyChat() {
       const response = await result.response;
       const text = response.text();
 
-      setMessages(prev => [...prev, { role: 'assistant', content: text }]);
+      setMessages(prev => [...prev, { role: 'model', content: text }]);
     } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [...prev, { 
-        role: 'assistant', 
+        role: 'model', 
         content: 'Sorry, I encountered an error. Please try again.' 
       }]);
     } finally {
