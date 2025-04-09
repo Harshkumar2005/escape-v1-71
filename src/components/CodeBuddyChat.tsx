@@ -249,9 +249,9 @@ export function CodeBuddyChat() {
             key={index}
             className={`${
               message.role === 'user'
-                ? 'ml-auto bg-[#cccccc29] p-4 rounded-tl-lg rounded-tr-lg rounded-bl-lg max-w-[85%]'
-                : 'w-full max-w-full rounded-lg'
-            } p-2`}
+                ? 'text-gray-300 text-sm ml-auto bg-[#cccccc29] rounded-tl-lg rounded-tr-lg rounded-bl-lg max-w-[85%] px-2.5 py-1.5 opacity-90'
+                : 'text-gray-300 opacity-90 w-full max-w-full rounded-lg text-sm px-1.5'
+            } text-sm`}
           >
             <ReactMarkdown
               components={{
