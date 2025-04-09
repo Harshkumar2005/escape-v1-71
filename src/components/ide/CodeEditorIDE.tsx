@@ -114,7 +114,7 @@ const CodeEditorIDE: React.FC = () => {
                     {showRightSidebar && (
                       <>
                         <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={28} minSize={23} maxSize={30}>
+                        <ResizablePanel defaultSize={29} minSize={23} maxSize={30}>
                           <CodeBuddyChat />
                         </ResizablePanel>
                       </>
