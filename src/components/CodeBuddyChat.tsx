@@ -285,13 +285,13 @@ export function CodeBuddyChat() {
             )}
           </div>
           
-          <button
+          {/* <button
             onClick={() => setUseDarkTheme(!useDarkTheme)}
             className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-gray-300 text-sm"
             title={useDarkTheme ? "Switch to light theme" : "Switch to dark theme"}
           >
             <Code size={14} />
-          </button>
+          </button>*/}
         </div>
       </div>
       
@@ -321,8 +321,8 @@ export function CodeBuddyChat() {
                     const language = detectLanguage(className);
                     
                     return (
-                      <div className="relative group my-4 rounded-md overflow-hidden border border-gray-700">
-                        <div className="flex justify-between items-center bg-[#1E1E1E] px-4 py-2 text-xs text-gray-300">
+                      <div className="relative group my-4 rounded-md overflow-hidden border">
+                        <div className="border-b flex justify-between items-center px-4 py-2 text-xs text-gray-300">
                           <div className="flex items-center gap-2">
                             <Code size={14} />
                             <span className="font-medium uppercase">{language}</span>
@@ -330,7 +330,7 @@ export function CodeBuddyChat() {
                           <button
                             onClick={() => handleCopyCode(code, codeBlockIndex)}
                             className="flex items-center text-xs text-gray-400 hover:text-white transition-colors"
-                            aria-label="Copy code"
+                            aria-label="Copy"
                           >
                             {copiedCodeBlockIndex === codeBlockIndex ? (
                               <>
@@ -340,7 +340,7 @@ export function CodeBuddyChat() {
                             ) : (
                               <>
                                 <Copy size={14} className="mr-1" />
-                                <span>Copy code</span>
+                                <span>Copy</span>
                               </>
                             )}
                           </button>
@@ -354,15 +354,15 @@ export function CodeBuddyChat() {
                             margin: 0,
                             padding: '1rem',
                             fontSize: '0.875rem',
-                            backgroundColor: useDarkTheme ? '#282C34' : '#f6f8fa',
+                            backgroundColor: useDarkTheme ? '#1a1e26' : '#1a1e26',
                             scrollbarWidth: 'none',
                           }}
                           lineNumberStyle={{
-                            color: useDarkTheme ? '#636d83' : '#aaaaaa',
+                            color: useDarkTheme ? '#636d83' : '#636d83',
                             opacity: 0.6,
                             minWidth: '2.5em',
                             textAlign: 'right',
-                            paddingRight: '0.5em',
+                            paddingRight: '1em',
                           }}
                         >
                           {code}
