@@ -254,10 +254,10 @@ const EditorArea: React.FC = () => {
         }
       });
 
-monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-  noSemanticValidation: true, // disables package/module/name not found type errors
-  noSyntaxValidation: false,  // keeps showing missing brackets, colons, etc.
-});
+   monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,  // disable module not found, types not found etc.
+      noSyntaxValidation: false,  // keep showing syntax errors
+    });
       
 monaco.editor.defineTheme('custom-light', {
         base: 'vs-dark',
