@@ -15,6 +15,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   role: 'user' | 'model';
@@ -319,8 +320,9 @@ export function CodeBuddyChat() {
             } text-sm`}
           >
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               components={{
-                code({ node, className, children, ...props }) {
+                code({ node, className, children, inline, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const code = String(children).replace(/\n$/, '');
                   

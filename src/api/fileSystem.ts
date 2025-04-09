@@ -177,10 +177,10 @@ export async function handleDeleteFile(req: Request): Promise<Response> {
 }
 
 export async function handleCreateDirectory(req: Request): Promise<Response> {
-  const body = await req.json() as FilePayload;
+  const body = await req.json() as { path: string };
   mockFileSystem.directories.add(body.path);
   
   return new Response(JSON.stringify({ success: true }), {
     headers: { 'Content-Type': 'application/json' }
   });
-} 
+}

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { 
   File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
@@ -219,7 +218,7 @@ const FileExplorer: React.FC = () => {
       onContextMenu={handleContextMenu}
     >
       <div className="px-2 py-0.5 flex justify-between items-center border-b border-border">
-        <h1 class="text-slate-400 text-sm font-medium mr-4">File Explorer</h1>
+        <h1 className="text-slate-400 text-sm font-medium mr-4">File Explorer</h1>
         <div className="flex space-x-1">
           <button 
             className="p-1 text-slate-400 hover:text-white hover:bg-[#cccccc29] rounded transition-colors"
