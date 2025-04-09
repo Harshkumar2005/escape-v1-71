@@ -243,7 +243,7 @@ export function CodeBuddyChat() {
   return (
     <div className="flex flex-col h-full bg-sidebar text-gray-100 overflow-hidden">
       {/* Chat message area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 overflow-x-hidden">
+     <div className="flex-1 px-1.5 py-3 space-y-4 overflow-x-hidden" style={{scrollbarWidth: 'none',}}>
         {messages.map((message, index) => (
           <div
             key={index}
