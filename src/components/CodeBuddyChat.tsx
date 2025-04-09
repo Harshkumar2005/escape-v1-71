@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
@@ -322,11 +321,11 @@ export function CodeBuddyChat() {
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                code({ node, className, children, inline, ...props }) {
+                code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const code = String(children).replace(/\n$/, '');
                   
-                  if (!inline && match) {
+                  if (!props.inline && match) {
                     // For code blocks (not inline code)
                     const codeBlockIndex = messages
                       .filter(msg => msg.role === 'model')
@@ -377,7 +376,6 @@ export function CodeBuddyChat() {
                             textAlign: 'right',
                             paddingRight: '1em'
                           }}
-                          {...props}
                         >
                           {code}
                         </SyntaxHighlighter>
@@ -395,7 +393,6 @@ export function CodeBuddyChat() {
                     </code>
                   );
                 },
-                // Add custom styling for other markdown elements
                 p: ({ children }) => <p className="my-2 whitespace-pre-wrap break-words">{children}</p>,
                 ul: ({ children }) => <ul className="list-disc ml-6 my-2">{children}</ul>,
                 ol: ({ children }) => <ol className="list-decimal ml-6 my-2">{children}</ol>,
