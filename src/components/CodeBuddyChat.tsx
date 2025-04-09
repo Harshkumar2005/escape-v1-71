@@ -1,9 +1,11 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { useFileContext } from '@/contexts/FileContext';
+import { useFileSystem } from '@/contexts/FileSystemContext';
+import { useEditor } from '@/contexts/EditorContext';
 
 interface Message {
   role: 'user' | 'model';
@@ -27,16 +29,25 @@ export function CodeBuddyChat() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { files, selectedFile } = useFileContext();
+  
+  // Use the FileSystem context to access all files and the selected file
+  const { 
+    files,
+    selectedFile,
+    getFileById
+  } = useFileSystem();
+  
+  // Use the Editor context to get the active tab's content
+  const { openedTabs, activeTabId, getTabContent } = useEditor();
 
   const genAI = new GoogleGenerativeAI("AIzaSyBUSTc2Ux0c8iNu66zSc-v43Ie36te6q3Y");
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash-thinking-exp-01-21",
+    model: "gemini-1.5-flash",
     generationConfig: {
       temperature: 0.7,
       topP: 0.95,
       topK: 64,
-      maxOutputTokens: 65536,
+      maxOutputTokens: 8192,
     },
   });
 
@@ -48,6 +59,46 @@ export function CodeBuddyChat() {
     scrollToBottom();
   }, [messages]);
 
+  // Function to gather workspace file information
+  const getWorkspaceFileInfo = () => {
+    // Collect file information from the file system context
+    const fileInfoList = [];
+    
+    const processFiles = (items: any[]) => {
+      for (const item of items) {
+        if (item.type === 'file') {
+          fileInfoList.push({
+            path: item.path,
+            content: item.content || '',
+            isOpen: item.id === selectedFile,
+            fileType: item.language || 'plaintext'
+          });
+        }
+        
+        if (item.children && item.children.length > 0) {
+          processFiles(item.children);
+        }
+      }
+    };
+    
+    processFiles(files);
+    return fileInfoList;
+  };
+
+  // Get information about the currently active file
+  const getCurrentFileInfo = () => {
+    if (!activeTabId) return null;
+    
+    const activeFile = getFileById(activeTabId);
+    if (!activeFile) return null;
+    
+    return {
+      path: activeFile.path,
+      fileType: activeFile.language || 'plaintext',
+      content: getTabContent(activeTabId) || activeFile.content || ''
+    };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -58,17 +109,20 @@ export function CodeBuddyChat() {
     setIsLoading(true);
 
     try {
-      // Prepare file context for the AI
-      const fileContext = files.map(file => ({
-        path: file.path,
-        content: file.content,
-        isOpen: file.isOpen
-      })).filter(file => file.content); // Only include files with content
+      // Gather workspace information
+      const workspaceFiles = getWorkspaceFileInfo();
+      const currentFile = getCurrentFileInfo();
       
-      const fileContextMessage = `Current workspace files:\n${JSON.stringify(fileContext, null, 2)}\n\n${
-        selectedFile ? `Currently open file: ${selectedFile.path}\nFile type: ${selectedFile.fileType}\nContent:\n\`\`\`${selectedFile.fileType}\n${selectedFile.content}\n\`\`\`` : 'No file currently open.'
+      // Prepare file context for the AI
+      const fileContextMessage = `Current workspace files:\n${JSON.stringify(workspaceFiles, null, 2)}\n\n${
+        currentFile 
+          ? `Currently open file: ${currentFile.path}\nFile type: ${currentFile.fileType}\nContent:\n\`\`\`${currentFile.fileType}\n${currentFile.content}\n\`\`\`` 
+          : 'No file currently open.'
       }`;
       
+      // Log the context being sent (for debugging)
+      console.log("Sending context to AI:", fileContextMessage);
+
       const chat = model.startChat({
         history: [
           {
@@ -116,9 +170,13 @@ export function CodeBuddyChat() {
           >
             <ReactMarkdown
               components={{
-                code({ node, inline, className, children, ...props }) {
+                code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
-                  return !inline && match ? (
+                  return !match ? (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  ) : (
                     <SyntaxHighlighter
                       style={vscDarkPlus}
                       language={match[1]}
@@ -127,10 +185,6 @@ export function CodeBuddyChat() {
                     >
                       {String(children).replace(/\n$/, '')}
                     </SyntaxHighlighter>
-                  ) : (
-                    <code className={className} {...props}>
-                      {children}
-                    </code>
                   );
                 },
               }}
@@ -163,4 +217,4 @@ export function CodeBuddyChat() {
       </form>
     </div>
   );
-} 
+}

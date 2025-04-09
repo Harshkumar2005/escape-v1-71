@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Types
@@ -42,10 +41,10 @@ interface FileSystemContextType {
   removeLog: (id: string) => void;
   resetFileSystem: () => void;
   replaceFileSystem: (newRootName: string) => void;
+  getAllFiles: () => FileSystemItem[];
 }
 
 const FileSystemContext = createContext<FileSystemContextType | undefined>(undefined);
-
 
 // Helper function to determine language based on file extension
 const getLanguageFromExtension = (filename: string): string => {
@@ -123,9 +122,6 @@ const getLanguageFromExtension = (filename: string): string => {
   
   return extensionMap[extension] || 'plaintext';
 };
-
-
-
 
 // Sample initial file system
 const initialFileSystem: FileSystemItem[] = [
@@ -220,6 +216,23 @@ const findItemById = (files: FileSystemItem[], id: string): FileSystemItem | und
   return undefined;
 };
 
+// Helper function to get all files as a flat array (including files in subdirectories)
+const getAllFilesFlat = (files: FileSystemItem[]): FileSystemItem[] => {
+  let result: FileSystemItem[] = [];
+  
+  for (const file of files) {
+    if (file.type === 'file') {
+      result.push(file);
+    }
+    
+    if (file.children) {
+      result = result.concat(getAllFilesFlat(file.children));
+    }
+  }
+  
+  return result;
+};
+
 // Helper function to find a parent by child ID
 const findParentById = (files: FileSystemItem[], childId: string): FileSystemItem | undefined => {
   for (const file of files) {
@@ -267,6 +280,11 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Get file by ID
   const getFileById = (id: string) => {
     return findItemById(files, id);
+  };
+  
+  // Get all files as a flat array
+  const getAllFiles = () => {
+    return getAllFilesFlat(files);
   };
 
   // Create new file or folder
@@ -604,7 +622,8 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       clearLogs,
       removeLog,
       resetFileSystem,
-      replaceFileSystem
+      replaceFileSystem,
+      getAllFiles
     }}>
       {children}
     </FileSystemContext.Provider>
