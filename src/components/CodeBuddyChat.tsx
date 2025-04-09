@@ -374,10 +374,14 @@ export function CodeBuddyChat() {
       </div>
 
       {/* Input area with current file context */}
-      <div className="bg-sidebar p-2 border-t border-gray-800">
+      <div className="bg-sidebar p-2 border-t">
         {/* Current file indicator */}
         {getCurrentFileName() && (
-          <div className="mb-2 px-2 py-0.5 rounded-md bg-[#cccccc15] text-sm flex items-center" style={{ width: "fit-content" }}>
+          <div className="border mb-2 px-2 py-0.5 rounded-md text-sm flex items-center" style={{
+          width: 'fit-content',
+          marginTop: '-9px',
+          borderRadius: '0px 0px 0.375rem 0.375em'
+          }}>
             <span className="text-gray-400">@{getCurrentFileName()}</span>
           </div>
         )}
@@ -401,10 +405,10 @@ export function CodeBuddyChat() {
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-1.5 py-0.5 text-sm disabled:opacity-50 disabled:hover:bg-[#333333]"
+              className="h-7 flex items-center gap-1 bg-[#cccccc29] rounded-md px-1.5 py-0.5 text-sm disabled:opacity-50 disabled:hover:bg-[#333333]"
             >
               {/*<span>Send</span>*/}
-              <ArrowUp size={14} strokeWidth={3}/>
+              <ArrowUp size={18} strokeWidth={3}/>
             </button>
           </div>
         </form>
