@@ -31,7 +31,7 @@ export function CodeBuddyChat() {
 
   const genAI = new GoogleGenerativeAI("AIzaSyBUSTc2Ux0c8iNu66zSc-v43Ie36te6q3Y");
   const model = genAI.getGenerativeModel({
-    model: "gemini-pro",
+    model: "gemini-2.0-flash-thinking-exp-01-21",
     generationConfig: {
       temperature: 0.7,
       topP: 0.95,
