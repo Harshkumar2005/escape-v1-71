@@ -6,7 +6,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { 
-  Send, 
+  ArrowUp, 
   Copy, 
   Check,
   ChevronDown,
@@ -242,6 +242,44 @@ export function CodeBuddyChat() {
 
   return (
     <div className="flex flex-col h-full bg-sidebar text-gray-100 overflow-hidden">
+      <div class="px-2 py-0.5 flex justify-between items-center border-b border-border">
+        <h2 class="text-sm font-medium text-sidebar-foreground">EXPLORER</h2>
+        <div class="flex space-x-1">
+         <div className="flex items-center gap-2 relative">
+              <span className="text-gray-400 text-sm">Agent:</span>
+              <button 
+                className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-gray-300 text-sm"
+                onClick={() => setShowAgentDropdown(!showAgentDropdown)}
+                type="button"
+              >
+                <span>{selectedAgent.name}</span>
+                <ChevronDown size={14} />
+              </button>
+              
+              {/* Agent dropdown */}
+              {showAgentDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-sidebar-foreground border border-gray-700 rounded-md shadow-lg z-10 w-56">
+                  <div className="py-1">
+                    {availableAgents.map((agent) => (
+                      <button
+                        key={agent.id}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-[#cccccc29] flex flex-col"
+                        onClick={() => {
+                          setSelectedAgent(agent);
+                          setShowAgentDropdown(false);
+                        }}
+                        type="button"
+                      >
+                        <span className="font-medium">{agent.name}</span>
+                        <span className="text-xs text-gray-400 mt-0.5">{agent.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+        </div>
+      </div>
       {/* Chat message area */}
      <div className="flex-1 px-1.5 py-3 space-y-4 overflow-x-hidden" style={{scrollbarWidth: 'none',}}>
         {messages.map((message, index) => (
@@ -359,48 +397,14 @@ export function CodeBuddyChat() {
           </div>
           
           {/* Agent selector and send button */}
-          <div className="flex items-center justify-between border-t border-gray-800 pt-2">
-            <div className="flex items-center gap-2 relative">
-              <span className="text-gray-400 text-sm">Agent</span>
-              <button 
-                className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-1.5 py-0.5 text-sm"
-                onClick={() => setShowAgentDropdown(!showAgentDropdown)}
-                type="button"
-              >
-                <span>{selectedAgent.name}</span>
-                <ChevronDown size={14} />
-              </button>
-              
-              {/* Agent dropdown */}
-              {showAgentDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-sidebar-foreground border border-gray-700 rounded-md shadow-lg z-10 w-56">
-                  <div className="py-1">
-                    {availableAgents.map((agent) => (
-                      <button
-                        key={agent.id}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-[#cccccc29] flex flex-col"
-                        onClick={() => {
-                          setSelectedAgent(agent);
-                          setShowAgentDropdown(false);
-                        }}
-                        type="button"
-                      >
-                        <span className="font-medium">{agent.name}</span>
-                        <span className="text-xs text-gray-400 mt-0.5">{agent.description}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
+          <div className="flex items-center justify-end">
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
               className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-1.5 py-0.5 text-sm disabled:opacity-50 disabled:hover:bg-[#333333]"
             >
-              <span>Send</span>
-              <Send size={14} />
+              {/*<span>Send</span>*/}
+              <ArrowUp size={14} strokeWidth={3}/>
             </button>
           </div>
         </form>
