@@ -42,6 +42,7 @@
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
     "@tanstack/react-query": "^5.56.2",
+    "@webcontainer/api": "^1.1.0",
     "chokidar": "^3.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -65,16 +66,16 @@
     "react-router-dom": "^6.26.2",
     "react-syntax-highlighter": "^15.5.0",
     "recharts": "^2.12.7",
+    "remark-gfm": "^3.0.1",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
     "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0",
-    "zod": "^3.23.8",
-    "@webcontainer/api": "^1.1.0",
+    "xterm-addon-unicode11": "^0.6.0",
     "xterm-addon-web-links": "^0.9.0",
-    "xterm-addon-unicode11": "^0.6.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
