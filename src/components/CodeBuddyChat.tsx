@@ -100,7 +100,6 @@ export function CodeBuddyChat() {
     scrollToBottom();
   }, [messages]);
 
-  // Auto-resize textarea based on content
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -108,9 +107,7 @@ export function CodeBuddyChat() {
     }
   }, [input]);
 
-  // Function to gather workspace file information
   const getWorkspaceFileInfo = () => {
-    // Get all files from the file system context
     const allFiles = getAllFiles();
     
     return allFiles.map(file => ({
@@ -121,7 +118,6 @@ export function CodeBuddyChat() {
     }));
   };
 
-  // Get information about the currently active file
   const getCurrentFileInfo = () => {
     if (!activeTabId) return null;
     
@@ -139,10 +135,8 @@ export function CodeBuddyChat() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Get current file info
     const currentFile = getCurrentFileInfo();
     
-    // Prepend current file context to user message
     let userMessage = input.trim();
     if (currentFile) {
       userMessage = `Currently opened file: ${currentFile.path}\n\n${userMessage}`;
@@ -153,17 +147,14 @@ export function CodeBuddyChat() {
     setIsLoading(true);
 
     try {
-      // Gather workspace information
       const workspaceFiles = getWorkspaceFileInfo();
       
-      // Prepare file context for the AI
       const fileContextMessage = `Current workspace files:\n${JSON.stringify(workspaceFiles, null, 2)}\n\n${
         currentFile 
           ? `Currently open file: ${currentFile.path}\nFile type: ${currentFile.fileType}\nContent:\n\`\`\`${currentFile.fileType}\n${currentFile.content}\n\`\`\`` 
           : 'No file currently open.'
       }`;
       
-      // Log the context being sent (for debugging)
       console.log("Sending context to AI:", fileContextMessage);
 
       const model = genAI.getGenerativeModel({
@@ -219,7 +210,6 @@ export function CodeBuddyChat() {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && e.shiftKey) {
-      // Allow shift+enter for line breaks
       return;
     } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -227,30 +217,25 @@ export function CodeBuddyChat() {
     }
   };
 
-  // Enhanced copy code functionality with better feedback
   const handleCopyCode = (code: string, index: number) => {
     navigator.clipboard.writeText(code);
     setCopiedCodeBlockIndex(index);
     
-    // Show toast notification
     toast.success('Code copied to clipboard', {
       description: 'The code has been copied to your clipboard',
       icon: <CheckCircle size={18} />
     });
     
-    // Reset the copied state after 2 seconds
     setTimeout(() => {
       setCopiedCodeBlockIndex(null);
     }, 2000);
   };
 
-  // Get current file name for the input context
   const getCurrentFileName = () => {
     const currentFile = getCurrentFileInfo();
     return currentFile ? currentFile.path.split('/').pop() : null;
   };
 
-  // Detect language from the code block language class
   const detectLanguage = (className: string | undefined) => {
     if (!className) return 'text';
     const match = /language-(\w+)/.exec(className);
@@ -273,7 +258,6 @@ export function CodeBuddyChat() {
               <ChevronDown size={14} />
             </button>
             
-            {/* Agent dropdown */}
             {showAgentDropdown && (
               <div className="absolute top-full left-0 mt-1 bg-sidebar-foreground border border-gray-700 rounded-md shadow-lg z-10 w-56">
                 <div className="py-1">
@@ -296,7 +280,6 @@ export function CodeBuddyChat() {
             )}
           </div>
           
-          {/* Toggle syntax highlighting theme */}
           <button
             onClick={() => setUseDarkTheme(!useDarkTheme)}
             className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-gray-300 text-sm"
@@ -307,7 +290,6 @@ export function CodeBuddyChat() {
         </div>
       </div>
       
-      {/* Chat message area */}
       <div className="flex-1 px-1.5 py-3 space-y-4 overflow-x-hidden" style={{scrollbarWidth: 'none',}}>
         {messages.map((message, index) => (
           <div
@@ -323,10 +305,10 @@ export function CodeBuddyChat() {
               components={{
                 code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
+                  const isCodeBlock = match && !className?.includes('inline');
                   const code = String(children).replace(/\n$/, '');
                   
-                  if (!props.inline && match) {
-                    // For code blocks (not inline code)
+                  if (isCodeBlock) {
                     const codeBlockIndex = messages
                       .filter(msg => msg.role === 'model')
                       .findIndex(msg => msg === message);
@@ -383,7 +365,6 @@ export function CodeBuddyChat() {
                     );
                   }
                   
-                  // For inline code
                   return (
                     <code 
                       className={`bg-gray-700 bg-opacity-50 text-gray-200 px-1 py-0.5 rounded text-sm ${className}`} 
@@ -479,9 +460,7 @@ export function CodeBuddyChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input area with current file context */}
       <div className="bg-sidebar p-2 border-t">
-        {/* Current file indicator */}
         {getCurrentFileName() && (
           <div className="border mb-2 px-2 py-0.5 rounded-md text-sm flex items-center" style={{
             width: 'fit-content',
@@ -506,7 +485,6 @@ export function CodeBuddyChat() {
             />
           </div>
           
-          {/* Agent selector and send button */}
           <div className="flex items-center justify-end">
             <button
               type="submit"
