@@ -98,7 +98,7 @@ const CodeEditorIDE: React.FC = () => {
                           <EditorArea />
                         </ResizablePanel>
                         
-                        {/* Terminal */}
+                        {/* Terminal 
                         {showTerminal && (
                           <>
                             <ResizableHandle withHandle />
@@ -106,7 +106,7 @@ const CodeEditorIDE: React.FC = () => {
                               <TerminalPanel />
                             </ResizablePanel>
                           </>
-                        )}
+                        )}*/}
                       </ResizablePanelGroup>
                     </ResizablePanel>
 
@@ -114,7 +114,7 @@ const CodeEditorIDE: React.FC = () => {
                     {showRightSidebar && (
                       <>
                         <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                        <ResizablePanel defaultSize={24} minSize={20} maxSize={30}>
                           <CodeBuddyChat />
                         </ResizablePanel>
                       </>
