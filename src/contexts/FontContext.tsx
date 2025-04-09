@@ -1,50 +1,31 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type FontFamily = 'JetBrains Mono' | 'Fira Code' | 'Source Code Pro' | 'Inter';
+type Font = 'JetBrains Mono' | 'Fira Code' | 'Source Code Pro' | 'Menlo';
 
 interface FontContextType {
-  fontFamily: FontFamily;
-  setFontFamily: (font: FontFamily) => void;
-  availableFonts: FontFamily[];
-  uiFont: string;
+  fontFamily: Font;
+  setFontFamily: (font: Font) => void;
   editorFont: string;
+  availableFonts: Font[];
 }
 
-const FontContext = createContext<FontContextType | undefined>(undefined);
+const FontContext = createContext<FontContextType | null>(null);
 
-export const FontProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [fontFamily, setFontFamily] = useState<FontFamily>('Inter');
-  const availableFonts: FontFamily[] = ['JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Inter'];
-  
-  // Set Inter as UI font and JetBrains Mono as editor font
-  const uiFont = 'Inter';
-  const editorFont = 'JetBrains Mono';
+export const FontProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [fontFamily, setFontFamily] = useState<Font>('JetBrains Mono');
 
-  // Apply font changes
-  const handleFontChange = (font: FontFamily) => {
-    setFontFamily(font);
-    toast.success(`Font changed to ${font}`);
-  };
+  const availableFonts: Font[] = [
+    'JetBrains Mono',
+    'Fira Code',
+    'Source Code Pro',
+    'Menlo'
+  ];
 
-  // Apply font to root CSS variable
-  useEffect(() => {
-    document.documentElement.style.setProperty('--font-family', fontFamily);
-    // Apply Inter as UI font
-    document.documentElement.style.setProperty('--ui-font-family', uiFont);
-    // Apply JetBrains Mono specifically for code
-    document.documentElement.style.setProperty('--editor-font-family', editorFont);
-  }, [fontFamily, uiFont, editorFont]);
+  const editorFont = fontFamily;
 
   return (
-    <FontContext.Provider value={{
-      fontFamily,
-      setFontFamily: handleFontChange,
-      availableFonts,
-      uiFont,
-      editorFont
-    }}>
+    <FontContext.Provider value={{ fontFamily, setFontFamily, editorFont, availableFonts }}>
       {children}
     </FontContext.Provider>
   );
@@ -52,7 +33,7 @@ export const FontProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useFont = () => {
   const context = useContext(FontContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useFont must be used within a FontProvider');
   }
   return context;
