@@ -6,16 +6,18 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Send, 
   Plus, 
   X, 
   RefreshCw, 
   MoreHorizontal, 
-  Globe, 
-  FileType,
   ChevronDown,
+  Copy,
+  CheckCircle
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Message {
   role: 'user' | 'model';
@@ -34,9 +36,11 @@ const systemPrompt = `You are CodeBuddy, an expert programming assistant. Your r
 9. Help with both frontend and backend development
 10. Maintain a friendly and professional tone`;
 
-const fileTypes = [
-  { id: 'migrate', label: 'migrate.ts', icon: 'typescript' },
-  { id: 'merger', label: 'message-merger.rs', icon: 'rust' }
+const availableAgents = [
+  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
+  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet' },
+  { id: 'gpt-4o', name: 'GPT-4o' }
 ];
 
 export function CodeBuddyChat() {
@@ -44,6 +48,8 @@ export function CodeBuddyChat() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState('gemini-1.5-flash');
+  const [showAgentDropdown, setShowAgentDropdown] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Use the FileSystem context to access all files and the selected file
@@ -76,6 +82,21 @@ export function CodeBuddyChat() {
     scrollToBottom();
   }, [messages]);
 
+  // Get information about the currently active file
+  const getCurrentFileInfo = () => {
+    if (!activeTabId) return null;
+    
+    const activeFile = getFileById(activeTabId);
+    if (!activeFile) return null;
+    
+    return {
+      path: activeFile.path,
+      name: activeFile.name,
+      fileType: activeFile.language || 'plaintext',
+      content: getTabContent(activeTabId) || activeFile.content || ''
+    };
+  };
+
   // Function to gather workspace file information
   const getWorkspaceFileInfo = () => {
     // Get all files from the file system context
@@ -89,33 +110,28 @@ export function CodeBuddyChat() {
     }));
   };
 
-  // Get information about the currently active file
-  const getCurrentFileInfo = () => {
-    if (!activeTabId) return null;
-    
-    const activeFile = getFileById(activeTabId);
-    if (!activeFile) return null;
-    
-    return {
-      path: activeFile.path,
-      fileType: activeFile.language || 'plaintext',
-      content: getTabContent(activeTabId) || activeFile.content || ''
-    };
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const userMessage = input.trim();
+    
+    // Get current file info
+    const currentFile = getCurrentFileInfo();
+    let messageWithFileContext = userMessage;
+    
+    // Prepend currently opened file information
+    if (currentFile) {
+      messageWithFileContext = `Currently opened file: ${currentFile.path}\n\n${userMessage}`;
+    }
+    
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setMessages(prev => [...prev, { role: 'user', content: messageWithFileContext }]);
     setIsLoading(true);
 
     try {
       // Gather workspace information
       const workspaceFiles = getWorkspaceFileInfo();
-      const currentFile = getCurrentFileInfo();
       
       // Prepare file context for the AI
       const fileContextMessage = `Current workspace files:\n${JSON.stringify(workspaceFiles, null, 2)}\n\n${
@@ -152,7 +168,7 @@ export function CodeBuddyChat() {
         ],
       });
 
-      const result = await chat.sendMessage(userMessage);
+      const result = await chat.sendMessage(messageWithFileContext);
       const response = await result.response;
       const text = response.text();
 
@@ -168,24 +184,47 @@ export function CodeBuddyChat() {
     }
   };
 
-  // Helper function to render the file type icon
-  const renderFileIcon = (type: string) => {
-    switch (type) {
-      case 'typescript':
-        return <span className="text-blue-400 text-xs mr-1">TS</span>;
-      case 'rust':
-        return <span className="text-orange-400 text-xs mr-1">🦀</span>;
-      case 'image':
-        return null;
-      default:
-        return null;
-    }
+  const handleCopyCode = (code: string, index: number) => {
+    navigator.clipboard.writeText(code)
+      .then(() => {
+        setCopiedIndex(index);
+        toast.success("Code copied to clipboard!");
+        setTimeout(() => setCopiedIndex(null), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy code:', err);
+        toast.error("Failed to copy code");
+      });
+  };
+
+  const selectAgent = (agentId: string) => {
+    setSelectedAgent(agentId);
+    setShowAgentDropdown(false);
   };
 
   return (
     <div className="flex flex-col h-full bg-sidebar text-gray-100 overflow-hidden">
+      {/* Top bar */}
+      <div className="flex justify-between items-center p-3 border-b border-gray-800">
+        <h2 className="font-semibold text-lg">Chat</h2>
+        <div className="flex items-center space-x-2 text-gray-400">
+          <button className="hover:text-gray-300">
+            <Plus size={18} />
+          </button>
+          <button className="hover:text-gray-300">
+            <RefreshCw size={18} />
+          </button>
+          <button className="hover:text-gray-300">
+            <MoreHorizontal size={18} />
+          </button>
+          <button className="hover:text-gray-300">
+            <X size={18} />
+          </button>
+        </div>
+      </div>
+
       {/* Chat message area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 overflow-x-hidden">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -193,22 +232,46 @@ export function CodeBuddyChat() {
               message.role === 'user'
                 ? 'ml-auto bg-[#cccccc29] p-4 rounded-tl-lg rounded-tr-lg rounded-bl-lg'
                 : 'w-full rounded-lg'
-            } p-2 max-w-3xl`}
+            } p-2 max-w-3xl break-words`}
           >
             <ReactMarkdown
               components={{
-                code({ node, className, children, ...props }) {
+                code({ node, inline, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
-                  return !node?.position?.start.column ? (
-                    <SyntaxHighlighter
-                      style={vscDarkPlus}
-                      language={match ? match[1] : 'text'}
-                      {...props}
-                    >
-                      {String(children).replace(/\n$/, '')}
-                    </SyntaxHighlighter>
-                  ) : (
-                    <code className={className} {...props}>
+                  const language = match ? match[1] : 'text';
+                  
+                  if (!inline) {
+                    const code = String(children).replace(/\n$/, '');
+                    return (
+                      <div className="relative">
+                        <div className="flex justify-between items-center bg-[#1E1E1E] px-4 py-1 rounded-t-md border-b border-gray-700">
+                          <span className="text-xs text-gray-400">{language}</span>
+                          <button 
+                            onClick={() => handleCopyCode(code, index)}
+                            className="text-gray-400 hover:text-white flex items-center gap-1"
+                          >
+                            {copiedIndex === index ? (
+                              <><CheckCircle size={14} /> Copied</>
+                            ) : (
+                              <><Copy size={14} /> Copy code</>
+                            )}
+                          </button>
+                        </div>
+                        <SyntaxHighlighter
+                          language={language}
+                          style={vscDarkPlus}
+                          customStyle={{ margin: 0, borderRadius: '0 0 6px 6px' }}
+                          showLineNumbers={true}
+                          wrapLines={true}
+                          wrapLongLines={true}
+                        >
+                          {code}
+                        </SyntaxHighlighter>
+                      </div>
+                    );
+                  }
+                  return (
+                    <code className="bg-gray-800 px-1 py-0.5 rounded text-sm" {...props}>
                       {children}
                     </code>
                   );
@@ -231,42 +294,51 @@ export function CodeBuddyChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input area with file tags */}
-      <div className="bg-sidebar p-2 border-t">
-        {/* File type tags */}
-        <div className="flex items-center gap-2 mb-2 overflow-x-auto pb-2 scrollbar-none">
-          
-          {fileTypes.map(type => (
-            <button 
-              key={type.id} 
-              className="text-gray-300 rounded-md px-2 py-1 text-sm flex items-center hover:bg-[#333333]"
-            >
-              {renderFileIcon(type.icon)}
-              {type.label}
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={handleSubmit} className="relative">
-          <div className="bg-sidebar rounded-lg overflow-hidden">
-            <input
-              type="text"
+      {/* Input area */}
+      <div className="bg-sidebar p-3 border-t border-gray-800">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div className="relative bg-[#2a2a2a] rounded-lg">
+            {getCurrentFileInfo() && (
+              <div className="absolute top-2 left-3 text-blue-400 text-sm z-10">
+                @{getCurrentFileInfo()?.name}
+              </div>
+            )}
+            <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Plan, search, build anything..."
-              className="w-full text-gray-100 px-3 py-3 focus:outline-none"
-              disabled={isLoading}
+              placeholder={`Plan, search, build anything...${getCurrentFileInfo() ? '' : ''}`}
+              className="bg-transparent border-none text-gray-100 min-h-[80px] pt-7 resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
           
           {/* Agent selector and send button */}
           <div className="flex items-center justify-between mt-2 border-t border-gray-800 pt-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 relative">
               <span className="text-gray-400 text-sm">Agent</span>
-              <button className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-2 py-1 text-sm">
-                <span>{selectedAgent}</span>
+              <button 
+                type="button"
+                className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-2 py-1 text-sm"
+                onClick={() => setShowAgentDropdown(!showAgentDropdown)}
+              >
+                <span>{availableAgents.find(a => a.id === selectedAgent)?.name || selectedAgent}</span>
                 <ChevronDown size={14} />
               </button>
+              
+              {/* Dropdown for agent selection */}
+              {showAgentDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-[#2a2a2a] border border-gray-700 rounded-md shadow-lg z-10">
+                  {availableAgents.map(agent => (
+                    <button
+                      key={agent.id}
+                      type="button"
+                      className="block w-full text-left px-4 py-2 text-sm hover:bg-[#3a3a3a] text-gray-300"
+                      onClick={() => selectAgent(agent.id)}
+                    >
+                      {agent.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             
             <button
