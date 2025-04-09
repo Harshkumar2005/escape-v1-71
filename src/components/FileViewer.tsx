@@ -1,29 +1,30 @@
+
 import { useState } from 'react';
-import { useFileContext } from '@/contexts/FileContext';
+import { useFileSystem } from '@/contexts/FileSystemContext';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { SaveIcon, EditIcon, XIcon } from 'lucide-react';
+import { Save, Edit, X } from 'lucide-react';
 
 export function FileViewer() {
-  const { files, currentFile, writeFile } = useFileContext();
+  const { selectedFile, getFileById, updateFileContent } = useFileSystem();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   
-  const currentFileInfo = currentFile 
-    ? files.find(f => f.path === currentFile) 
+  const currentFileInfo = selectedFile
+    ? getFileById(selectedFile)
     : null;
   
   const handleEdit = () => {
     if (currentFileInfo) {
-      setEditedContent(currentFileInfo.content);
+      setEditedContent(currentFileInfo.content || '');
       setIsEditing(true);
     }
   };
   
   const handleSave = async () => {
-    if (currentFileInfo) {
+    if (currentFileInfo && currentFileInfo.id) {
       try {
-        await writeFile(currentFileInfo.path, editedContent);
+        updateFileContent(currentFileInfo.id, editedContent);
         setIsEditing(false);
       } catch (error) {
         console.error('Error saving file:', error);
@@ -55,14 +56,14 @@ export function FileViewer() {
                 onClick={handleSave}
                 title="Save"
               >
-                <SaveIcon size={16} />
+                <Save size={16} />
               </button>
               <button 
                 className="p-1 rounded hover:bg-gray-700"
                 onClick={handleCancel}
                 title="Cancel"
               >
-                <XIcon size={16} />
+                <X size={16} />
               </button>
             </>
           ) : (
@@ -71,7 +72,7 @@ export function FileViewer() {
               onClick={handleEdit}
               title="Edit"
             >
-              <EditIcon size={16} />
+              <Edit size={16} />
             </button>
           )}
         </div>
@@ -87,14 +88,14 @@ export function FileViewer() {
           />
         ) : (
           <SyntaxHighlighter
-            language={currentFileInfo.fileType}
+            language={currentFileInfo.language || 'plaintext'}
             style={vscDarkPlus}
             customStyle={{ margin: 0, height: '100%' }}
           >
-            {currentFileInfo.content}
+            {currentFileInfo.content || ''}
           </SyntaxHighlighter>
         )}
       </div>
     </div>
   );
-} 
+}
