@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { CodeBuddyChat } from '@/components/CodeBuddyChat';
+import CodeEditorIDE from '@/components/ide/CodeEditorIDE';
 
-const Index: React.FC = () => {
+const Index = () => {
   return (
-    <div className="h-screen">
-      <CodeBuddyChat />
+    <div className="h-screen w-screen overflow-hidden">
+      <CodeEditorIDE />
     </div>
   );
 };

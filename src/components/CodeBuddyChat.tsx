@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
@@ -10,8 +9,6 @@ interface Message {
   role: 'user' | 'model';
   content: string;
 }
-
-const API_KEY = "AIzaSyDJmv6gSRcBEO6aWc9IIdpFWUO08fbmzXE"; // Replace with your actual API key
 
 const systemPrompt = `You are CodeBuddy, an expert programming assistant. Your role is to:
 1. Help users with coding tasks, debugging, and best practices
@@ -32,14 +29,14 @@ export function CodeBuddyChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { files, selectedFile } = useFileContext();
 
-  const genAI = new GoogleGenerativeAI(API_KEY);
+  const genAI = new GoogleGenerativeAI("AIzaSyBUSTc2Ux0c8iNu66zSc-v43Ie36te6q3Y");
   const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash-thinking-exp-01-21",
     generationConfig: {
       temperature: 0.7,
       topP: 0.95,
       topK: 64,
-      maxOutputTokens: 8192,
+      maxOutputTokens: 65536,
     },
   });
 
@@ -51,30 +48,6 @@ export function CodeBuddyChat() {
     scrollToBottom();
   }, [messages]);
 
-  // Function to get file information from the context
-  const getFileInformation = () => {
-    // Make sure we have files to work with
-    if (!files || files.length === 0) {
-      return "No files available in the workspace.";
-    }
-
-    // Format the files information for the AI
-    const filesInfo = files.map(file => ({
-      path: file.path,
-      content: file.content,
-      isOpen: file.isOpen
-    }));
-
-    // Create a string with the file context
-    const fileContext = `Current workspace files:\n${JSON.stringify(filesInfo, null, 2)}\n\n${
-      selectedFile 
-        ? `Currently open file: ${selectedFile.path}\nFile type: ${selectedFile.fileType}\nContent:\n\`\`\`${selectedFile.fileType}\n${selectedFile.content}\n\`\`\``
-        : 'No file currently open.'
-    }`;
-
-    return fileContext;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -85,10 +58,16 @@ export function CodeBuddyChat() {
     setIsLoading(true);
 
     try {
-      // Get file context information
-      const fileContextMessage = getFileInformation();
+      // Prepare file context for the AI
+      const fileContext = files.map(file => ({
+        path: file.path,
+        content: file.content,
+        isOpen: file.isOpen
+      })).filter(file => file.content); // Only include files with content
       
-      console.log("File context being sent to AI:", fileContextMessage);
+      const fileContextMessage = `Current workspace files:\n${JSON.stringify(fileContext, null, 2)}\n\n${
+        selectedFile ? `Currently open file: ${selectedFile.path}\nFile type: ${selectedFile.fileType}\nContent:\n\`\`\`${selectedFile.fileType}\n${selectedFile.content}\n\`\`\`` : 'No file currently open.'
+      }`;
       
       const chat = model.startChat({
         history: [
@@ -113,10 +92,10 @@ export function CodeBuddyChat() {
 
       setMessages(prev => [...prev, { role: 'model', content: text }]);
     } catch (error) {
-      console.error('Error sending message to AI:', error);
+      console.error('Error:', error);
       setMessages(prev => [...prev, { 
         role: 'model', 
-        content: 'Sorry, I encountered an error. Please try again. Error details: ' + (error instanceof Error ? error.message : String(error)) 
+        content: 'Sorry, I encountered an error. Please try again.' 
       }]);
     } finally {
       setIsLoading(false);
@@ -184,4 +163,4 @@ export function CodeBuddyChat() {
       </form>
     </div>
   );
-}
+} 

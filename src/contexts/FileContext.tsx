@@ -171,4 +171,4 @@ export const useFileContext = () => {
     throw new Error('useFileContext must be used within a FileProvider');
   }
   return context;
-};
+}; 
