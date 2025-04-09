@@ -35,6 +35,8 @@ const systemPrompt = `You are CodeBuddy, an expert programming assistant. Your r
 10. Maintain a friendly and professional tone`;
 
 const fileTypes = [
+  { id: 'image', label: 'Image', icon: 'image' },
+  { id: 'action', label: 'action.ts', icon: 'typescript' },
   { id: 'migrate', label: 'migrate.ts', icon: 'typescript' },
   { id: 'merger', label: 'message-merger.rs', icon: 'rust' }
 ];
@@ -43,7 +45,7 @@ export function CodeBuddyChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedAgent, setSelectedAgent] = useState('gemini-1.5-flash');
+  const [selectedAgent, setSelectedAgent] = useState('claude-3.7-sonnet');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Use the FileSystem context to access all files and the selected file
@@ -183,7 +185,26 @@ export function CodeBuddyChat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-sidebar text-gray-100 overflow-hidden">
+    <div className="flex flex-col h-full bg-[#141414] text-gray-100 rounded-lg overflow-hidden border border-gray-800">
+      {/* Top bar with title and icons */}
+      <div className="flex items-center justify-between p-3 border-b border-gray-800 bg-[#1a1a1a]">
+        <h2 className="text-xl font-semibold">Chat</h2>
+        <div className="flex items-center gap-2">
+          <button className="p-1.5 hover:bg-gray-700 rounded-full text-gray-400">
+            <Plus size={18} />
+          </button>
+          <button className="p-1.5 hover:bg-gray-700 rounded-full text-gray-400">
+            <RefreshCw size={18} />
+          </button>
+          <button className="p-1.5 hover:bg-gray-700 rounded-full text-gray-400">
+            <MoreHorizontal size={18} />
+          </button>
+          <button className="p-1.5 hover:bg-gray-700 rounded-full text-gray-400">
+            <X size={18} />
+          </button>
+        </div>
+      </div>
+
       {/* Chat message area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => (
@@ -191,9 +212,9 @@ export function CodeBuddyChat() {
             key={index}
             className={`${
               message.role === 'user'
-                ? 'ml-auto bg-[#cccccc29] p-4 rounded-tl-lg rounded-tr-lg rounded-bl-lg'
-                : 'w-full rounded-lg'
-            } p-2 max-w-3xl`}
+                ? 'ml-auto bg-[#2a2a2a] rounded-tl-lg rounded-tr-lg rounded-bl-lg'
+                : 'bg-[#1e1e1e] w-full rounded-lg'
+            } p-4 max-w-3xl`}
           >
             <ReactMarkdown
               components={{
@@ -220,7 +241,7 @@ export function CodeBuddyChat() {
           </div>
         ))}
         {isLoading && (
-          <div className="w-full rounded-lg p-4 max-w-3xl">
+          <div className="bg-[#1e1e1e] w-full rounded-lg p-4 max-w-3xl">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
               <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-100"></div>
@@ -232,14 +253,17 @@ export function CodeBuddyChat() {
       </div>
 
       {/* Input area with file tags */}
-      <div className="bg-sidebar p-2 border-t">
+      <div className="bg-[#1a1a1a] p-3 border-t border-gray-800">
         {/* File type tags */}
         <div className="flex items-center gap-2 mb-2 overflow-x-auto pb-2 scrollbar-none">
+          <button className="bg-[#262626] text-gray-300 rounded-md px-2 py-1 text-sm flex items-center hover:bg-[#333333]">
+            <span className="mr-1">@</span>
+          </button>
           
           {fileTypes.map(type => (
             <button 
               key={type.id} 
-              className="text-gray-300 rounded-md px-2 py-1 text-sm flex items-center hover:bg-[#333333]"
+              className="bg-[#262626] text-gray-300 rounded-md px-2 py-1 text-sm flex items-center hover:bg-[#333333]"
             >
               {renderFileIcon(type.icon)}
               {type.label}
@@ -248,13 +272,13 @@ export function CodeBuddyChat() {
         </div>
 
         <form onSubmit={handleSubmit} className="relative">
-          <div className="bg-sidebar rounded-lg overflow-hidden">
+          <div className="bg-[#262626] rounded-lg overflow-hidden">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Plan, search, build anything..."
-              className="w-full text-gray-100 px-3 py-3 focus:outline-none"
+              className="w-full bg-transparent text-gray-100 px-3 py-3 focus:outline-none"
               disabled={isLoading}
             />
           </div>
@@ -263,7 +287,7 @@ export function CodeBuddyChat() {
           <div className="flex items-center justify-between mt-2 border-t border-gray-800 pt-2">
             <div className="flex items-center gap-2">
               <span className="text-gray-400 text-sm">Agent</span>
-              <button className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-2 py-1 text-sm">
+              <button className="flex items-center gap-1 bg-[#262626] rounded-md px-2 py-1 text-sm hover:bg-[#333333]">
                 <span>{selectedAgent}</span>
                 <ChevronDown size={14} />
               </button>
@@ -272,7 +296,7 @@ export function CodeBuddyChat() {
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="bg-[#cccccc29] text-white px-4 py-1.5 rounded-md flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-[#333333]"
+              className="bg-[#333333] text-white px-4 py-1.5 rounded-md hover:bg-[#444444] flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-[#333333]"
             >
               <span>Send</span>
               <Send size={14} />
