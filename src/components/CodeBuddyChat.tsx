@@ -6,7 +6,16 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
-import { Send, Plus, X } from 'lucide-react';
+import { 
+  Send, 
+  Plus, 
+  X, 
+  RefreshCw, 
+  MoreHorizontal, 
+  Globe, 
+  FileType,
+  ChevronDown,
+} from 'lucide-react';
 
 interface Message {
   role: 'user' | 'model';
@@ -25,10 +34,18 @@ const systemPrompt = `You are CodeBuddy, an expert programming assistant. Your r
 9. Help with both frontend and backend development
 10. Maintain a friendly and professional tone`;
 
+const fileTypes = [
+  { id: 'image', label: 'Image', icon: 'image' },
+  { id: 'action', label: 'action.ts', icon: 'typescript' },
+  { id: 'migrate', label: 'migrate.ts', icon: 'typescript' },
+  { id: 'merger', label: 'message-merger.rs', icon: 'rust' }
+];
+
 export function CodeBuddyChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState('claude-3.7-sonnet');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Use the FileSystem context to access all files and the selected file
@@ -153,20 +170,42 @@ export function CodeBuddyChat() {
     }
   };
 
+  // Helper function to render the file type icon
+  const renderFileIcon = (type: string) => {
+    switch (type) {
+      case 'typescript':
+        return <span className="text-blue-400 text-xs mr-1">TS</span>;
+      case 'rust':
+        return <span className="text-orange-400 text-xs mr-1">🦀</span>;
+      case 'image':
+        return null;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-[#141414] text-gray-100 rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between p-3 border-b border-gray-800">
+    <div className="flex flex-col h-full bg-[#141414] text-gray-100 rounded-lg overflow-hidden border border-gray-800">
+      {/* Top bar with title and icons */}
+      <div className="flex items-center justify-between p-3 border-b border-gray-800 bg-[#1a1a1a]">
         <h2 className="text-xl font-semibold">Chat</h2>
         <div className="flex items-center gap-2">
-          <button className="p-1.5 hover:bg-gray-700 rounded-full">
+          <button className="p-1.5 hover:bg-gray-700 rounded-full text-gray-400">
             <Plus size={18} />
           </button>
-          <button className="p-1.5 hover:bg-gray-700 rounded-full">
+          <button className="p-1.5 hover:bg-gray-700 rounded-full text-gray-400">
+            <RefreshCw size={18} />
+          </button>
+          <button className="p-1.5 hover:bg-gray-700 rounded-full text-gray-400">
+            <MoreHorizontal size={18} />
+          </button>
+          <button className="p-1.5 hover:bg-gray-700 rounded-full text-gray-400">
             <X size={18} />
           </button>
         </div>
       </div>
-      
+
+      {/* Chat message area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => (
           <div
@@ -179,13 +218,12 @@ export function CodeBuddyChat() {
           >
             <ReactMarkdown
               components={{
-                code({ node, inline, className, children, ...props }) {
+                code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
-                  return !inline && match ? (
+                  return !node?.position?.start.column ? (
                     <SyntaxHighlighter
                       style={vscDarkPlus}
-                      language={match[1]}
-                      PreTag="div"
+                      language={match ? match[1] : 'text'}
                       {...props}
                     >
                       {String(children).replace(/\n$/, '')}
@@ -214,40 +252,58 @@ export function CodeBuddyChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="p-3 border-t border-gray-800">
-        <div className="flex items-center bg-[#2a2a2a] rounded-lg">
-          <div className="flex items-center gap-1 p-2 pl-3">
-            <button type="button" className="p-1 text-gray-400 hover:text-gray-200">
-              @
-            </button>
-            <span className="text-gray-600 mx-1">|</span>
-            <button type="button" className="p-1 text-gray-400 hover:text-gray-200">
-              •••
-            </button>
-            <span className="text-gray-600 mx-1">Image</span>
-          </div>
+      {/* Input area with file tags */}
+      <div className="bg-[#1a1a1a] p-3 border-t border-gray-800">
+        {/* File type tags */}
+        <div className="flex items-center gap-2 mb-2 overflow-x-auto pb-2 scrollbar-none">
+          <button className="bg-[#262626] text-gray-300 rounded-md px-2 py-1 text-sm flex items-center hover:bg-[#333333]">
+            <span className="mr-1">@</span>
+          </button>
           
-          <div className="flex-1">
+          {fileTypes.map(type => (
+            <button 
+              key={type.id} 
+              className="bg-[#262626] text-gray-300 rounded-md px-2 py-1 text-sm flex items-center hover:bg-[#333333]"
+            >
+              {renderFileIcon(type.icon)}
+              {type.label}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="relative">
+          <div className="bg-[#262626] rounded-lg overflow-hidden">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Plan, search, build anything..."
-              className="w-full bg-transparent text-gray-100 px-2 py-3 focus:outline-none"
+              className="w-full bg-transparent text-gray-100 px-3 py-3 focus:outline-none"
               disabled={isLoading}
             />
           </div>
           
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="bg-[#3a3a3a] text-white px-4 py-2 m-1 rounded-md hover:bg-[#4a4a4a] flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-[#3a3a3a]"
-          >
-            <span>Send</span>
-            <Send size={16} />
-          </button>
-        </div>
-      </form>
+          {/* Agent selector and send button */}
+          <div className="flex items-center justify-between mt-2 border-t border-gray-800 pt-2">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-sm">Agent</span>
+              <button className="flex items-center gap-1 bg-[#262626] rounded-md px-2 py-1 text-sm hover:bg-[#333333]">
+                <span>{selectedAgent}</span>
+                <ChevronDown size={14} />
+              </button>
+            </div>
+            
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="bg-[#333333] text-white px-4 py-1.5 rounded-md hover:bg-[#444444] flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-[#333333]"
+            >
+              <span>Send</span>
+              <Send size={14} />
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
