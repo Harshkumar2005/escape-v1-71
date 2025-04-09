@@ -4,7 +4,6 @@ import { useFileSystem } from '@/contexts/FileSystemContext';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Save, Edit, X } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 
 export function FileViewer() {
   const { selectedFile, getFileById, updateFileContent } = useFileSystem();
@@ -81,10 +80,10 @@ export function FileViewer() {
       
       <div className="flex-1 overflow-auto p-4">
         {isEditing ? (
-          <Textarea
+          <textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="w-full h-full bg-gray-900 text-gray-100 font-mono p-4 rounded resize-none"
+            className="w-full h-full bg-gray-900 text-gray-100 font-mono p-4 rounded"
             spellCheck="false"
           />
         ) : (
@@ -92,9 +91,6 @@ export function FileViewer() {
             language={currentFileInfo.language || 'plaintext'}
             style={vscDarkPlus}
             customStyle={{ margin: 0, height: '100%' }}
-            showLineNumbers={true}
-            wrapLines={true}
-            wrapLongLines={true}
           >
             {currentFileInfo.content || ''}
           </SyntaxHighlighter>
