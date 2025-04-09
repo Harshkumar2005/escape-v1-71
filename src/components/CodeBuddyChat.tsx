@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { 
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import remarkGfm from 'remark-gfm';
+import { customDarkTheme, customLightTheme } from '@/utils/prismTheme';
 
 interface Message {
   role: 'user' | 'model';
@@ -242,6 +242,11 @@ export function CodeBuddyChat() {
     return match ? match[1] : 'text';
   };
 
+  const isCodeBlock = (className: string | undefined) => {
+    if (!className) return false;
+    return /language-(\w+)/.test(className || '');
+  };
+
   return (
     <div className="flex flex-col h-full bg-sidebar text-gray-100 overflow-hidden">
       <div className="px-2 py-0.5 flex justify-between items-center border-b border-border">
@@ -305,10 +310,10 @@ export function CodeBuddyChat() {
               components={{
                 code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
-                  const isCodeBlock = match && !className?.includes('inline');
+                  const codeBlock = isCodeBlock(className);
                   const code = String(children).replace(/\n$/, '');
                   
-                  if (isCodeBlock) {
+                  if (codeBlock) {
                     const codeBlockIndex = messages
                       .filter(msg => msg.role === 'model')
                       .findIndex(msg => msg === message);
@@ -341,19 +346,19 @@ export function CodeBuddyChat() {
                           </button>
                         </div>
                         <SyntaxHighlighter
-                          style={useDarkTheme ? vscDarkPlus : oneLight}
-                          language={match[1]}
+                          style={useDarkTheme ? customDarkTheme : customLightTheme}
+                          language={match ? match[1] : 'text'}
                           showLineNumbers={true}
                           wrapLines={true}
                           customStyle={{
                             margin: 0,
                             padding: '1rem',
                             fontSize: '0.875rem',
-                            backgroundColor: useDarkTheme ? '#1a1e2600' : '#1a1e2600',
+                            backgroundColor: useDarkTheme ? '#282C34' : '#f6f8fa',
                             scrollbarWidth: 'none',
                           }}
                           lineNumberStyle={{
-                            color: useDarkTheme ? '#ebebeb' : '#ebebeb',
+                            color: useDarkTheme ? '#636d83' : '#aaaaaa',
                             opacity: 0.6,
                             minWidth: '2.5em',
                             textAlign: 'right',
