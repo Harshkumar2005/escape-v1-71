@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
@@ -353,7 +352,7 @@ export function CodeBuddyChat() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask something about your code..."
-              className="w-full text-gray-100 px-3 py-3 focus:outline-none bg-transparent resize-none min-h-[60px] max-h-[200px]"
+              className="w-full text-gray-100 px-1 py-0.5 focus:outline-none bg-transparent resize-none min-h-[60px] max-h-[150px]"
               disabled={isLoading}
               rows={1}
             />
@@ -398,7 +397,7 @@ export function CodeBuddyChat() {
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="bg-[#cccccc29] text-white px-4 py-1.5 rounded-md flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-[#333333]"
+              className="flex items-center gap-1 bg-[#cccccc29] rounded-md px-2 py-1 text-sm disabled:opacity-50 disabled:hover:bg-[#333333]"
             >
               <span>Send</span>
               <Send size={14} />
