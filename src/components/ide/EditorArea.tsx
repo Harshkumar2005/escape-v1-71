@@ -256,7 +256,7 @@ const EditorArea: React.FC = () => {
 
    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
       noSemanticValidation: true,  // disable module not found, types not found etc.
-      noSyntaxValidation: false,  // keep showing syntax errors
+      noSyntaxValidation: true,  // keep showing syntax errors
     });
       
 monaco.editor.defineTheme('custom-light', {
