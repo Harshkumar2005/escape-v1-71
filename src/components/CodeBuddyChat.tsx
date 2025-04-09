@@ -360,7 +360,7 @@ export function CodeBuddyChat() {
                           lineNumberStyle={{
                             color: useDarkTheme ? '#636d83' : '#636d83',
                             opacity: 0.6,
-                            minWidth: '2.5em',
+                            minWidth: '1.5em',
                             textAlign: 'right',
                             paddingRight: '1em',
                           }}
