@@ -349,14 +349,15 @@ export function CodeBuddyChat() {
                             margin: 0,
                             padding: '1rem',
                             fontSize: '0.875rem',
-                            backgroundColor: useDarkTheme ? '#1E1E1E' : '#f8f8f8'
+                            backgroundColor: useDarkTheme ? '#1a1e2600' : '#1a1e2600',
+                            scrollbarWidth: 'none',
                           }}
                           lineNumberStyle={{
-                            color: useDarkTheme ? '#6b7280' : '#9ca3af',
+                            color: useDarkTheme ? '#ebebeb' : '#ebebeb',
                             opacity: 0.6,
                             minWidth: '2.5em',
                             textAlign: 'right',
-                            paddingRight: '1em'
+                            paddingRight: '0.5em',
                           }}
                         >
                           {code}
@@ -375,12 +376,12 @@ export function CodeBuddyChat() {
                   );
                 },
                 p: ({ children }) => <p className="my-2 whitespace-pre-wrap break-words">{children}</p>,
-                ul: ({ children }) => <ul className="list-disc ml-6 my-2">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal ml-6 my-2">{children}</ol>,
-                li: ({ children }) => <li className="my-1 whitespace-pre-wrap break-words">{children}</li>,
-                h1: ({ children }) => <h1 className="text-xl font-bold my-3">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-lg font-bold my-2">{children}</h2>,
-                h3: ({ children }) => <h3 className="text-md font-bold my-2">{children}</h3>,
+                ul: ({ children }) => <ul className="list-disc ml-6">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal ml-6">{children}</ol>,
+                li: ({ children }) => <li className="whitespace-pre-wrap break-words">{children}</li>,
+                h1: ({ children }) => <h1 className="text-xl font-bold">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-lg font-bold">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-md font-bold">{children}</h3>,
                 h4: ({ children }) => <h4 className="font-bold my-1">{children}</h4>,
                 blockquote: ({ children }) => (
                   <blockquote className="border-l-4 border-gray-500 pl-4 italic my-2 whitespace-pre-wrap break-words">
@@ -420,12 +421,12 @@ export function CodeBuddyChat() {
                   </tr>
                 ),
                 th: ({ children }) => (
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                  <th className="px-4 text-left text-xs font-medium text-gray-300 uppercase">
                     {children}
                   </th>
                 ),
                 td: ({ children }) => (
-                  <td className="px-4 py-2 whitespace-nowrap text-sm">
+                  <td className="px-4 whitespace-nowrap text-sm">
                     {children}
                   </td>
                 ),
@@ -440,7 +441,7 @@ export function CodeBuddyChat() {
                   </em>
                 ),
                 hr: () => (
-                  <hr className="my-4 border-gray-700" />
+                  <hr className="border-gray-700" />
                 ),
               }}
             >
