@@ -82,8 +82,8 @@ const TopBar: React.FC = () => {
   return (
     <div className="flex items-center justify-between px-2 py-1 bg-status-bar text-slate-400 text-sm border-b border-border">
       <div className="flex items-center space-x-1">
-        <Ghost className="text-white" strokeWidth={2.25} size={16} />
-        <h1 className="text-white font-medium mr-4">ESCAPE.esc</h1>
+        <Ghost className="text-sidebar-foreground" strokeWidth={2.25} size={16} />
+        <h1 className="text-sidebar-foreground font-medium mr-4">ESCAPE.esc</h1>
         {/*
         <div className="relative">
           <button 
@@ -229,6 +229,7 @@ const TopBar: React.FC = () => {
       </div>
       
       <div className="flex items-center space-x-2">
+        <p className="p-1 hover:text-white transition-colors">Logs:</p>
         {/*<FontSelector />*/}
         
         {/*
