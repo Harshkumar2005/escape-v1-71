@@ -91,7 +91,7 @@ const EditorArea: React.FC = () => {
       fontSize: 14,
       fontFamily: editorFont + ", 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
       minimap: { enabled: true },
-      scrollBeyondLastLine: false,
+      scrollBeyondLastLine: true,
       renderLineHighlight: 'all',
       cursorBlinking: 'smooth',
       cursorSmoothCaretAnimation: 'on',
