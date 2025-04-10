@@ -127,77 +127,11 @@ const getLanguageFromExtension = (filename: string): string => {
 const initialFileSystem: FileSystemItem[] = [
   {
     id: 'root',
-    name: 'my-project',
+    name: 'new-project',
     type: 'folder',
-    path: '/my-project',
+    path: '/new-project',
     isOpen: true,
-    children: [
-      {
-        id: 'src',
-        name: 'src',
-        type: 'folder',
-        path: '/my-project/src',
-        isOpen: true,
-        parentId: 'root',
-        children: [
-          {
-            id: 'components',
-            name: 'components',
-            type: 'folder',
-            path: '/my-project/src/components',
-            isOpen: false,
-            parentId: 'src',
-            children: [
-              {
-                id: 'button',
-                name: 'Button.tsx',
-                type: 'file',
-                path: '/my-project/src/components/Button.tsx',
-                language: 'typescript',
-                content: 'import React from "react";\n\ninterface ButtonProps {\n  children: React.ReactNode;\n  onClick?: () => void;\n  variant?: "primary" | "secondary";\n}\n\nconst Button: React.FC<ButtonProps> = ({ children, onClick, variant = "primary" }) => {\n  return (\n    <button\n      className={`px-4 py-2 rounded ${variant === "primary" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"}`}\n      onClick={onClick}\n    >\n      {children}\n    </button>\n  );\n};\n\nexport default Button;',
-                parentId: 'components',
-              }
-            ]
-          },
-          {
-            id: 'app',
-            name: 'App.tsx',
-            type: 'file',
-            path: '/my-project/src/App.tsx',
-            language: 'typescript',
-            content: 'import React from "react";\nimport Button from "./components/Button";\n\nconst App: React.FC = () => {\n  return (\n    <div className="p-4">\n      <h1 className="text-2xl font-bold mb-4">My Application</h1>\n      <Button onClick={() => alert("Button clicked!")}>Click Me</Button>\n    </div>\n  );\n};\n\nexport default App;',
-            parentId: 'src',
-          },
-          {
-            id: 'index',
-            name: 'index.tsx',
-            type: 'file',
-            path: '/my-project/src/index.tsx',
-            language: 'typescript',
-            content: 'import React from "react";\nimport ReactDOM from "react-dom/client";\nimport App from "./App";\n\nReactDOM.createRoot(document.getElementById("root")!).render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>\n);',
-            parentId: 'src',
-          }
-        ]
-      },
-      {
-        id: 'package',
-        name: 'package.json',
-        type: 'file',
-        path: '/my-project/package.json',
-        language: 'json',
-        content: '{\n  "name": "my-project",\n  "version": "1.0.0",\n  "dependencies": {\n    "react": "^18.0.0",\n    "react-dom": "^18.0.0"\n  }\n}',
-        parentId: 'root',
-      },
-      {
-        id: 'readme',
-        name: 'README.md',
-        type: 'file',
-        path: '/my-project/README.md',
-        language: 'markdown',
-        content: '# My Project\n\nThis is a sample React project.\n\n## Getting Started\n\nInstall dependencies:\n\n```bash\nnpm install\n```\n\nStart the development server:\n\n```bash\nnpm start\n```',
-        parentId: 'root',
-      }
-    ]
+    children: []
   }
 ];
 
