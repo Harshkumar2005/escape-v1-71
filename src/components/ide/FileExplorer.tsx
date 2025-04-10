@@ -389,8 +389,8 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
   return (
     <div>
       <div
-        className={`file-explorer-item flex items-center py-0.5 px-1 cursor-pointer rounded ${
-          isSelected ? 'bg-[#272b34] text-white' : ''
+        className={`flex items-center py-0.5 px-1 cursor-pointer rounded ${
+          isSelected ? 'bg-[#272b34] text-white' : 'hover:text-white'
         }`}
         style={{ paddingLeft: `${(depth * 12) + 4}px` }}
         onClick={handleItemClick}
