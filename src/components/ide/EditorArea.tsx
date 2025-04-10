@@ -107,7 +107,7 @@ const EditorArea: React.FC = () => {
     });
 
     // Set up context menu with copy/paste options
-    editor.addAction({
+  /*  editor.addAction({
       id: 'custom-copy',
       label: 'Copy',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
@@ -167,6 +167,9 @@ const EditorArea: React.FC = () => {
         }
       }
     });
+
+    */
+    
 
     // Set up save shortcut
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
