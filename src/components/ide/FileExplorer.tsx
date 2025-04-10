@@ -158,7 +158,7 @@ const FileExplorer: React.FC = () => {
     onClick: () => void; 
   }) => (
     <div 
-      className="ml-1 mr-1 rounded menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer"
+      className="text-sm ml-1 mr-1 rounded menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer"
       onClick={(e) => {
         e.stopPropagation();
         onClick();
