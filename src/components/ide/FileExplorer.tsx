@@ -424,7 +424,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
           />
         ) : (
           <span className={`text-sm truncate ${
-          isSelected ? 'text-white' : 'text-sidebar-foreground opacity-90 hover:text-white hover:opacity-100'
+          isSelected ? 'text-white' : 'text-sidebar-foreground opacity-90 group-hover:text-white group-hover:opacity-100'
         }`}>{item.name}</span>
         )}
       </div>
