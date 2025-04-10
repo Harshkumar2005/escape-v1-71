@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid } from 'lucide-react';
+import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid, Ghost, Option } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import FontSelector from './FontSelector';
@@ -83,8 +82,9 @@ const TopBar: React.FC = () => {
   return (
     <div className="flex items-center justify-between px-2 py-1 bg-status-bar text-slate-400 text-sm border-b border-border">
       <div className="flex items-center space-x-1">
-        <h1 className="font-medium mr-4">Code Editor IDE</h1>
-        
+        <Ghost strokeWidth={2.25} size={16} />
+        <h1 className="text-white font-medium mr-4">ESCAPE.esc</h1>
+        {/*
         <div className="relative">
           <button 
             className={`px-2 py-0.5 hover:text-white transition-colors ${activeMenu === 'file' ? 'text-white' : ''}`}
@@ -93,18 +93,18 @@ const TopBar: React.FC = () => {
             File
           </button>
           {activeMenu === 'file' && (
-            <div className="menu-dropdown mt-1 left-0 bg-sidebar border border-border rounded shadow-lg py-1 z-50">
-              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('new-file')}>
+            <div className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
+              <div className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer" onClick={() => handleAction('new-file')}>
                 <FileIcon size={14} className="mr-2" />
                 New File
               </div>
-              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('save')}>
+              <div className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer" onClick={() => handleAction('save')}>
                 <Save size={14} className="mr-2" />
                 Save
                 <span className="ml-auto text-xs opacity-70">Ctrl+S</span>
               </div>
-              <div className="border-t border-border my-1"></div>
-              <div className="menu-item flex items-center px-3 py-1.5 hover:bg-tab-active hover:text-white cursor-pointer" onClick={() => handleAction('delete')}>
+              <div className="border-t border-border"></div>
+              <div className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer" onClick={() => handleAction('delete')}>
                 <Trash2 size={14} className="mr-2" />
                 Delete
               </div>
@@ -192,11 +192,46 @@ const TopBar: React.FC = () => {
             </div>
           )}
         </div>
+        */}
+        <div className="relative" style={{
+            marginLeft: '15px',
+          }}>
+        <button 
+          className="gap-1.5 flex items-center hover:text-white"
+          onClick={() => handleAction('undo')}
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo size={16} />
+          Undo
+        </button>
+        </div>
+
+        <div className="relative">
+        <button 
+          className="gap-1.5 flex items-center hover:text-white"
+          onClick={() => handleAction('redo')}
+          title="Redo (Ctrl+Y)"
+        >
+          <Redo size={16} />
+          Redo
+        </button>
+        </div>
+        <div className="relative">
+         <button 
+          className="gap-1.5 flex items-center hover:text-white"
+          onClick={() => handleAction('save')}
+          title="Save (Ctrl+S)"
+        >
+          <Save size={16} />
+           Save
+        </button>
+        </div>
       </div>
       
       <div className="flex items-center space-x-2">
-        <FontSelector />
+        {/*<FontSelector />*/}
         
+        {/*
         <button 
           className="p-1 hover:text-white transition-colors"
           onClick={() => handleAction('save')}
@@ -234,6 +269,8 @@ const TopBar: React.FC = () => {
         >
           <Settings size={16} />
         </button>
+
+        */}
       </div>
     </div>
   );
