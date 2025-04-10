@@ -397,12 +397,16 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
         onContextMenu={(e) => handleItemContextMenu(e, item)}
       >
         {item.type === 'folder' && (
-          <span className="mr-1 text-slate-400">
+          <span className={`mr-1 ${
+          isSelected ? 'text-white' : 'text-slate-400'
+        }`}>
             {item.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
         )}
         
-        <span className="mr-1 text-slate-400">
+        <span className={`mr-1 ${
+          isSelected ? 'text-white' : 'text-slate-400'
+        }`}>
           {item.type === 'folder' 
             ? (item.isOpen ? <FolderOpen size={16} /> : <Folder size={16} />)
             : getFileIcon(item.name)
@@ -483,14 +487,14 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ item, handleItemCon
   
   return (
     <div
-      className="file-explorer-item flex items-center py-0.5 px-2 cursor-pointer rounded hover:text-white transition-colors"
+      className="flex items-center py-0.5 px-2 cursor-pointer rounded hover:text-white transition-colors"
       onClick={handleClick}
       onContextMenu={(e) => handleItemContextMenu(e, item)}
     >
       <span className="mr-2 text-slate-400">
         {item.type === 'folder' ? <Folder size={16} /> : getFileIcon(item.name)}
       </span>
-      <span className="text-sm text-sidebar-foreground opacity-90 truncate">{item.name}</span>
+      <span className="text-sm text-sidebar-foreground hover:text-white opacity-90 truncate">{item.name}</span>
       <span className="text-xs text-slate-500 ml-2 truncate opacity-70">{item.path}</span>
     </div>
   );
