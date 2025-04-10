@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { 
-  Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
-  Edit, Trash, FolderPlus
+  File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
+  FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
+  FileCog, FileSpreadsheet, Edit, Trash, FolderPlus
 } from 'lucide-react';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 import 'react-contexify/ReactContexify.css';
-import FileIcon from '@/components/FileIcon';
 
 const CONTEXT_MENU_ID = 'file-explorer-context-menu';
 const FILE_ITEM_MENU_ID = 'file-item-context-menu';
@@ -288,7 +288,7 @@ const FileExplorer: React.FC = () => {
       <Menu id={CONTEXT_MENU_ID} className="context-menu">
         <Item onClick={() => startCreatingNewItem(files[0].path, 'file')} className="context-menu-item">
           <div className="flex items-center">
-            <FileIcon fileName="file.txt" size={14} />
+            <FileText size={14} className="mr-2 opacity-70" />
             <span>New File</span>
           </div>
         </Item>
@@ -318,7 +318,7 @@ const FileExplorer: React.FC = () => {
       <Menu id={FOLDER_ITEM_MENU_ID} className="context-menu">
         <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')} className="context-menu-item">
           <div className="flex items-center">
-            <FileIcon fileName="file.txt" size={14} />
+            <FileText size={14} className="mr-2 opacity-70" />
             <span>New File</span>
           </div>
         </Item>
@@ -405,7 +405,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
         <span className="mr-1 text-slate-400">
           {item.type === 'folder' 
             ? (item.isOpen ? <FolderOpen size={16} /> : <Folder size={16} />)
-            : <FileIcon fileName={item.name} size={16} />
+            : getFileIcon(item.name)
           }
         </span>
         
@@ -429,10 +429,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
           style={{ paddingLeft: `${((depth + 1) * 12) + 4}px` }}
         >
           <span className="mr-1 text-slate-400">
-            {newItemType === 'folder' 
-              ? <Folder size={16} /> 
-              : <FileIcon fileName="file.txt" size={16} />
-            }
+            {newItemType === 'folder' ? <Folder size={16} /> : <File size={16} />}
           </span>
           <input
             type="text"
@@ -489,10 +486,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ item, handleItemCon
       onContextMenu={(e) => handleItemContextMenu(e, item)}
     >
       <span className="mr-2 text-slate-400">
-        {item.type === 'folder' 
-          ? <Folder size={16} /> 
-          : <FileIcon fileName={item.name} size={16} />
-        }
+        {item.type === 'folder' ? <Folder size={16} /> : getFileIcon(item.name)}
       </span>
       <span className="text-sm text-sidebar-foreground opacity-90 truncate">{item.name}</span>
       <span className="text-xs text-slate-500 ml-2 truncate opacity-70">{item.path}</span>

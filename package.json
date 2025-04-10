@@ -11,7 +11,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@exuanbo/file-icons-js": "^3.3.0",
     "@google/generative-ai": "^0.24.0",
     "@hookform/resolvers": "^3.9.0",
     "@monaco-editor/react": "^4.7.0",
