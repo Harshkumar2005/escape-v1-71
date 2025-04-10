@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid, Ghost, Option } from 'lucide-react';
+import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid, Ghost, Option, Undo2, Redo2 } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import FontSelector from './FontSelector';
@@ -82,7 +82,7 @@ const TopBar: React.FC = () => {
   return (
     <div className="flex items-center justify-between px-2 py-1 bg-status-bar text-slate-400 text-sm border-b border-border">
       <div className="flex items-center space-x-1">
-        <Ghost strokeWidth={2.25} size={16} />
+        <Ghost className="text-white" strokeWidth={2.25} size={16} />
         <h1 className="text-white font-medium mr-4">ESCAPE.esc</h1>
         {/*
         <div className="relative">
@@ -197,28 +197,28 @@ const TopBar: React.FC = () => {
             marginLeft: '15px',
           }}>
         <button 
-          className="gap-1.5 flex items-center hover:text-white"
+          className="px-2 py-0.5 gap-1.5 flex items-center hover:text-white"
           onClick={() => handleAction('undo')}
           title="Undo (Ctrl+Z)"
         >
-          <Undo size={16} />
+          <Undo2 size={16} />
           Undo
         </button>
         </div>
 
         <div className="relative">
         <button 
-          className="gap-1.5 flex items-center hover:text-white"
+          className="px-2 py-0.5 gap-1.5 flex items-center hover:text-white"
           onClick={() => handleAction('redo')}
           title="Redo (Ctrl+Y)"
         >
-          <Redo size={16} />
+          <Redo2 size={16} />
           Redo
         </button>
         </div>
         <div className="relative">
          <button 
-          className="gap-1.5 flex items-center hover:text-white"
+          className="px-2 py-0.5 gap-1.5 flex items-center hover:text-white"
           onClick={() => handleAction('save')}
           title="Save (Ctrl+S)"
         >
