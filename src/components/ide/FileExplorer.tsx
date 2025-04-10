@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
   FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
-import { Menu, Item, useContextMenu } from 'react-contexify';
 import 'react-contexify/ReactContexify.css';
 
 const CONTEXT_MENU_ID = 'file-explorer-context-menu';
@@ -98,22 +97,96 @@ const FileExplorer: React.FC = () => {
   const newItemInputRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   
-  const { show } = useContextMenu();
+  const [contextMenu, setContextMenu] = useState<{
+    isOpen: boolean;
+    x: number;
+    y: number;
+    menuType: 'main' | 'file' | 'folder';
+    itemId?: string;
+    itemPath?: string;
+  }>({
+    isOpen: false,
+    x: 0,
+    y: 0,
+    menuType: 'main'
+  });
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (contextMenu.isOpen) {
+        setContextMenu(prev => ({ ...prev, isOpen: false }));
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [contextMenu.isOpen]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    show({ event: e, id: CONTEXT_MENU_ID });
+    setContextMenu({
+      isOpen: true,
+      x: e.clientX,
+      y: e.clientY,
+      menuType: 'main'
+    });
   };
 
   const handleItemContextMenu = (e: React.MouseEvent, item: FileSystemItem) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (item.type === 'file') {
-      show({ event: e, id: FILE_ITEM_MENU_ID, props: { itemId: item.id, itemPath: item.path } });
-    } else {
-      show({ event: e, id: FOLDER_ITEM_MENU_ID, props: { itemId: item.id, itemPath: item.path } });
-    }
+    setContextMenu({
+      isOpen: true,
+      x: e.clientX,
+      y: e.clientY,
+      menuType: item.type === 'file' ? 'file' : 'folder',
+      itemId: item.id,
+      itemPath: item.path
+    });
+  };
+
+  const MenuItem = ({ 
+    icon, 
+    children, 
+    onClick 
+  }: { 
+    icon: React.ReactNode; 
+    children: React.ReactNode; 
+    onClick: () => void; 
+  }) => (
+    <div 
+      className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+        setContextMenu(prev => ({ ...prev, isOpen: false }));
+      }}
+    >
+      {icon}
+      {children}
+    </div>
+  );
+
+  const renderFileTree = (items: FileSystemItem[], depth = 0) => {
+    return items.map(item => (
+      <FileExplorerItem 
+        key={item.id}
+        item={item}
+        depth={depth}
+        handleItemContextMenu={handleItemContextMenu}
+        renamingItemId={renamingItemId}
+        renameInputRef={renameInputRef}
+        handleRename={handleRename}
+        newItemType={newItemType}
+        newItemParentPath={newItemParentPath}
+        newItemInputRef={newItemInputRef}
+        handleCreateNewItem={handleCreateNewItem}
+        setRenamingItemId={setRenamingItemId}
+      />
+    ));
   };
 
   const handleSearch = (query: string) => {
@@ -193,25 +266,6 @@ const FileExplorer: React.FC = () => {
     }
   };
 
-  const renderFileTree = (items: FileSystemItem[], depth = 0) => {
-    return items.map(item => (
-      <FileExplorerItem 
-        key={item.id}
-        item={item}
-        depth={depth}
-        handleItemContextMenu={handleItemContextMenu}
-        renamingItemId={renamingItemId}
-        renameInputRef={renameInputRef}
-        handleRename={handleRename}
-        newItemType={newItemType}
-        newItemParentPath={newItemParentPath}
-        newItemInputRef={newItemInputRef}
-        handleCreateNewItem={handleCreateNewItem}
-        setRenamingItemId={setRenamingItemId}
-      />
-    ));
-  };
-
   return (
     <div 
       className="h-full overflow-auto bg-sidebar flex flex-col"
@@ -285,58 +339,80 @@ const FileExplorer: React.FC = () => {
         )}
       </div>
       
-    
-      <Menu id={CONTEXT_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
-        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
-            <FileText size={14} className="mr-2" />
+      {contextMenu.isOpen && contextMenu.menuType === 'main' && (
+        <div 
+          className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50 absolute"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MenuItem 
+            icon={<FileText size={14} className="mr-2" />}
+            onClick={() => startCreatingNewItem(files[0].path, 'file')}
+          >
             New File
-        </Item>
-        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
-            <Folder size={14} className="mr-2" />
+          </MenuItem>
+          <MenuItem 
+            icon={<Folder size={14} className="mr-2" />}
+            onClick={() => startCreatingNewItem(files[0].path, 'folder')}
+          >
             New Folder
-        </Item>
-      </Menu>
+          </MenuItem>
+        </div>
+      )}
  
-   
-      <Menu id={FILE_ITEM_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
-        <Item onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
-            <Edit size={14} className="mr-2" />
+      {contextMenu.isOpen && contextMenu.menuType === 'file' && (
+        <div 
+          className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50 absolute"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MenuItem 
+            icon={<Edit size={14} className="mr-2" />}
+            onClick={() => startRenaming(contextMenu.itemId!)}
+          >
             Rename
-        </Item>
-        <Item onClick={({ props }) => deleteFile(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
-            <Trash size={14} className="mr-2" />
+          </MenuItem>
+          <MenuItem 
+            icon={<Trash size={14} className="mr-2" />}
+            onClick={() => deleteFile(contextMenu.itemId!)}
+          >
             Delete
-        </Item>
-      </Menu>
+          </MenuItem>
+        </div>
+      )}
   
-     
-      <Menu id={FOLDER_ITEM_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
-        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
-         
-            <FileText size={14} className="mr-2 opacity-70" />
+      {contextMenu.isOpen && contextMenu.menuType === 'folder' && (
+        <div 
+          className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50 absolute"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MenuItem 
+            icon={<FileText size={14} className="mr-2 opacity-70" />}
+            onClick={() => startCreatingNewItem(contextMenu.itemPath!, 'file')}
+          >
             New File
-       
-        </Item>
-        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'folder')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
-        
-            <FolderPlus size={14} className="mr-2" />
+          </MenuItem>
+          <MenuItem 
+            icon={<FolderPlus size={14} className="mr-2" />}
+            onClick={() => startCreatingNewItem(contextMenu.itemPath!, 'folder')}
+          >
             New Folder
-     
-        </Item>
-        <Item onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
-       
-            <Edit size={14} className="mr-2" />
+          </MenuItem>
+          <MenuItem 
+            icon={<Edit size={14} className="mr-2" />}
+            onClick={() => startRenaming(contextMenu.itemId!)}
+          >
             Rename
-        
-        </Item>
-        <Item onClick={({ props }) => deleteFile(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
-       
-            <Trash size={14} className="mr-2" />
+          </MenuItem>
+          <MenuItem 
+            icon={<Trash size={14} className="mr-2" />}
+            onClick={() => deleteFile(contextMenu.itemId!)}
+          >
             Delete
-     
-        </Item>
-      </Menu>
- 
+          </MenuItem>
+        </div>
+      )}
     </div>
   );
 };
