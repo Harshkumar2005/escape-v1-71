@@ -1,7 +1,7 @@
-
 import React, { useState, Dispatch, SetStateAction } from 'react';
 import { useFileContext } from '@/contexts/FileContext';
-import { Folder, File, ChevronRight, ChevronDown, Plus } from 'lucide-react';
+import { Folder, ChevronRight, ChevronDown, Plus } from 'lucide-react';
+import { FileIcon, defaultStyles } from 'react-file-icon';
 import type { FileNode } from '@/contexts/FileContext';
 
 export const FileExplorer: React.FC = () => {
@@ -29,6 +29,21 @@ export const FileExplorer: React.FC = () => {
     }
   };
 
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+    
+    if (extension) {
+      const styles = (defaultStyles as any)[extension] || {};
+      return (
+        <div className="w-4 h-4 flex-shrink-0">
+          <FileIcon extension={extension} {...styles} />
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   const renderNode = (node: FileNode) => {
     const isDirectory = node.children && node.children.length > 0;
     const isSelected = selectedFile?.path === node.path;
@@ -49,7 +64,7 @@ export const FileExplorer: React.FC = () => {
           ) : (
             <>
               <span className="w-4" />
-              <File size={16} className="text-gray-500" />
+              {getFileIcon(node.path.split('/').pop() || '') || <div className="w-4 h-4" />}
             </>
           )}
           <span className="text-sm">{node.path.split('/').pop()}</span>
@@ -92,4 +107,4 @@ export const FileExplorer: React.FC = () => {
       </div>
     </div>
   );
-}; 
+};

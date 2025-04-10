@@ -4,6 +4,7 @@ import {
   FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
   FileCog, FileSpreadsheet, Edit, Trash, FolderPlus
 } from 'lucide-react';
+import { FileIcon, defaultStyles } from 'react-file-icon';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { Menu, Item, useContextMenu } from 'react-contexify';
@@ -14,77 +15,18 @@ const FILE_ITEM_MENU_ID = 'file-item-context-menu';
 const FOLDER_ITEM_MENU_ID = 'folder-item-context-menu';
 
 const getFileIcon = (fileName: string) => {
-  const extension = fileName.split('.').pop()?.toLowerCase();
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
   
-  switch(extension) {
-    case 'js':
-    case 'jsx':
-    case 'ts':
-    case 'tsx':
-    case 'html':
-    case 'css':
-    case 'php':
-    case 'py':
-    case 'rb':
-    case 'java':
-    case 'go':
-    case 'c':
-    case 'cpp':
-    case 'cs':
-      return <FileCode size={16} className="file-icon" />;
-    
-    case 'txt':
-    case 'md':
-    case 'rtf':
-    case 'log':
-      return <FileText size={16} className="file-icon" />;
-    
-    case 'jpg':
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-    case 'svg':
-    case 'bmp':
-    case 'ico':
-      return <FileImage size={16} className="file-icon" />;
-    
-    case 'mp4':
-    case 'avi':
-    case 'mov':
-    case 'wmv':
-    case 'webm':
-      return <FileVideo size={16} className="file-icon" />;
-    
-    case 'mp3':
-    case 'wav':
-    case 'ogg':
-    case 'flac':
-      return <FileAudio size={16} className="file-icon" />;
-    
-    case 'json':
-      return <FileJson size={16} className="file-icon" />;
-    
-    case 'yml':
-    case 'yaml':
-    case 'toml':
-    case 'ini':
-    case 'env':
-    case 'config':
-      return <FileCog size={16} className="file-icon" />;
-    
-    case 'csv':
-    case 'xls':
-    case 'xlsx':
-      return <FileSpreadsheet size={16} className="file-icon" />;
-    
-    case 'exe':
-    case 'bat':
-    case 'sh':
-      return <FileCheck size={16} className="file-icon" />;
-    
-    default:
-      return <File size={16} className="file-icon" />;
+  if (extension) {
+    const styles = (defaultStyles as any)[extension] || {};
+    return (
+      <div className="w-4 h-4 mr-1.5">
+        <FileIcon extension={extension} {...styles} />
+      </div>
+    );
   }
+  
+  return <File size={16} className="file-icon mr-1.5" />;
 };
 
 const FileExplorer: React.FC = () => {
