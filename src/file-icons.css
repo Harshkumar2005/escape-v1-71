@@ -1,0 +1,50 @@
+
+/* Basic styling for file icons */
+.icon {
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  display: inline-block;
+}
+
+/* File type colors */
+.icon-js, .icon-jsx, .icon-ts, .icon-tsx {
+  color: #f7df1e;
+}
+
+.icon-html {
+  color: #e44d26;
+}
+
+.icon-css {
+  color: #264de4;
+}
+
+.icon-json {
+  color: #f5871f;
+}
+
+.icon-md {
+  color: #57a143;
+}
+
+.icon-txt {
+  color: #737373;
+}
+
+/* Image file types */
+.icon-png, .icon-jpg, .icon-jpeg, .icon-gif, .icon-svg {
+  color: #a074c4;
+}
+
+/* Config file types */
+.icon-config, .icon-yml, .icon-yaml, .icon-toml {
+  color: #6e9cbe;
+}
+
+/* Default icon */
+.icon-default {
+  color: #9da5b4;
+}
