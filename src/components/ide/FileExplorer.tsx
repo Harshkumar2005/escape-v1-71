@@ -390,7 +390,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
     <div>
       <div
         className={`file-explorer-item flex items-center py-0.5 px-1 cursor-pointer rounded ${
-          isSelected ? 'selected' : ''
+          isSelected ? 'bg-[#272b34] text-white' : ''
         }`}
         style={{ paddingLeft: `${(depth * 12) + 4}px` }}
         onClick={handleItemClick}
@@ -481,7 +481,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ item, handleItemCon
   
   return (
     <div
-      className="file-explorer-item flex items-center py-0.5 px-2 cursor-pointer rounded hover:bg-[#cccccc29] transition-colors"
+      className="file-explorer-item flex items-center py-0.5 px-2 cursor-pointer rounded hover:text-white transition-colors"
       onClick={handleClick}
       onContextMenu={(e) => handleItemContextMenu(e, item)}
     >
