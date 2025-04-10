@@ -287,54 +287,54 @@ const FileExplorer: React.FC = () => {
       
     
       <Menu id={CONTEXT_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
-        <div onClick={() => startCreatingNewItem(files[0].path, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
             <FileText size={14} className="mr-2" />
             New File
-        </div>
-        <div onClick={() => startCreatingNewItem(files[0].path, 'folder')} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
+        </Item>
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
             <Folder size={14} className="mr-2" />
             New Folder
-        </div>
+        </Item>
       </Menu>
  
    
       <Menu id={FILE_ITEM_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
-        <div onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
+        <Item onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
             <Edit size={14} className="mr-2" />
             Rename
-        </div>
-        <div onClick={({ props }) => deleteFile(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
+        </Item>
+        <Item onClick={({ props }) => deleteFile(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
             <Trash size={14} className="mr-2" />
             Delete
-        </div>
+        </Item>
       </Menu>
   
      
       <Menu id={FOLDER_ITEM_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
-        <div onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
          
             <FileText size={14} className="mr-2 opacity-70" />
             New File
        
-        </div>
-        <div onClick={({ props }) => startCreatingNewItem(props.itemPath, 'folder')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+        </Item>
+        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'folder')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
         
             <FolderPlus size={14} className="mr-2" />
             New Folder
      
-        </div>
-        <div onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+        </Item>
+        <Item onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
        
             <Edit size={14} className="mr-2" />
             Rename
         
-        </div>
-        <div onClick={({ props }) => deleteFile(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+        </Item>
+        <Item onClick={({ props }) => deleteFile(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
        
             <Trash size={14} className="mr-2" />
             Delete
      
-        </div>
+        </Item>
       </Menu>
  
     </div>
