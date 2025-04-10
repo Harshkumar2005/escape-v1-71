@@ -285,7 +285,7 @@ const FileExplorer: React.FC = () => {
         )}
       </div>
       
-     
+     <Menu>
       <div id={CONTEXT_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
         <div onClick={() => startCreatingNewItem(files[0].path, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
             <FileText size={14} className="mr-2" />
@@ -296,7 +296,8 @@ const FileExplorer: React.FC = () => {
             New Folder
         </div>
       </div>
-      
+      </Menu>
+      <Menu>
       <div id={FILE_ITEM_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
         <div onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
             <Edit size={14} className="mr-2" />
@@ -307,7 +308,8 @@ const FileExplorer: React.FC = () => {
             Delete
         </div>
       </div>
-      
+      </Menu>
+      <Menu>
       <div id={FOLDER_ITEM_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
         <div onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
          
@@ -334,6 +336,7 @@ const FileExplorer: React.FC = () => {
      
         </div>
       </div>
+    </Menu>
     </div>
   );
 };
