@@ -1,8 +1,9 @@
 
 import React, { useState, Dispatch, SetStateAction } from 'react';
 import { useFileContext } from '@/contexts/FileContext';
-import { Folder, File, ChevronRight, ChevronDown, Plus } from 'lucide-react';
+import { Folder, ChevronRight, ChevronDown, Plus } from 'lucide-react';
 import type { FileNode } from '@/contexts/FileContext';
+import { FileIconComponent } from './FileIconComponent';
 
 export const FileExplorer: React.FC = () => {
   const { files, setFiles, selectedFile, setSelectedFile, createDirectory } = useFileContext();
@@ -32,6 +33,7 @@ export const FileExplorer: React.FC = () => {
   const renderNode = (node: FileNode) => {
     const isDirectory = node.children && node.children.length > 0;
     const isSelected = selectedFile?.path === node.path;
+    const fileName = node.path.split('/').pop() || '';
 
     return (
       <div key={node.path} className="pl-4">
@@ -49,10 +51,10 @@ export const FileExplorer: React.FC = () => {
           ) : (
             <>
               <span className="w-4" />
-              <File size={16} className="text-gray-500" />
+              <FileIconComponent filename={fileName} size={16} />
             </>
           )}
-          <span className="text-sm">{node.path.split('/').pop()}</span>
+          <span className="text-sm">{fileName}</span>
         </div>
         {isDirectory && node.isOpen && node.children.map(child => renderNode(child))}
       </div>
