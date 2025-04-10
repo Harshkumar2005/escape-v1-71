@@ -1,0 +1,37 @@
+
+/* Custom file icons styles */
+.icon {
+  display: inline-block;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Default colors for different file types */
+.icon-js { color: #f1e05a; }
+.icon-ts { color: #3178c6; }
+.icon-html { color: #e34c26; }
+.icon-css { color: #563d7c; }
+.icon-json { color: #292929; }
+.icon-md { color: #083fa1; }
+.icon-jsx, .icon-tsx { color: #61dafb; }
+.icon-vue { color: #41b883; }
+.icon-py { color: #3572A5; }
+.icon-rb { color: #701516; }
+.icon-java { color: #b07219; }
+.icon-php { color: #4F5D95; }
+.icon-c, .icon-cpp, .icon-h { color: #f34b7d; }
+.icon-go { color: #00ADD8; }
+.icon-rs { color: #dea584; }
+.icon-sh { color: #89e051; }
+.icon-dockerfile { color: #384d54; }
+.icon-yml, .icon-yaml { color: #cb171e; }
+.icon-svg { color: #ff9900; }
+.icon-png, .icon-jpg, .icon-jpeg, .icon-gif { color: #a074c4; }
+.icon-pdf { color: #b30b00; }
+.icon-txt { color: #4d4d4c; }
+.icon-gitignore { color: #41535b; }

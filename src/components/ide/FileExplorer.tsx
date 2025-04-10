@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { 
   Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
-  Edit, Trash, FolderPlus
+  Edit, Trash, FolderPlus, File as FileText
 } from 'lucide-react';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
