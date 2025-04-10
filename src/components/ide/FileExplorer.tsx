@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
   FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
@@ -7,6 +6,12 @@ import {
 } from 'lucide-react';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
+import { Menu, Item, useContextMenu } from 'react-contexify';
+import 'react-contexify/ReactContexify.css';
+
+const CONTEXT_MENU_ID = 'file-explorer-context-menu';
+const FILE_ITEM_MENU_ID = 'file-item-context-menu';
+const FOLDER_ITEM_MENU_ID = 'folder-item-context-menu';
 
 const getFileIcon = (fileName: string) => {
   const extension = fileName.split('.').pop()?.toLowerCase();
@@ -93,51 +98,22 @@ const FileExplorer: React.FC = () => {
   const newItemInputRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   
-  // Menu state
-  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-  const [showContextMenu, setShowContextMenu] = useState(false);
-  const [showFileItemMenu, setShowFileItemMenu] = useState(false);
-  const [showFolderItemMenu, setShowFolderItemMenu] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [selectedItemPath, setSelectedItemPath] = useState<string | null>(null);
-
-  // Close menus when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowContextMenu(false);
-      setShowFileItemMenu(false);
-      setShowFolderItemMenu(false);
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  const { show } = useContextMenu();
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
-    setShowContextMenu(true);
-    setShowFileItemMenu(false);
-    setShowFolderItemMenu(false);
+    show({ event: e, id: CONTEXT_MENU_ID });
   };
 
   const handleItemContextMenu = (e: React.MouseEvent, item: FileSystemItem) => {
     e.preventDefault();
     e.stopPropagation();
     
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
-    setSelectedItemId(item.id);
-    setSelectedItemPath(item.path);
-    
     if (item.type === 'file') {
-      setShowFileItemMenu(true);
-      setShowFolderItemMenu(false);
+      show({ event: e, id: FILE_ITEM_MENU_ID, props: { itemId: item.id, itemPath: item.path } });
     } else {
-      setShowFileItemMenu(false);
-      setShowFolderItemMenu(true);
+      show({ event: e, id: FOLDER_ITEM_MENU_ID, props: { itemId: item.id, itemPath: item.path } });
     }
-    
-    setShowContextMenu(false);
   };
 
   const handleSearch = (query: string) => {
@@ -178,11 +154,6 @@ const FileExplorer: React.FC = () => {
         newItemInputRef.current.focus();
       }
     }, 50);
-    
-    // Close all menus
-    setShowContextMenu(false);
-    setShowFileItemMenu(false);
-    setShowFolderItemMenu(false);
   };
 
   const handleCreateNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -207,11 +178,6 @@ const FileExplorer: React.FC = () => {
         renameInputRef.current.select();
       }
     }, 50);
-    
-    // Close all menus
-    setShowContextMenu(false);
-    setShowFileItemMenu(false);
-    setShowFolderItemMenu(false);
   };
 
   const handleRename = (e: React.KeyboardEvent<HTMLInputElement>, itemId: string) => {
@@ -227,169 +193,23 @@ const FileExplorer: React.FC = () => {
     }
   };
 
-  const handleDeleteItem = (itemId: string) => {
-    deleteFile(itemId);
-    
-    // Close all menus
-    setShowContextMenu(false);
-    setShowFileItemMenu(false);
-    setShowFolderItemMenu(false);
-  };
-
-  // Custom MenuItem component
-  const MenuItem = ({ onClick, children }: { onClick: () => void, children: React.ReactNode }) => (
-    <div 
-      className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-    >
-      {children}
-    </div>
-  );
-
-  // File Explorer Item component
-  const FileExplorerItem = ({ 
-    item, 
-    depth = 0,
-    handleItemContextMenu,
-    renamingItemId,
-    renameInputRef,
-    handleRename,
-    newItemType,
-    newItemParentPath,
-    newItemInputRef,
-    handleCreateNewItem,
-  }: any) => {
-    const { openTab } = useEditor();
-    const { selectedFile, toggleFolder } = useFileSystem();
-    
-    // Determine if this is a folder
-    const isFolder = item.type === 'folder';
-    
-    // Check if this item is selected
-    const isSelected = selectedFile === item.id;
-    
-    // Handle item click
-    const handleItemClick = () => {
-      if (isFolder) {
-        toggleFolder(item.id);
-      } else {
-        openTab(item.id);
-      }
-    };
-    
-    return (
-      <>
-        <div
-          className={`flex items-center py-0.5 px-2 cursor-pointer rounded-sm text-sidebar-foreground ${
-            isSelected ? 'bg-[#cccccc29]' : 'hover:bg-[#cccccc15]'
-          }`}
-          style={{ paddingLeft: `${depth * 12 + 4}px` }}
-          onClick={handleItemClick}
-          onContextMenu={(e) => handleItemContextMenu(e, item)}
-        >
-          {isFolder ? (
-            <div className="pr-1">
-              {item.isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </div>
-          ) : (
-            <div className="w-4"></div>
-          )}
-          
-          <div className="mr-1.5">
-            {isFolder ? (
-              item.isOpen ? <FolderOpen size={16} className="folder-open-icon" /> : <Folder size={16} className="folder-icon" />
-            ) : (
-              getFileIcon(item.name)
-            )}
-          </div>
-          
-          {renamingItemId === item.id ? (
-            <input
-              ref={renameInputRef}
-              defaultValue={item.name}
-              className="flex-1 bg-sidebar-foreground bg-opacity-10 px-1 rounded text-white outline-none"
-              onKeyDown={(e) => handleRename(e, item.id)}
-              onBlur={() => setRenamingItemId(null)}
-            />
-          ) : (
-            <span className="text-sm truncate">{item.name}</span>
-          )}
-        </div>
-        
-        {isFolder && item.isOpen && (
-          <div>
-            {item.children?.map((child: FileSystemItem) => (
-              <FileExplorerItem
-                key={child.id}
-                item={child}
-                depth={depth + 1}
-                handleItemContextMenu={handleItemContextMenu}
-                renamingItemId={renamingItemId}
-                renameInputRef={renameInputRef}
-                handleRename={handleRename}
-                newItemType={newItemType}
-                newItemParentPath={newItemParentPath}
-                newItemInputRef={newItemInputRef}
-                handleCreateNewItem={handleCreateNewItem}
-              />
-            ))}
-            
-            {newItemType && newItemParentPath === item.path && (
-              <div
-                className="flex items-center py-0.5 px-2"
-                style={{ paddingLeft: `${(depth + 1) * 12 + 8}px` }}
-              >
-                <div className="mr-1.5">
-                  {newItemType === 'file' ? (
-                    <FileText size={16} className="file-icon" />
-                  ) : (
-                    <Folder size={16} className="folder-icon" />
-                  )}
-                </div>
-                <input
-                  ref={newItemInputRef}
-                  className="flex-1 bg-sidebar-foreground bg-opacity-10 px-1 rounded text-white outline-none"
-                  placeholder={newItemType === 'file' ? 'File name...' : 'Folder name...'}
-                  onKeyDown={handleCreateNewItem}
-                  onBlur={() => setNewItemType(null)}
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </>
-    );
-  };
-
-  // Search Result Item component
-  const SearchResultItem = ({ item, handleItemContextMenu }: { item: FileSystemItem, handleItemContextMenu: any }) => {
-    const { openTab } = useEditor();
-    
-    const handleItemClick = () => {
-      if (item.type === 'file') {
-        openTab(item.id);
-      }
-    };
-    
-    return (
-      <div
-        className="flex items-center py-0.5 px-2 cursor-pointer rounded-sm text-sidebar-foreground hover:bg-[#cccccc15]"
-        onClick={handleItemClick}
-        onContextMenu={(e) => handleItemContextMenu(e, item)}
-      >
-        <div className="mr-1.5">
-          {item.type === 'folder' ? (
-            <Folder size={16} className="folder-icon" />
-          ) : (
-            getFileIcon(item.name)
-          )}
-        </div>
-        <span className="text-sm truncate">{item.name}</span>
-      </div>
-    );
+  const renderFileTree = (items: FileSystemItem[], depth = 0) => {
+    return items.map(item => (
+      <FileExplorerItem 
+        key={item.id}
+        item={item}
+        depth={depth}
+        handleItemContextMenu={handleItemContextMenu}
+        renamingItemId={renamingItemId}
+        renameInputRef={renameInputRef}
+        handleRename={handleRename}
+        newItemType={newItemType}
+        newItemParentPath={newItemParentPath}
+        newItemInputRef={newItemInputRef}
+        handleCreateNewItem={handleCreateNewItem}
+        setRenamingItemId={setRenamingItemId}
+      />
+    ));
   };
 
   return (
@@ -460,86 +280,218 @@ const FileExplorer: React.FC = () => {
           </div>
         ) : (
           <div className="px-2 py-1">
-            {files.map(item => (
-              <FileExplorerItem 
-                key={item.id}
-                item={item}
-                handleItemContextMenu={handleItemContextMenu}
-                renamingItemId={renamingItemId}
-                renameInputRef={renameInputRef}
-                handleRename={handleRename}
-                newItemType={newItemType}
-                newItemParentPath={newItemParentPath}
-                newItemInputRef={newItemInputRef}
-                handleCreateNewItem={handleCreateNewItem}
-                setRenamingItemId={setRenamingItemId}
-              />
-            ))}
+            {renderFileTree(files)}
           </div>
         )}
       </div>
       
-      {/* Main Context Menu */}
-      {showContextMenu && (
-        <div 
-          className="menu-dropdown fixed mt-1 bg-[#1a1e26] border border-border rounded shadow-lg z-50"
-          style={{ top: contextMenuPosition.y, left: contextMenuPosition.x }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <MenuItem onClick={() => startCreatingNewItem(files[0].path, 'file')}>
+    
+      <Menu id={CONTEXT_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
             <FileText size={14} className="mr-2" />
             New File
-          </MenuItem>
-          <MenuItem onClick={() => startCreatingNewItem(files[0].path, 'folder')}>
+        </Item>
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
             <Folder size={14} className="mr-2" />
             New Folder
-          </MenuItem>
-        </div>
-      )}
-      
-      {/* File Item Context Menu */}
-      {showFileItemMenu && selectedItemId && (
-        <div 
-          className="menu-dropdown fixed mt-1 bg-[#1a1e26] border border-border rounded shadow-lg z-50"
-          style={{ top: contextMenuPosition.y, left: contextMenuPosition.x }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <MenuItem onClick={() => startRenaming(selectedItemId)}>
+        </Item>
+      </Menu>
+ 
+   
+      <Menu id={FILE_ITEM_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
+        <Item onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
             <Edit size={14} className="mr-2" />
             Rename
-          </MenuItem>
-          <MenuItem onClick={() => handleDeleteItem(selectedItemId)}>
+        </Item>
+        <Item onClick={({ props }) => deleteFile(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
             <Trash size={14} className="mr-2" />
             Delete
-          </MenuItem>
-        </div>
-      )}
-      
-      {/* Folder Item Context Menu */}
-      {showFolderItemMenu && selectedItemId && selectedItemPath && (
-        <div 
-          className="menu-dropdown fixed mt-1 bg-[#1a1e26] border border-border rounded shadow-lg z-50"
-          style={{ top: contextMenuPosition.y, left: contextMenuPosition.x }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <MenuItem onClick={() => startCreatingNewItem(selectedItemPath, 'file')}>
+        </Item>
+      </Menu>
+  
+     
+      <Menu id={FOLDER_ITEM_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
+        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+         
             <FileText size={14} className="mr-2 opacity-70" />
             New File
-          </MenuItem>
-          <MenuItem onClick={() => startCreatingNewItem(selectedItemPath, 'folder')}>
+       
+        </Item>
+        <Item onClick={({ props }) => startCreatingNewItem(props.itemPath, 'folder')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+        
             <FolderPlus size={14} className="mr-2" />
             New Folder
-          </MenuItem>
-          <MenuItem onClick={() => startRenaming(selectedItemId)}>
+     
+        </Item>
+        <Item onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+       
             <Edit size={14} className="mr-2" />
             Rename
-          </MenuItem>
-          <MenuItem onClick={() => handleDeleteItem(selectedItemId)}>
+        
+        </Item>
+        <Item onClick={({ props }) => deleteFile(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+       
             <Trash size={14} className="mr-2" />
             Delete
-          </MenuItem>
+     
+        </Item>
+      </Menu>
+ 
+    </div>
+  );
+};
+
+interface FileExplorerItemProps {
+  item: FileSystemItem;
+  depth: number;
+  handleItemContextMenu: (e: React.MouseEvent, item: FileSystemItem) => void;
+  renamingItemId: string | null;
+  renameInputRef: React.RefObject<HTMLInputElement>;
+  handleRename: (e: React.KeyboardEvent<HTMLInputElement>, itemId: string) => void;
+  newItemType: FileType | null;
+  newItemParentPath: string;
+  newItemInputRef: React.RefObject<HTMLInputElement>;
+  handleCreateNewItem: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  setRenamingItemId: React.Dispatch<React.SetStateAction<string | null>>;
+}
+
+const FileExplorerItem: React.FC<FileExplorerItemProps> = ({ 
+  item, 
+  depth,
+  handleItemContextMenu,
+  renamingItemId,
+  renameInputRef,
+  handleRename,
+  newItemType,
+  newItemParentPath,
+  newItemInputRef,
+  handleCreateNewItem,
+  setRenamingItemId
+}) => {
+  const { toggleFolder, selectedFile } = useFileSystem();
+  const { openTab } = useEditor();
+  
+  const handleItemClick = () => {
+    if (item.type === 'folder') {
+      toggleFolder(item.id);
+    } else {
+      openTab(item.id);
+    }
+  };
+  
+  const isSelected = selectedFile === item.id;
+  const showNewItemInput = newItemType && newItemParentPath === item.path;
+  
+  return (
+    <div>
+      <div
+        className={`group flex items-center py-0.5 px-1 cursor-pointer rounded ${
+          isSelected ? 'bg-[#272b34] text-white' : 'hover:text-white'
+        }`}
+        style={{ paddingLeft: `${(depth * 12) + 4}px` }}
+        onClick={handleItemClick}
+        onContextMenu={(e) => handleItemContextMenu(e, item)}
+      >
+        {item.type === 'folder' && (
+          <span className={`mr-1 ${
+          isSelected ? 'text-white' : 'group-hover:text-white text-slate-400 group-hover:opacity-100'
+        }`}>
+            {item.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </span>
+        )}
+        
+        <span className={`mr-1 ${
+          isSelected ? 'text-white' : 'group-hover:text-white text-slate-400 group-hover:opacity-100'
+        }`}>
+          {item.type === 'folder' 
+            ? (item.isOpen ? <FolderOpen size={16} /> : <Folder size={16} />)
+            : getFileIcon(item.name)
+          }
+        </span>
+        
+        {renamingItemId === item.id ? (
+          <input
+            type="text"
+            defaultValue={item.name}
+            ref={renameInputRef}
+            className="bg-sidebar-foreground bg-opacity-20 text-sm px-1 rounded text-sidebar-foreground outline-none"
+            onKeyDown={(e) => handleRename(e, item.id)}
+            onBlur={() => setTimeout(() => setRenamingItemId(null), 100)}
+          />
+        ) : (
+          <span className={`text-sm truncate ${
+          isSelected ? 'text-white' : 'text-sidebar-foreground opacity-90 group-hover:text-white group-hover:opacity-100'
+        }`}>{item.name}</span>
+        )}
+      </div>
+      
+      {showNewItemInput && (
+        <div 
+          className="flex items-center py-0.5 px-1"
+          style={{ paddingLeft: `${((depth + 1) * 12) + 4}px` }}
+        >
+          <span className="mr-1 text-slate-400">
+            {newItemType === 'folder' ? <Folder size={16} /> : <File size={16} />}
+          </span>
+          <input
+            type="text"
+            ref={newItemInputRef}
+            className="bg-sidebar-foreground bg-opacity-20 text-sm px-1 rounded text-sidebar-foreground outline-none"
+            onKeyDown={handleCreateNewItem}
+            placeholder={`New ${newItemType}`}
+          />
         </div>
       )}
+      
+      {item.type === 'folder' && item.isOpen && item.children && (
+        <div>
+          {item.children.map(child => (
+            <FileExplorerItem
+              key={child.id}
+              item={child}
+              depth={depth + 1}
+              handleItemContextMenu={handleItemContextMenu}
+              renamingItemId={renamingItemId}
+              renameInputRef={renameInputRef}
+              handleRename={handleRename}
+              newItemType={newItemType}
+              newItemParentPath={newItemParentPath}
+              newItemInputRef={newItemInputRef}
+              handleCreateNewItem={handleCreateNewItem}
+              setRenamingItemId={setRenamingItemId}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface SearchResultItemProps {
+  item: FileSystemItem;
+  handleItemContextMenu: (e: React.MouseEvent, item: FileSystemItem) => void;
+}
+
+const SearchResultItem: React.FC<SearchResultItemProps> = ({ item, handleItemContextMenu }) => {
+  const { openTab } = useEditor();
+  
+  const handleClick = () => {
+    if (item.type === 'file') {
+      openTab(item.id);
+    }
+  };
+  
+  return (
+    <div
+      className="flex items-center py-0.5 px-2 cursor-pointer rounded hover:text-white transition-colors"
+      onClick={handleClick}
+      onContextMenu={(e) => handleItemContextMenu(e, item)}
+    >
+      <span className="mr-2 text-slate-400">
+        {item.type === 'folder' ? <Folder size={16} /> : getFileIcon(item.name)}
+      </span>
+      <span className="text-sm text-sidebar-foreground hover:text-white opacity-90 truncate">{item.name}</span>
+      <span className="text-xs text-slate-500 ml-2 truncate opacity-70">{item.path}</span>
     </div>
   );
 };
