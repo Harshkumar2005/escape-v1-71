@@ -389,7 +389,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
   return (
     <div>
       <div
-        className={`flex items-center py-0.5 px-1 cursor-pointer rounded ${
+        className={`group flex items-center py-0.5 px-1 cursor-pointer rounded ${
           isSelected ? 'bg-[#272b34] text-white' : 'hover:text-white'
         }`}
         style={{ paddingLeft: `${(depth * 12) + 4}px` }}
@@ -398,14 +398,14 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
       >
         {item.type === 'folder' && (
           <span className={`mr-1 ${
-          isSelected ? 'text-white' : 'hover:text-white text-slate-400 hover:opacity-100'
+          isSelected ? 'text-white' : 'group-hover:text-white text-slate-400 group-hover:opacity-100'
         }`}>
             {item.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
         )}
         
         <span className={`mr-1 ${
-          isSelected ? 'text-white' : 'hover:text-white text-slate-400 hover:opacity-100'
+          isSelected ? 'text-white' : 'group-hover:text-white text-slate-400 group-hover:opacity-100'
         }`}>
           {item.type === 'folder' 
             ? (item.isOpen ? <FolderOpen size={16} /> : <Folder size={16} />)
