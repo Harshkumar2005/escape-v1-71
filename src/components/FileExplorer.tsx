@@ -1,7 +1,7 @@
 import React, { useState, Dispatch, SetStateAction } from 'react';
 import { useFileContext } from '@/contexts/FileContext';
 import { Folder, ChevronRight, ChevronDown, Plus } from 'lucide-react';
-import { FileIcon, defaultStyles } from 'react-file-icon';
+import FileIcon from './common/FileIcon';
 import type { FileNode } from '@/contexts/FileContext';
 
 export const FileExplorer: React.FC = () => {
@@ -29,24 +29,10 @@ export const FileExplorer: React.FC = () => {
     }
   };
 
-  const getFileIcon = (fileName: string) => {
-    const extension = fileName.split('.').pop()?.toLowerCase() || '';
-    
-    if (extension) {
-      const styles = (defaultStyles as any)[extension] || {};
-      return (
-        <div className="w-4 h-4 flex-shrink-0">
-          <FileIcon extension={extension} {...styles} />
-        </div>
-      );
-    }
-    
-    return null;
-  };
-
   const renderNode = (node: FileNode) => {
     const isDirectory = node.children && node.children.length > 0;
     const isSelected = selectedFile?.path === node.path;
+    const fileName = node.path.split('/').pop() || '';
 
     return (
       <div key={node.path} className="pl-4">
@@ -64,10 +50,12 @@ export const FileExplorer: React.FC = () => {
           ) : (
             <>
               <span className="w-4" />
-              {getFileIcon(node.path.split('/').pop() || '') || <div className="w-4 h-4" />}
+              <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                <FileIcon filename={fileName} size={16} />
+              </div>
             </>
           )}
-          <span className="text-sm">{node.path.split('/').pop()}</span>
+          <span className="text-sm">{fileName}</span>
         </div>
         {isDirectory && node.isOpen && node.children.map(child => renderNode(child))}
       </div>

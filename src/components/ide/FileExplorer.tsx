@@ -4,7 +4,7 @@ import {
   FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
   FileCog, FileSpreadsheet, Edit, Trash, FolderPlus
 } from 'lucide-react';
-import { FileIcon, defaultStyles } from 'react-file-icon';
+import FileIcon from '../common/FileIcon';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { Menu, Item, useContextMenu } from 'react-contexify';
@@ -15,18 +15,11 @@ const FILE_ITEM_MENU_ID = 'file-item-context-menu';
 const FOLDER_ITEM_MENU_ID = 'folder-item-context-menu';
 
 const getFileIcon = (fileName: string) => {
-  const extension = fileName.split('.').pop()?.toLowerCase() || '';
-  
-  if (extension) {
-    const styles = (defaultStyles as any)[extension] || {};
-    return (
-      <div className="w-4 h-4 mr-1.5">
-        <FileIcon extension={extension} {...styles} />
-      </div>
-    );
-  }
-  
-  return <File size={16} className="file-icon mr-1.5" />;
+  return (
+    <div className="w-4 h-4 mr-1.5 flex items-center justify-center">
+      <FileIcon filename={fileName} size={16} />
+    </div>
+  );
 };
 
 const FileExplorer: React.FC = () => {
