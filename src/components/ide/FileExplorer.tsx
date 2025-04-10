@@ -398,14 +398,14 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
       >
         {item.type === 'folder' && (
           <span className={`mr-1 ${
-          isSelected ? 'text-white' : 'text-slate-400'
+          isSelected ? 'text-white' : 'hover:text-white text-slate-400'
         }`}>
             {item.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
         )}
         
         <span className={`mr-1 ${
-          isSelected ? 'text-white' : 'text-slate-400'
+          isSelected ? 'text-white' : 'hover:text-white text-slate-400'
         }`}>
           {item.type === 'folder' 
             ? (item.isOpen ? <FolderOpen size={16} /> : <Folder size={16} />)
