@@ -194,35 +194,35 @@ const TopBar: React.FC = () => {
         </div>
         */}
         <div className="relative" style={{
-            marginLeft: '15px',
+            marginLeft: '20px',
           }}>
         <button 
-          className="px-2 py-0.5 gap-1.5 flex items-center hover:text-white"
+          className="py-0.5 gap-1 flex items-center hover:text-white"
           onClick={() => handleAction('undo')}
           title="Undo (Ctrl+Z)"
         >
-          <Undo2 size={16} />
+          <Undo2 size={15} />
           Undo
         </button>
         </div>
 
         <div className="relative">
         <button 
-          className="px-2 py-0.5 gap-1.5 flex items-center hover:text-white"
+          className="px-2 py-0.5 gap-1 flex items-center hover:text-white"
           onClick={() => handleAction('redo')}
           title="Redo (Ctrl+Y)"
         >
-          <Redo2 size={16} />
+          <Redo2 size={15} />
           Redo
         </button>
         </div>
         <div className="relative">
          <button 
-          className="px-2 py-0.5 gap-1.5 flex items-center hover:text-white"
+          className="py-0.5 gap-1.5 flex items-center hover:text-white"
           onClick={() => handleAction('save')}
           title="Save (Ctrl+S)"
         >
-          <Save size={16} />
+          <Save size={15} />
            Save
         </button>
         </div>
