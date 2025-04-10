@@ -285,31 +285,31 @@ const FileExplorer: React.FC = () => {
         )}
       </div>
       
-      <Menu id={CONTEXT_MENU_ID} className="context-menu">
-        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')} className="context-menu-item">
-          <div className="flex items-center">
-            <FileText size={14} className="mr-2 opacity-70" />
+      <Menu id={CONTEXT_MENU_ID} className="menu-dropdown mt-1 left-0 bg-[#1a1e26] border border-border rounded shadow-lg z-50">
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'file')} className="menu-item flex items-center px-4 py-1 hover:bg-[#272b34] hover:text-white cursor-pointer">
+          <div className="">
+            <FileText size={14} className="mr-2" />
             <span>New File</span>
           </div>
         </Item>
-        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')} className="context-menu-item">
-          <div className="flex items-center">
-            <Folder size={14} className="mr-2 opacity-70" />
+        <Item onClick={() => startCreatingNewItem(files[0].path, 'folder')} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
+          <div className="">
+            <Folder size={14} className="mr-2" />
             <span>New Folder</span>
           </div>
         </Item>
       </Menu>
       
       <Menu id={FILE_ITEM_MENU_ID} className="context-menu">
-        <Item onClick={({ props }) => startRenaming(props.itemId)} className="context-menu-item">
-          <div className="flex items-center">
-            <Edit size={14} className="mr-2 opacity-70" />
+        <Item onClick={({ props }) => startRenaming(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
+          <div className="">
+            <Edit size={14} className="mr-2" />
             <span>Rename</span>
           </div>
         </Item>
-        <Item onClick={({ props }) => deleteFile(props.itemId)} className="context-menu-item">
-          <div className="flex items-center">
-            <Trash size={14} className="mr-2 opacity-70" />
+        <Item onClick={({ props }) => deleteFile(props.itemId)} className="menu-item flex items-center px-4 py-1 hover:bg-[#cccccc29] hover:text-white cursor-pointer">
+          <div className="">
+            <Trash size={14} className="mr-2" />
             <span>Delete</span>
           </div>
         </Item>
