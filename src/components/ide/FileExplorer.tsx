@@ -1,18 +1,91 @@
-
 import React, { useState, useRef } from 'react';
 import { 
-  Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
-  Edit, Trash, FolderPlus, FileText
+  File, Folder, FolderOpen, ChevronDown, ChevronRight, Plus, Search, X,
+  FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
+  FileCog, FileSpreadsheet, Edit, Trash, FolderPlus
 } from 'lucide-react';
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 import 'react-contexify/ReactContexify.css';
-import { FileIconComponent } from '../FileIconComponent';
 
 const CONTEXT_MENU_ID = 'file-explorer-context-menu';
 const FILE_ITEM_MENU_ID = 'file-item-context-menu';
 const FOLDER_ITEM_MENU_ID = 'folder-item-context-menu';
+
+const getFileIcon = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  
+  switch(extension) {
+    case 'js':
+    case 'jsx':
+    case 'ts':
+    case 'tsx':
+    case 'html':
+    case 'css':
+    case 'php':
+    case 'py':
+    case 'rb':
+    case 'java':
+    case 'go':
+    case 'c':
+    case 'cpp':
+    case 'cs':
+      return <FileCode size={16} className="file-icon" />;
+    
+    case 'txt':
+    case 'md':
+    case 'rtf':
+    case 'log':
+      return <FileText size={16} className="file-icon" />;
+    
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+    case 'svg':
+    case 'bmp':
+    case 'ico':
+      return <FileImage size={16} className="file-icon" />;
+    
+    case 'mp4':
+    case 'avi':
+    case 'mov':
+    case 'wmv':
+    case 'webm':
+      return <FileVideo size={16} className="file-icon" />;
+    
+    case 'mp3':
+    case 'wav':
+    case 'ogg':
+    case 'flac':
+      return <FileAudio size={16} className="file-icon" />;
+    
+    case 'json':
+      return <FileJson size={16} className="file-icon" />;
+    
+    case 'yml':
+    case 'yaml':
+    case 'toml':
+    case 'ini':
+    case 'env':
+    case 'config':
+      return <FileCog size={16} className="file-icon" />;
+    
+    case 'csv':
+    case 'xls':
+    case 'xlsx':
+      return <FileSpreadsheet size={16} className="file-icon" />;
+    
+    case 'exe':
+    case 'bat':
+    case 'sh':
+      return <FileCheck size={16} className="file-icon" />;
+    
+    default:
+      return <File size={16} className="file-icon" />;
+  }
+};
 
 const FileExplorer: React.FC = () => {
   const { files, createFile, renameFile, deleteFile, toggleFolder } = useFileSystem();
@@ -332,7 +405,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
         <span className="mr-1 text-slate-400">
           {item.type === 'folder' 
             ? (item.isOpen ? <FolderOpen size={16} /> : <Folder size={16} />)
-            : <FileIconComponent filename={item.name} size={16} />
+            : getFileIcon(item.name)
           }
         </span>
         
@@ -356,7 +429,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
           style={{ paddingLeft: `${((depth + 1) * 12) + 4}px` }}
         >
           <span className="mr-1 text-slate-400">
-            {newItemType === 'folder' ? <Folder size={16} /> : <FileIconComponent filename="newfile" size={16} />}
+            {newItemType === 'folder' ? <Folder size={16} /> : <File size={16} />}
           </span>
           <input
             type="text"
@@ -413,10 +486,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ item, handleItemCon
       onContextMenu={(e) => handleItemContextMenu(e, item)}
     >
       <span className="mr-2 text-slate-400">
-        {item.type === 'folder' 
-          ? <Folder size={16} /> 
-          : <FileIconComponent filename={item.name} size={16} />
-        }
+        {item.type === 'folder' ? <Folder size={16} /> : getFileIcon(item.name)}
       </span>
       <span className="text-sm text-sidebar-foreground opacity-90 truncate">{item.name}</span>
       <span className="text-xs text-slate-500 ml-2 truncate opacity-70">{item.path}</span>
