@@ -419,9 +419,9 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
             onBlur={() => setTimeout(() => setRenamingItemId(null), 100)}
           />
         ) : (
-          <span className=`text-sm truncate ${
+          <span className={`text-sm truncate ${
           isSelected ? 'text-white' : 'text-sidebar-foreground opacity-90'
-        }`>{item.name}</span>
+        }`}>{item.name}</span>
         )}
       </div>
       
