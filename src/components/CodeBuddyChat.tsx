@@ -678,9 +678,9 @@ export function CodeBuddyChat() {
                 ol: ({ children }) => <ol className="list-decimal ml-6">{children}</ol>,
                 li: ({ children }) => <li className="whitespace-pre-wrap break-words">{children}</li>,
                 h1: ({ children }) => <h1 className="text-xl font-bold">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-lg font-bold">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-lg font-bold">{children}</h2>,
                 h3: ({ children }) => <h3 className="text-md font-bold">{children}</h3>,
-                h4: ({ children }) => <h4 className="font-bold my-1">{children}</h1>,
+                h4: ({ children }) => <h4 className="font-bold my-1">{children}</h4>,
                 blockquote: ({ children }) => (
                   <blockquote className="border-l-4 border-gray-500 pl-4 italic my-2 whitespace-pre-wrap break-words">
                     {children}
