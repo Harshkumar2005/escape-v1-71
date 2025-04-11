@@ -228,7 +228,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
 
 
 import React, { useState } from 'react';
-import { Github, Search, Loader, X, ChevronRight, FileCode, Download } from 'lucide-react';
+import { Github, Search, Loader, X, ChevronRight, FileCode, Download, Ghost} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
