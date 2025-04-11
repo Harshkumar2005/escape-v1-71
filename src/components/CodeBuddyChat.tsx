@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
@@ -281,15 +280,15 @@ export function CodeBuddyChat() {
     }, 2000);
   };
 
-  const parseFileHeader = (code: string): { language: string, filePath: string, operation: 'create' | 'edit' } | null => {
+  const parseFileHeader = (code: string): { language: string, filePath: string, operation?: string } | null => {
     // Check if the first line contains file metadata
     const firstLine = code.split('\n')[0].trim();
     
-    // Updated regex to handle both formats: 
-    // 1. "language filepath operation"
-    // 2. "language /filepath operation"
-    const regex = /^([a-zA-Z0-9]+)\s+([\w\/\.\-_]+)\s+(create|edit)$/;
-    const altRegex = /^([a-zA-Z0-9]+)\s+\/([\w\/\.\-_]+)\s+(create|edit)$/;
+    // Try to extract language and file path at minimum, operation is optional
+    // This regex is more flexible and will look for at least a language and a file path
+    const regex = /^([a-zA-Z0-9]+)\s+([\/\w\.\-_]+)(?:\s+(create|edit))?$/i;
+    // Also handle paths that start with a slash
+    const altRegex = /^([a-zA-Z0-9]+)\s+\/([\/\w\.\-_]+)(?:\s+(create|edit))?$/i;
     
     let match = firstLine.match(regex);
     
@@ -309,8 +308,21 @@ export function CodeBuddyChat() {
       const [_, language, filePath, operation] = match;
       return {
         language,
-        filePath,
+        filePath: '/' + filePath,
         operation: operation as 'create' | 'edit'
+      };
+    }
+    
+    // More lenient parsing - look for any text that might be language and filepath
+    // This is a fallback for malformed headers
+    const parts = firstLine.split(/\s+/);
+    if (parts.length >= 2) {
+      const language = parts[0];
+      const filePath = parts[1].startsWith('/') ? parts[1] : '/' + parts[1];
+      return {
+        language,
+        filePath,
+        operation: 'create'  // Default to create if not specified
       };
     }
     
@@ -334,27 +346,11 @@ export function CodeBuddyChat() {
     const codeContent = code.split('\n').slice(1).join('\n');
     
     try {
-      if (operation === 'create') {
-        // Create a new file - Fix: using 'file' as FileType instead of a string
-        createFile(filePath, codeContent, 'file');
-        setAcceptedCodeBlockIndex(index);
-        
-        toast.success('File created successfully', {
-          description: `Created ${filePath}`,
-          icon: <CheckCircle size={18} />
-        });
-      } else if (operation === 'edit') {
-        // Find the existing file
-        const existingFile = files.find(file => file.path === filePath);
-        
-        if (!existingFile) {
-          toast.error('File not found', {
-            description: `Could not find ${filePath} to edit`
-          });
-          return;
-        }
-        
-        // Update the file content
+      // Check if file exists
+      const existingFile = files.find(file => file.path === filePath);
+      
+      if (existingFile) {
+        // File exists, update it
         updateFileContent(existingFile.id, codeContent);
         setAcceptedCodeBlockIndex(index);
         
@@ -362,6 +358,30 @@ export function CodeBuddyChat() {
           description: `Updated ${filePath}`,
           icon: <CheckCircle size={18} />
         });
+      } else {
+        // File doesn't exist, create it
+        // Get the parent path for the new file
+        const lastSlashIndex = filePath.lastIndexOf('/');
+        const parentPath = lastSlashIndex > 0 ? filePath.substring(0, lastSlashIndex) : '/';
+        const fileName = filePath.substring(lastSlashIndex + 1);
+        
+        // Create the new file
+        const newFileId = createFile(parentPath, fileName, 'file');
+        
+        if (newFileId) {
+          // Update the content of the newly created file
+          updateFileContent(newFileId, codeContent);
+          setAcceptedCodeBlockIndex(index);
+          
+          toast.success('File created successfully', {
+            description: `Created ${filePath}`,
+            icon: <CheckCircle size={18} />
+          });
+        } else {
+          toast.error('Failed to create file', {
+            description: `Could not create ${filePath}`
+          });
+        }
       }
       
       setTimeout(() => {
