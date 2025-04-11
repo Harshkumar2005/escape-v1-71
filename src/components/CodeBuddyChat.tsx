@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
@@ -272,8 +271,8 @@ export function CodeBuddyChat() {
     
     try {
       if (operation === 'create') {
-        // Create a new file
-        createFile(filePath, codeContent, language);
+        // Create a new file - Fix: using 'file' as FileType instead of a string
+        createFile(filePath, codeContent, 'file');
         setAcceptedCodeBlockIndex(index);
         
         toast.success('File created successfully', {
