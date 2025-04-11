@@ -105,7 +105,7 @@ export const ProjectStartup: React.FC = () => {
 };
 */
 import React, { useState } from 'react';
-import { Github, FileCode, Loader, Ghost, ArrowRight } from 'lucide-react';
+import { Github, FileCode, Loader, Ghost, Code2, ChevronRight } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -143,73 +143,105 @@ export const ProjectStartup = () => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-6xl p-0 border-none overflow-hidden rounded-none">
-          <div className="h-screen flex flex-col bg-black">
-            <div className="flex-grow flex flex-col justify-center items-center px-8">
-              <div className="mb-8 flex items-center justify-center relative">
-                <div className="absolute inset-0 blur-lg bg-cyan-500/20 rounded-full"></div>
-                <Ghost className="h-20 w-20 mr-5 text-cyan-400 relative z-10" />
-                <h1 className="text-8xl font-black text-white relative z-10 tracking-tighter">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500">ESCAPE</span>
-                  <span className="text-pink-500">.esc</span>
-                </h1>
+        <DialogContent className="max-w-5xl p-0 bg-sidebar border-border overflow-hidden rounded-xl">
+          <div className="flex h-screen">
+            {/* Left side with background image/pattern */}
+            <div className="hidden md:flex md:w-1/3 bg-gradient-to-b from-blue-800 to-indigo-900 items-center justify-center p-8">
+              <div className="text-center">
+                <Ghost className="h-24 w-24 mx-auto mb-6 text-white" />
+                <h2 className="text-2xl font-bold text-white mb-4">Welcome to your coding journey</h2>
+                <p className="text-blue-200 text-sm">
+                  Create, collaborate, and build your next great project with ESCAPE.esc
+                </p>
+              </div>
+            </div>
+            
+            {/* Right side with content */}
+            <div className="w-full md:w-2/3 flex flex-col p-8 bg-sidebar">
+              <div className="flex items-center mb-12">
+                <Ghost className="h-10 w-10 mr-3 text-blue-500" />
+                <h1 className="text-4xl font-bold text-sidebar-foreground">ESCAPE.esc</h1>
               </div>
               
-              <p className="text-lg text-cyan-200 mb-16 tracking-wide">CODING ON THE EDGE</p>
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold text-sidebar-foreground mb-2">Get Started</h2>
+                <p className="text-sidebar-foreground opacity-70">Choose how you want to begin your project</p>
+              </div>
               
-              <div className="w-full max-w-3xl space-y-6">
+              <div className="space-y-4 flex-grow">
                 <Button
                   variant="outline"
-                  className="flex items-center justify-between w-full p-6 bg-black border border-cyan-500/50 text-white rounded-md hover:bg-cyan-950/30 transition-all group"
+                  className="flex items-center justify-between w-full p-5 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg group"
                   onClick={handleLoadFromGithub}
                   disabled={isLoading}
                 >
                   <div className="flex items-center">
-                    <div className="rounded-full p-3 bg-cyan-900/40 mr-6 group-hover:bg-cyan-800/50 transition-colors">
+                    <div className="rounded-lg p-2 bg-blue-500/10 mr-4">
                       {isLoading ? (
-                        <Loader className="h-8 w-8 text-cyan-400 animate-spin" />
+                        <Loader className="h-6 w-6 text-blue-500 animate-spin" />
                       ) : (
-                        <Github className="h-8 w-8 text-cyan-400" />
+                        <Github className="h-6 w-6 text-blue-500" />
                       )}
                     </div>
                     <div className="text-left">
-                      <div className="font-bold text-xl mb-1">GitHub Repository</div>
-                      <div className="text-sm text-cyan-300/70">
-                        Connect to existing code
+                      <div className="font-medium text-lg">GitHub Repository</div>
+                      <div className="text-sm text-muted-foreground">
+                        Clone from existing repository
                       </div>
                     </div>
                   </div>
-                  <ArrowRight className="h-6 w-6 text-cyan-400 group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-sidebar-foreground transition-colors" />
                 </Button>
                 
                 <Button
                   variant="outline"
-                  className="flex items-center justify-between w-full p-6 bg-black border border-pink-500/50 text-white rounded-md hover:bg-pink-950/30 transition-all group"
+                  className="flex items-center justify-between w-full p-5 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg group"
                   onClick={handleStartNewProject}
                   disabled={isLoading}
                 >
                   <div className="flex items-center">
-                    <div className="rounded-full p-3 bg-pink-900/40 mr-6 group-hover:bg-pink-800/50 transition-colors">
+                    <div className="rounded-lg p-2 bg-green-500/10 mr-4">
                       {isLoading ? (
-                        <Loader className="h-8 w-8 text-pink-400 animate-spin" />
+                        <Loader className="h-6 w-6 text-green-500 animate-spin" />
                       ) : (
-                        <FileCode className="h-8 w-8 text-pink-400" />
+                        <FileCode className="h-6 w-6 text-green-500" />
                       )}
                     </div>
                     <div className="text-left">
-                      <div className="font-bold text-xl mb-1">New Project</div>
-                      <div className="text-sm text-pink-300/70">
-                        Start from scratch
+                      <div className="font-medium text-lg">New Project</div>
+                      <div className="text-sm text-muted-foreground">
+                        Start with an empty workspace
                       </div>
                     </div>
                   </div>
-                  <ArrowRight className="h-6 w-6 text-pink-400 group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-sidebar-foreground transition-colors" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex items-center justify-between w-full p-5 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg group"
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center">
+                    <div className="rounded-lg p-2 bg-purple-500/10 mr-4">
+                      <Code2 className="h-6 w-6 text-purple-500" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-lg">Templates</div>
+                      <div className="text-sm text-muted-foreground">
+                        Start with a predefined project template
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-sidebar-foreground transition-colors" />
                 </Button>
               </div>
-            </div>
-            
-            <div className="py-4 border-t border-cyan-900/30 text-center">
-              <p className="text-sm text-cyan-500/50">ESCAPE.esc v2.0.4 • Next-gen coding environment</p>
+              
+              <div className="mt-8 pt-4 border-t border-border/40">
+                <p className="text-sm text-sidebar-foreground opacity-50">
+                  ESCAPE.esc • Modern code editor for modern developers
+                </p>
+              </div>
             </div>
           </div>
         </DialogContent>
