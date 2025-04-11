@@ -283,6 +283,8 @@ export function CodeBuddyChat() {
   // Improved function to parse file information from code blocks
   const parseCodeBlockInfo = (code: string): { language: string, filePath: string, operation: string, content: string } | null => {
     const lines = code.split('\n');
+    if (lines.length === 0) return null;
+    
     const firstLine = lines[0].trim();
     
     // Format 1: ```js path="/path/to/file.js" create
@@ -665,7 +667,6 @@ export function CodeBuddyChat() {
     </div>
   );
 }
-
 
 
 
