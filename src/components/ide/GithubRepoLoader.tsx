@@ -406,15 +406,14 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl p-0 bg-sidebar border-border overflow-hidden rounded-lg">
+      <DialogContent className="max-w-4xl p-0 bg-sidebar overflow-hidden rounded-lg">
         <div className="min-h-screen flex flex-col bg-sidebar">
-          <header className="border-b border-border p-6">
-            <div className="flex items-center">
-              <Github className="h-10 w-10 mr-4 text-sidebar-foreground" />
-              <div>
-                <h1 className="text-3xl font-bold text-sidebar-foreground">Import from GitHub</h1>
-                <p className="text-sidebar-foreground opacity-70 mt-1">Clone a public repository to start working on it</p>
-              </div>
+          <header className="p-6">
+            <div className="justify-center flex items-center">
+              <Ghost className="mt-2 h-14 w-14 mr-4 text-sidebar-foreground" />
+              <h1 className="text-4xl font-extrabold text-sidebar-foreground">
+                ESCAPE.esc
+              </h1>
             </div>
           </header>
           
@@ -458,7 +457,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                   <div className="space-y-4">
                     <Button
                       variant="outline"
-                      className="flex items-center justify-between w-full p-5 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg group"
+                      className="flex items-center justify-between w-full p-8 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg group"
                       onClick={() => setRepoUrl('https://github.com/facebook/react')}
                     >
                       <div className="flex items-center">
@@ -475,7 +474,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                     
                     <Button
                       variant="outline"
-                      className="flex items-center justify-between w-full p-5 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg group"
+                      className="flex items-center justify-between w-full p-8 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg group"
                       onClick={() => setRepoUrl('https://github.com/vercel/next.js')}
                     >
                       <div className="flex items-center">
@@ -492,7 +491,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                     
                     <Button
                       variant="outline"
-                      className="flex items-center justify-between w-full p-5 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg group"
+                      className="flex items-center justify-between w-full p-8 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg group"
                       onClick={() => setRepoUrl('https://github.com/tailwindlabs/tailwindcss')}
                     >
                       <div className="flex items-center">
@@ -529,7 +528,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                     ></div>
                   </div>
                   
-                  <div className="space-y-4 text-left">
+                  <div className="hidden space-y-4 text-left">
                     <div className="flex items-center gap-3 p-4 bg-terminal rounded-lg">
                       <FileCode className="h-6 w-6 text-sidebar-foreground" />
                       <div className="text-sidebar-foreground">Setting up file system structure...</div>
@@ -545,7 +544,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
             )}
           </div>
           
-          <footer className="border-t border-border p-4 flex justify-between items-center">
+          <footer className="hidden border-t border-border p-4 flex justify-between items-center">
             <p className="text-sm text-sidebar-foreground opacity-50">ESCAPE.esc • GitHub Integration</p>
             {!loading && (
               <Button
