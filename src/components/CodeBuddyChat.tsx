@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
@@ -284,8 +285,26 @@ export function CodeBuddyChat() {
   const parseFileHeader = (code: string): { language: string, filePath: string, operation: 'create' | 'edit' } | null => {
     // Check if the first line contains file metadata
     const firstLine = code.split('\n')[0].trim();
+    
+    // Updated regex to handle both formats: 
+    // 1. "language filepath operation"
+    // 2. "language /filepath operation"
     const regex = /^([a-zA-Z0-9]+)\s+([\w\/\.\-_]+)\s+(create|edit)$/;
-    const match = firstLine.match(regex);
+    const altRegex = /^([a-zA-Z0-9]+)\s+\/([\w\/\.\-_]+)\s+(create|edit)$/;
+    
+    let match = firstLine.match(regex);
+    
+    if (match) {
+      const [_, language, filePath, operation] = match;
+      return {
+        language,
+        filePath,
+        operation: operation as 'create' | 'edit'
+      };
+    }
+    
+    // Try the alternate format
+    match = firstLine.match(altRegex);
     
     if (match) {
       const [_, language, filePath, operation] = match;
