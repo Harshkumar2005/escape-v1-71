@@ -228,7 +228,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
 
 
 import React, { useState } from 'react';
-import { Github, Search, Loader, X, ChevronRight, FileCode, Download, Ghost} from 'lucide-react';
+import { Github, Search, Loader, X, ChevronRight, FileCode, Download, Ghost, FolderDown} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -437,7 +437,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                       disabled={!repoUrl.trim()}
                       className="bg-terminal hover:bg-terminal/90 border border-border text-sidebar-foreground text-lg p-6 flex items-center gap-2 min-w-32"
                     >
-                      <Search className="h-6 w-6" />
+                      <FolderDown className="h-6 w-6" />
                       Import
                     </Button>
                   </div>
