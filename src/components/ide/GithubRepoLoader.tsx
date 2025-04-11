@@ -437,7 +437,8 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                       disabled={!repoUrl.trim()}
                       className="bg-terminal hover:bg-terminal/90 border border-border text-sidebar-foreground text-lg p-6 flex items-center gap-2 min-w-32"
                     >
-                      <FolderDown className="h-6 w-6" />
+                      <FolderDown strokeWidth={2.5} className="mt-0.5 h-6 w-6" /> 
+                     
                       Import
                     </Button>
                   </div>
