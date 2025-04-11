@@ -402,6 +402,37 @@ export function CodeBuddyChat() {
     }
   };
 
+  // Extract clean code content by removing metadata lines (FILE_PATH, OPERATION, etc.)
+  const extractCleanCode = (code: string): string => {
+    const lines = code.split('\n');
+    const filePathLine = lines.findIndex(line => line.trim().startsWith('FILE_PATH:'));
+    const operationLine = lines.findIndex(line => line.trim().startsWith('OPERATION:'));
+    
+    if (filePathLine > 0 && operationLine > 0) {
+      // Find the first empty line after operation line
+      let emptyLineIndex = -1;
+      for (let i = operationLine + 1; i < lines.length; i++) {
+        if (lines[i].trim() === '') {
+          emptyLineIndex = i;
+          break;
+        }
+      }
+      
+      const contentStartIndex = emptyLineIndex > 0 ? emptyLineIndex + 1 : operationLine + 1;
+      return lines.slice(contentStartIndex).join('\n');
+    }
+    
+    // If we can't identify the format, return original code
+    return code;
+  };
+
+  // Helper function to find a file by path in the file system
+  const findFileByPath = (path: string): string | null => {
+    const allFiles = getAllFiles();
+    const foundFile = allFiles.find(file => file.path === path);
+    return foundFile ? foundFile.id : null;
+  };
+
   const handleAcceptCode = (code: string, index: number) => {
     const codeInfo = parseCodeBlock(code);
     
@@ -413,16 +444,15 @@ export function CodeBuddyChat() {
       return;
     }
     
-    const { filePath, content } = codeInfo;
+    const { filePath, content, operation } = codeInfo;
     
     try {
-      // Check if the file exists in our system
-      const existingFile = files.find(file => file.path === filePath);
+      // First check if a file with this path already exists
+      const existingFileId = findFileByPath(filePath);
       
-      if (existingFile) {
-        // Update existing file
-        updateFileContent(existingFile.id, content);
-        setAcceptedCodeBlockIndex(index);
+      if (existingFileId) {
+        // Update existing file content
+        updateFileContent(existingFileId, content);
         
         toast.success('File updated successfully', {
           description: `Updated ${filePath}`,
@@ -438,7 +468,6 @@ export function CodeBuddyChat() {
         
         if (newFileId) {
           updateFileContent(newFileId, content);
-          setAcceptedCodeBlockIndex(index);
           
           toast.success('File created successfully', {
             description: `Created ${filePath}`,
@@ -451,6 +480,7 @@ export function CodeBuddyChat() {
         }
       }
       
+      setAcceptedCodeBlockIndex(index);
       setTimeout(() => {
         setAcceptedCodeBlockIndex(null);
       }, 2000);
@@ -540,7 +570,7 @@ export function CodeBuddyChat() {
                 code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const codeBlock = isCodeBlock(className);
-                  const code = String(children).replace(/\n$/, '');
+                  const rawCode = String(children).replace(/\n$/, '');
                   
                   if (codeBlock) {
                     const codeBlockIndex = messages
@@ -548,7 +578,10 @@ export function CodeBuddyChat() {
                       .findIndex(msg => msg === message);
                     
                     const language = detectLanguage(className);
-                    const filePath = extractFilePathForDisplay(code);
+                    const filePath = extractFilePathForDisplay(rawCode);
+                    
+                    // Clean the code by removing metadata lines
+                    const cleanCode = extractCleanCode(rawCode);
                     
                     return (
                       <div className="relative group my-4 rounded-md overflow-hidden border">
@@ -556,15 +589,10 @@ export function CodeBuddyChat() {
                           <div className="flex items-center gap-2">
                             <Code size={14} />
                             <span className="font-medium uppercase">{language}</span>
-                            {filePath && (
-                              <span className="text-gray-400 ml-2">
-                                Path: {filePath}
-                              </span>
-                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => handleAcceptCode(code, codeBlockIndex)}
+                              onClick={() => handleAcceptCode(rawCode, codeBlockIndex)}
                               className="flex items-center text-xs text-gray-400 hover:text-white transition-colors"
                               aria-label="Accept"
                             >
@@ -581,7 +609,7 @@ export function CodeBuddyChat() {
                               )}
                             </button>
                             <button
-                              onClick={() => handleCopyCode(code, codeBlockIndex)}
+                              onClick={() => handleCopyCode(cleanCode, codeBlockIndex)}
                               className="flex items-center text-xs text-gray-400 hover:text-white transition-colors"
                               aria-label="Copy"
                             >
@@ -619,8 +647,13 @@ export function CodeBuddyChat() {
                             paddingRight: '1em',
                           }}
                         >
-                          {code}
+                          {cleanCode}
                         </SyntaxHighlighter>
+                        {filePath && (
+                          <div className="border-t text-xs text-gray-400 px-4 py-2">
+                            Path: {filePath}
+                          </div>
+                        )}
                       </div>
                     );
                   }
