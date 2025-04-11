@@ -510,7 +510,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                 </div>
                 
                 <div className="mt-8 text-center text-sidebar-foreground opacity-50 text-sm">
-                  <p>Note: Only public repositories are supported. Large files (>500KB) may be skipped.</p>
+                  <p>Note: Only public repositories are supported. Large files (500KB) may be skipped.</p>
                 </div>
               </div>
             ) : (
