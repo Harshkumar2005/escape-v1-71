@@ -104,9 +104,8 @@ export const ProjectStartup: React.FC = () => {
   );
 };
 */
-
 import React, { useState } from 'react';
-import { Github, FileCode, Loader, Ghost } from 'lucide-react';
+import { Github, FileCode, Loader, Ghost, Plus, Code } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -144,55 +143,67 @@ export const ProjectStartup = () => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-4xl p-0 bg-sidebar border-border overflow-hidden rounded-lg">
-          <div className="h-screen flex flex-col justify-center items-center">
-            <div className="mb-12 flex items-center">
-              <Ghost className="h-12 w-12 mr-4 text-blue-500" />
-              <h1 className="text-6xl font-bold text-sidebar-foreground">ESCAPE.esc</h1>
+        <DialogContent className="max-w-5xl p-0 bg-sidebar border-border overflow-hidden rounded-lg">
+          <div className="h-screen flex flex-col justify-center items-center bg-gradient-to-br from-blue-900 to-black">
+            <div className="mb-10 flex items-center">
+              <Ghost className="h-16 w-16 mr-4 text-blue-400" />
+              <h1 className="text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                ESCAPE.esc
+              </h1>
             </div>
             
-            <div className="text-center mb-12">
-              <p className="text-xl text-sidebar-foreground opacity-70">Your next-generation code editor</p>
+            <div className="text-center mb-16">
+              <p className="text-xl text-blue-200 opacity-80">Where code meets imagination</p>
             </div>
             
-            <div className="grid grid-cols-2 gap-8 w-full max-w-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl px-6">
               <Button
                 variant="outline"
-                className="flex flex-col items-center justify-center gap-4 h-48 p-6 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg transition-all hover:scale-105"
+                className="flex items-center justify-between p-8 bg-blue-900/30 hover:bg-blue-800/50 border border-blue-500/30 text-blue-100 rounded-xl transition-all hover:shadow-lg hover:shadow-blue-900/30"
                 onClick={handleLoadFromGithub}
                 disabled={isLoading}
               >
-                {isLoading ? (
-                  <Loader className="h-12 w-12 text-blue-500 animate-spin" />
-                ) : (
-                  <Github className="h-12 w-12 text-blue-500" />
-                )}
-                <div className="text-center">
-                  <div className="font-medium text-xl mb-2">Load from GitHub</div>
-                  <div className="text-sm text-muted-foreground">
-                    Import code from a public repository
+                <div className="flex items-center">
+                  {isLoading ? (
+                    <Loader className="h-10 w-10 text-blue-400 animate-spin mr-6" />
+                  ) : (
+                    <Github className="h-10 w-10 text-blue-400 mr-6" />
+                  )}
+                  <div className="text-left">
+                    <div className="font-bold text-xl mb-1">GitHub Repository</div>
+                    <div className="text-sm text-blue-300">
+                      Import from existing repository
+                    </div>
                   </div>
                 </div>
+                <Code className="h-6 w-6 text-blue-400" />
               </Button>
               
               <Button
                 variant="outline"
-                className="flex flex-col items-center justify-center gap-4 h-48 p-6 bg-terminal hover:bg-terminal/90 border-border text-sidebar-foreground rounded-lg transition-all hover:scale-105"
+                className="flex items-center justify-between p-8 bg-purple-900/30 hover:bg-purple-800/50 border border-purple-500/30 text-purple-100 rounded-xl transition-all hover:shadow-lg hover:shadow-purple-900/30"
                 onClick={handleStartNewProject}
                 disabled={isLoading}
               >
-                {isLoading ? (
-                  <Loader className="h-12 w-12 text-green-500 animate-spin" />
-                ) : (
-                  <FileCode className="h-12 w-12 text-green-500" />
-                )}
-                <div className="text-center">
-                  <div className="font-medium text-xl mb-2">Start New Project</div>
-                  <div className="text-sm text-muted-foreground">
-                    Begin with a blank workspace
+                <div className="flex items-center">
+                  {isLoading ? (
+                    <Loader className="h-10 w-10 text-purple-400 animate-spin mr-6" />
+                  ) : (
+                    <FileCode className="h-10 w-10 text-purple-400 mr-6" />
+                  )}
+                  <div className="text-left">
+                    <div className="font-bold text-xl mb-1">Blank Canvas</div>
+                    <div className="text-sm text-purple-300">
+                      Start with a clean workspace
+                    </div>
                   </div>
                 </div>
+                <Plus className="h-6 w-6 text-purple-400" />
               </Button>
+            </div>
+            
+            <div className="mt-12 text-center text-blue-300/60 text-sm">
+              <p>ESCAPE.esc — Next-generation code editor</p>
             </div>
           </div>
         </DialogContent>
