@@ -105,7 +105,7 @@ export const ProjectStartup: React.FC = () => {
 };
 */
 import React, { useState } from 'react';
-import { Github, FileCode, Loader, Ghost, Plus, Code } from 'lucide-react';
+import { Github, FileCode, Loader, Ghost, ArrowRight } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -143,67 +143,73 @@ export const ProjectStartup = () => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-5xl p-0 bg-sidebar border-border overflow-hidden rounded-lg">
-          <div className="h-screen flex flex-col justify-center items-center bg-gradient-to-br from-blue-900 to-black">
-            <div className="mb-10 flex items-center">
-              <Ghost className="h-16 w-16 mr-4 text-blue-400" />
-              <h1 className="text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-                ESCAPE.esc
-              </h1>
-            </div>
-            
-            <div className="text-center mb-16">
-              <p className="text-xl text-blue-200 opacity-80">Where code meets imagination</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl px-6">
-              <Button
-                variant="outline"
-                className="flex items-center justify-between p-8 bg-blue-900/30 hover:bg-blue-800/50 border border-blue-500/30 text-blue-100 rounded-xl transition-all hover:shadow-lg hover:shadow-blue-900/30"
-                onClick={handleLoadFromGithub}
-                disabled={isLoading}
-              >
-                <div className="flex items-center">
-                  {isLoading ? (
-                    <Loader className="h-10 w-10 text-blue-400 animate-spin mr-6" />
-                  ) : (
-                    <Github className="h-10 w-10 text-blue-400 mr-6" />
-                  )}
-                  <div className="text-left">
-                    <div className="font-bold text-xl mb-1">GitHub Repository</div>
-                    <div className="text-sm text-blue-300">
-                      Import from existing repository
-                    </div>
-                  </div>
-                </div>
-                <Code className="h-6 w-6 text-blue-400" />
-              </Button>
+        <DialogContent className="max-w-6xl p-0 border-none overflow-hidden rounded-none">
+          <div className="h-screen flex flex-col bg-black">
+            <div className="flex-grow flex flex-col justify-center items-center px-8">
+              <div className="mb-8 flex items-center justify-center relative">
+                <div className="absolute inset-0 blur-lg bg-cyan-500/20 rounded-full"></div>
+                <Ghost className="h-20 w-20 mr-5 text-cyan-400 relative z-10" />
+                <h1 className="text-8xl font-black text-white relative z-10 tracking-tighter">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500">ESCAPE</span>
+                  <span className="text-pink-500">.esc</span>
+                </h1>
+              </div>
               
-              <Button
-                variant="outline"
-                className="flex items-center justify-between p-8 bg-purple-900/30 hover:bg-purple-800/50 border border-purple-500/30 text-purple-100 rounded-xl transition-all hover:shadow-lg hover:shadow-purple-900/30"
-                onClick={handleStartNewProject}
-                disabled={isLoading}
-              >
-                <div className="flex items-center">
-                  {isLoading ? (
-                    <Loader className="h-10 w-10 text-purple-400 animate-spin mr-6" />
-                  ) : (
-                    <FileCode className="h-10 w-10 text-purple-400 mr-6" />
-                  )}
-                  <div className="text-left">
-                    <div className="font-bold text-xl mb-1">Blank Canvas</div>
-                    <div className="text-sm text-purple-300">
-                      Start with a clean workspace
+              <p className="text-lg text-cyan-200 mb-16 tracking-wide">CODING ON THE EDGE</p>
+              
+              <div className="w-full max-w-3xl space-y-6">
+                <Button
+                  variant="outline"
+                  className="flex items-center justify-between w-full p-6 bg-black border border-cyan-500/50 text-white rounded-md hover:bg-cyan-950/30 transition-all group"
+                  onClick={handleLoadFromGithub}
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center">
+                    <div className="rounded-full p-3 bg-cyan-900/40 mr-6 group-hover:bg-cyan-800/50 transition-colors">
+                      {isLoading ? (
+                        <Loader className="h-8 w-8 text-cyan-400 animate-spin" />
+                      ) : (
+                        <Github className="h-8 w-8 text-cyan-400" />
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <div className="font-bold text-xl mb-1">GitHub Repository</div>
+                      <div className="text-sm text-cyan-300/70">
+                        Connect to existing code
+                      </div>
                     </div>
                   </div>
-                </div>
-                <Plus className="h-6 w-6 text-purple-400" />
-              </Button>
+                  <ArrowRight className="h-6 w-6 text-cyan-400 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex items-center justify-between w-full p-6 bg-black border border-pink-500/50 text-white rounded-md hover:bg-pink-950/30 transition-all group"
+                  onClick={handleStartNewProject}
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center">
+                    <div className="rounded-full p-3 bg-pink-900/40 mr-6 group-hover:bg-pink-800/50 transition-colors">
+                      {isLoading ? (
+                        <Loader className="h-8 w-8 text-pink-400 animate-spin" />
+                      ) : (
+                        <FileCode className="h-8 w-8 text-pink-400" />
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <div className="font-bold text-xl mb-1">New Project</div>
+                      <div className="text-sm text-pink-300/70">
+                        Start from scratch
+                      </div>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-6 w-6 text-pink-400 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
             </div>
             
-            <div className="mt-12 text-center text-blue-300/60 text-sm">
-              <p>ESCAPE.esc — Next-generation code editor</p>
+            <div className="py-4 border-t border-cyan-900/30 text-center">
+              <p className="text-sm text-cyan-500/50">ESCAPE.esc v2.0.4 • Next-gen coding environment</p>
             </div>
           </div>
         </DialogContent>
