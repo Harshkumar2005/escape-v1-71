@@ -147,28 +147,36 @@ export const ProjectStartup = () => {
         <DialogContent className="max-w-5xl p-0 bg-sidebar border-border overflow-hidden rounded-lg">
           <div className="h-screen flex flex-col justify-center items-center bg-sidebar">
             <div className="mb-10 flex items-center">
-              <Ghost className="h-16 w-16 mr-4 text-sidebar-foreground" />
+              <Ghost className="mt-2 h-16 w-16 mr-4 text-sidebar-foreground" />
               <h1 className="text-7xl font-extrabold text-sidebar-foreground">
                 ESCAPE.esc
               </h1>
             </div>
             
-            <div className="text-center mb-16">
-              <p className="text-xl text-sidebar-foreground opacity-80">Where code meets imagination</p>
+            <div className="text-center mb-8 mt-6">
+              <p className="text-xl text-sidebar-foreground opacity-80">Choose how you want to get started with your project</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl px-6">
               <Button
                 variant="outline"
-                className="flex items-center justify-between p-8 bg-terminal hover:bg-terminal/90 border border-border text-sidebar-foreground rounded-xl transition-all hover:shadow-lg"
+                className="flex items-center justify-between p-8 bg-terminal hover:bg-terminal/90 border border-border text-sidebar-foreground rounded-xl transition-all hover:shadow-lg focus:outline-none focus:ring-0"
                 onClick={handleLoadFromGithub}
                 disabled={isLoading}
               >
                 <div className="flex items-center">
                   {isLoading ? (
-                    <Loader className="h-14 w-14 text-sidebar-foreground animate-spin mr-6" />
+                    <Loader className="h-20 w-20 text-sidebar-foreground animate-spin mr-6" style={{
+                    height: "5rem",
+                    width: "2rem",
+                    marginLeft: "-10px"
+                   }}/>
                   ) : (
-                    <Github className="h-14 w-14 text-sidebar-foreground mr-6" />
+                    <Github className="h-20 w-20 text-sidebar-foreground mr-6" style={{
+                    height: "5rem",
+                    width: "2rem",
+                    marginLeft: "-10px"
+                   }}/>
                   )}
                   <div className="text-left">
                     <div className="font-bold text-xl mb-1">GitHub Repository</div>
@@ -182,15 +190,23 @@ export const ProjectStartup = () => {
               
               <Button
                 variant="outline"
-                className="flex items-center justify-between p-8 bg-terminal hover:bg-terminal/90 border border-border text-sidebar-foreground rounded-xl transition-all hover:shadow-lg"
+                className="flex items-center justify-between p-8 bg-terminal hover:bg-terminal/90 border border-border text-sidebar-foreground rounded-xl transition-all hover:shadow-lg focus:outline-none focus:ring-0"
                 onClick={handleStartNewProject}
                 disabled={isLoading}
               >
                 <div className="flex items-center">
                   {isLoading ? (
-                    <Loader className="h-14 w-14 text-sidebar-foreground animate-spin mr-6" />
+                    <Loader className="h-14 w-14 text-sidebar-foreground animate-spin mr-6" style={{
+                    height: "5rem",
+                    width: "2rem",
+                    marginLeft: "-10px"
+                   }}/>
                   ) : (
-                    <FileCode className="h-14 w-14 text-sidebar-foreground mr-6" />
+                    <FileCode className="h-14 w-14 text-sidebar-foreground mr-6" style={{
+                    height: "5rem",
+                    width: "2rem",
+                    marginLeft: "-10px"
+                   }}/>
                   )}
                   <div className="text-left">
                     <div className="font-bold text-xl mb-1">Blank Canvas</div>
@@ -203,7 +219,7 @@ export const ProjectStartup = () => {
               </Button>
             </div>
             
-            <div className="mt-12 text-center text-sidebar-foreground opacity-50 text-sm">
+            <div className="hidden mt-12 text-center text-sidebar-foreground opacity-50 text-sm">
               <p>ESCAPE.esc — Next-generation code editor</p>
             </div>
           </div>
