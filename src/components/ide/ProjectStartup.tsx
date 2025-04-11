@@ -146,7 +146,7 @@ export const ProjectStartup = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-5xl p-0 bg-sidebar border-border overflow-hidden rounded-lg">
           <div className="h-screen flex flex-col justify-center items-center bg-sidebar">
-            <div className="mb-10 flex items-center">
+            <div className="mb-8 flex items-center">
               <Ghost className="mt-2 h-16 w-16 mr-4 text-sidebar-foreground" />
               <h1 className="text-7xl font-extrabold text-sidebar-foreground">
                 ESCAPE.esc
@@ -157,10 +157,10 @@ export const ProjectStartup = () => {
               <p className="text-xl text-sidebar-foreground opacity-80">Choose how you want to get started with your project</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl px-6">
+            <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl px-6">
               <Button
-                variant="outline"
-                className="flex items-center justify-between p-8 bg-terminal hover:bg-terminal/90 border border-border text-sidebar-foreground rounded-xl transition-all hover:shadow-lg focus:outline-none focus:ring-0"
+                variant="default"
+                className="flex items-center justify-between p-8 hover:bg-terminal/90 border text-sidebar-foreground rounded-xl transition-all hover:shadow-lg focus:outline-none focus:ring-0"
                 onClick={handleLoadFromGithub}
                 disabled={isLoading}
               >
@@ -189,8 +189,8 @@ export const ProjectStartup = () => {
               </Button>
               
               <Button
-                variant="outline"
-                className="flex items-center justify-between p-8 bg-terminal hover:bg-terminal/90 border border-border text-sidebar-foreground rounded-xl transition-all hover:shadow-lg focus:outline-none focus:ring-0"
+                variant="default"
+                className="flex items-center justify-between p-8 hover:bg-terminal/90 border text-sidebar-foreground rounded-xl transition-all hover:shadow-lg focus:outline-none focus:ring-0"
                 onClick={handleStartNewProject}
                 disabled={isLoading}
               >
