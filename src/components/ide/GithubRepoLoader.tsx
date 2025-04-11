@@ -461,7 +461,11 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                       onClick={() => setRepoUrl('https://github.com/facebook/react')}
                     >
                       <div className="flex items-center">
-                        <Github className="h-8 w-8 text-sidebar-foreground mr-4" />
+                        <Github className="text-sidebar-foreground mr-4" style={{
+                    height: "1.68rem",
+                    width: "1.68rem",
+                    marginLeft: "-10px"
+                   }}/>
                         <div className="text-left">
                           <div className="font-medium text-lg">facebook/react</div>
                           <div className="text-sm text-sidebar-foreground opacity-70">
@@ -478,8 +482,11 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                       onClick={() => setRepoUrl('https://github.com/vercel/next.js')}
                     >
                       <div className="flex items-center">
-                        <Github className="h-8 w-8 text-sidebar-foreground mr-4" />
-                        <div className="text-left">
+                        <Github className="text-sidebar-foreground mr-4" style={{
+                    height: "1.68rem",
+                    width: "1.68rem",
+                    marginLeft: "-10px"
+                   }}/><div className="text-left">
                           <div className="font-medium text-lg">vercel/next.js</div>
                           <div className="text-sm text-sidebar-foreground opacity-70">
                             The React Framework for Production
@@ -495,8 +502,11 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
                       onClick={() => setRepoUrl('https://github.com/tailwindlabs/tailwindcss')}
                     >
                       <div className="flex items-center">
-                        <Github className="h-8 w-8 text-sidebar-foreground mr-4" />
-                        <div className="text-left">
+                        <Github className="text-sidebar-foreground mr-4" style={{
+                    height: "1.68rem",
+                    width: "1.68rem",
+                    marginLeft: "-10px"
+                   }}/><div className="text-left">
                           <div className="font-medium text-lg">tailwindlabs/tailwindcss</div>
                           <div className="text-sm text-sidebar-foreground opacity-70">
                             A utility-first CSS framework for rapid UI development
@@ -514,7 +524,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
               </div>
             ) : (
               <div className="flex-grow flex flex-col items-center justify-center">
-                <div className="w-full max-w-lg text-center">
+                <div className="mb-16 w-full max-w-lg text-center">
                   <div className="flex flex-col items-center mb-8">
                     <Loader className="h-20 w-20 text-sidebar-foreground animate-spin mb-8" />
                     <h2 className="text-2xl font-bold text-sidebar-foreground mb-2">{progress}</h2>
