@@ -29,62 +29,69 @@ interface AIAgent {
   description: string;
 }
 
-const systemPrompt = `You are ** CodeBuddy**, an expert programming assistant meticulously designed to help users with coding tasks.Your primary role is to provide precise and helpful code solutions, explanations, and guidance.You embody the expertise of a seasoned developer with a deep understanding of programming languages, best practices, and codebase management.
+// Updated system prompt with a more rigid format for code
+const systemPrompt = `You are **CodeBuddy**, an expert programming assistant meticulously designed to help users with coding tasks. Your primary role is to provide precise and helpful code solutions, explanations, and guidance. You embody the expertise of a seasoned developer with a deep understanding of programming languages, best practices, and codebase management.
 
-** Crucially, you must adhere to the following strict guidelines when responding to code - related requests, especially those involving file operations:**
+**Crucially, you must adhere to the following strict guidelines when responding to code-related requests, especially those involving file operations:**
 
-** Core Principles:**
+**Core Principles:**
 
-1. ** Strict Instruction Following:** Execute user requests precisely and only to the extent specified.Do not introduce unnecessary changes or additions beyond the explicit instructions.
+1. **Strict Instruction Following:** Execute user requests precisely and only to the extent specified. Do not introduce unnecessary changes or additions beyond the explicit instructions.
 
-2. ** Code Output Format - Simple Text Format:** When providing code, you ** must ** use the following text format to encapsulate the entire file content.This is non - negotiable:
+2. **Code Output Format - STRICT FORMAT:** When providing code, you **must** use the following text format to encapsulate the entire file content. This is non-negotiable:
 
-    \`\`\`[programming language] path="[file path here]" [create | edit]
+    \`\`\`[programming language]
+    FILE_PATH: [full path to file]
+    OPERATION: [CREATE or EDIT]
+    
     [Full content of the file goes here]
     \`\`\`
 
-  *   ** Programming Language:** Start with the programming language of the file(e.g., "js", "py", "tsx", "html", "css", etc.).
-    *   ** File Path:** Specify the complete file path within the project, following the programming language with a single space.
-    *   ** Operation Type:** Indicate the operation being performed on the file("create" for a new file, "edit" for modifying an existing file), following the file path with a single space.
-    *   ** File Content:** After the first line specifying language, path, and operation, include the complete, updated code of the file. ** You are required to provide the full code for the entire file, even if only a single line is changed.**
+    * **Programming Language:** Start with the programming language of the file (e.g., "js", "py", "tsx", "html", "css", etc.).
+    * **FILE_PATH:** On the next line, exactly as shown, write "FILE_PATH: " followed by the complete file path within the project.
+    * **OPERATION:** On the next line, exactly as shown, write "OPERATION: " followed by either "CREATE" or "EDIT" in uppercase.
+    * **Blank Line:** Leave one blank line after the operation line.
+    * **File Content:** Include the complete, updated code of the file. **You are required to provide the full code for the entire file, even if only a single line is changed.**
 
-    ** Example:**
+    **Example:**
 
-  For creating a new Javascript file at "/src/components/MyComponent.js":
+    For creating a new Javascript file at "/src/components/MyComponent.js":
 
-\`\`\`js path="/src/components/MyComponent.js" create
-    // Full content of MyComponent.js will be here
-    import React from 'react';
+\`\`\`js
+FILE_PATH: /src/components/MyComponent.js
+OPERATION: CREATE
 
-    function MyComponent() {
-        return (
-            <div>
-                Hello from MyComponent!
-            </div>
-        );
-    }
+import React from 'react';
 
-    export default MyComponent;
-    \`\`\`
+function MyComponent() {
+    return (
+        <div>
+            Hello from MyComponent!
+        </div>
+    );
+}
 
-3. ** Concise Explanations:** Immediately following the code block(in the simple text format), provide a ** brief and simple explanation ** of the changes or the code provided.This explanation ** must be limited to a maximum of three lines.** Focus on clarity and conciseness.
+export default MyComponent;
+\`\`\`
 
-4. ** Codebase Understanding and Re - examination:** Before generating any code or making changes, thoroughly analyze the user's request. Critically re-examine the relevant parts of the codebase to understand the context and ensure your changes are appropriate and consistent with the existing project structure and logic. Think like a meticulous developer who understands the importance of codebase integrity.
+3. **Concise Explanations:** Immediately following the code block, provide a **brief and simple explanation** of the changes or the code provided. This explanation **must be limited to a maximum of three lines.** Focus on clarity and conciseness.
 
-  ** General Responsibilities(in addition to the above):**
+4. **Codebase Understanding and Re-examination:** Before generating any code or making changes, thoroughly analyze the user's request. Critically re-examine the relevant parts of the codebase to understand the context and ensure your changes are appropriate and consistent with the existing project structure and logic. Think like a meticulous developer who understands the importance of codebase integrity.
 
-1. ** Help with coding tasks, debugging, and best practices:** Assist users with various coding challenges, identify and resolve errors, and guide them towards writing clean and efficient code.
-2. ** Provide clear, concise explanations with code examples:** Explain complex concepts in an easy - to - understand manner, using relevant code examples to illustrate points.
-3. ** Follow modern development standards and patterns:** Adhere to contemporary coding conventions, design patterns, and architectural principles.
-4. ** Consider security, performance, and maintainability:** Prioritize secure coding practices, optimize code for performance, and ensure the code is maintainable and scalable in the long run.
-5. ** Use markdown formatting for better readability:** Format your responses using markdown to enhance readability and structure (e.g., code blocks, headings, lists).
-6. ** Include relevant documentation links when helpful:** Provide links to official documentation or helpful resources when explaining concepts or technologies.
-7. ** Break down complex problems into manageable steps:** When faced with complex requests, decompose them into smaller, logical steps to provide a structured and progressive solution.
-8. ** Suggest improvements and optimizations:** Proactively identify areas for improvement in the user's code or approach and suggest optimizations.
-9. ** Help with both frontend and backend development:** Be proficient in assisting with both frontend and backend technologies and tasks.
-10. ** Maintain a friendly and professional tone:** Communicate in a helpful, respectful, and professional manner.
+**General Responsibilities (in addition to the above):**
 
-** Remember:** You possess a vast knowledge base of programming languages and software development principles.Leverage this expertise to provide the best possible assistance to users while strictly adhering to the output format and explanation constraints outlined above.Your precision, conciseness, and codebase awareness are paramount.`;
+1. **Help with coding tasks, debugging, and best practices:** Assist users with various coding challenges, identify and resolve errors, and guide them towards writing clean and efficient code.
+2. **Provide clear, concise explanations with code examples:** Explain complex concepts in an easy-to-understand manner, using relevant code examples to illustrate points.
+3. **Follow modern development standards and patterns:** Adhere to contemporary coding conventions, design patterns, and architectural principles.
+4. **Consider security, performance, and maintainability:** Prioritize secure coding practices, optimize code for performance, and ensure the code is maintainable and scalable in the long run.
+5. **Use markdown formatting for better readability:** Format your responses using markdown to enhance readability and structure (e.g., code blocks, headings, lists).
+6. **Include relevant documentation links when helpful:** Provide links to official documentation or helpful resources when explaining concepts or technologies.
+7. **Break down complex problems into manageable steps:** When faced with complex requests, decompose them into smaller, logical steps to provide a structured and progressive solution.
+8. **Suggest improvements and optimizations:** Proactively identify areas for improvement in the user's code or approach and suggest optimizations.
+9. **Help with both frontend and backend development:** Be proficient in assisting with both frontend and backend technologies and tasks.
+10. **Maintain a friendly and professional tone:** Communicate in a helpful, respectful, and professional manner.
+
+**Remember:** You possess a vast knowledge base of programming languages and software development principles. Leverage this expertise to provide the best possible assistance to users while strictly adhering to the output format and explanation constraints outlined above. Your precision, conciseness, and codebase awareness are paramount.`;
 
 // Available AI agents
 const availableAgents: AIAgent[] = [
@@ -280,44 +287,128 @@ export function CodeBuddyChat() {
     }, 2000);
   };
 
-  // Improved function to parse file information from code blocks
-  const parseCodeBlockInfo = (code: string): { language: string, filePath: string, operation: string, content: string } | null => {
-    const lines = code.split('\n');
-    if (lines.length === 0) return null;
-    
-    const firstLine = lines[0].trim();
-    
-    // Format 1: ```js path="/path/to/file.js" create
-    const formatRegex = /^(\w+)\s+path=["']([^"']+)["']\s*(create|edit)?/i;
-    const match = firstLine.match(formatRegex);
-    
-    if (match) {
-      const [_, language, filePath, operation = 'create'] = match;
-      // Remove the first line (header) to get only content
-      const content = lines.slice(1).join('\n');
-      return { language, filePath, operation, content };
+  // Super robust code block parsing function with multiple format support
+  const parseCodeBlock = (code: string): { language: string, filePath: string, operation: string, content: string } | null => {
+    try {
+      // Ensure we have content to work with
+      if (!code || code.trim().length === 0) {
+        console.log("Empty code block");
+        return null;
+      }
+
+      const lines = code.split('\n');
+      let language = '';
+      let filePath = '';
+      let operation = 'CREATE';
+      let contentStartIndex = 0;
+
+      // First, identify the language (should be the first word in the first line)
+      if (lines.length > 0) {
+        language = lines[0].trim().split(' ')[0].toLowerCase();
+      }
+
+      // Try parsing our preferred format first:
+      // ```js
+      // FILE_PATH: /path/to/file.js
+      // OPERATION: CREATE
+      //
+      // [content starts here]
+      // ```
+      const filePathLine = lines.findIndex(line => line.trim().startsWith('FILE_PATH:'));
+      const operationLine = lines.findIndex(line => line.trim().startsWith('OPERATION:'));
+
+      if (filePathLine > 0 && operationLine > 0) {
+        filePath = lines[filePathLine].substring(lines[filePathLine].indexOf(':') + 1).trim();
+        operation = lines[operationLine].substring(lines[operationLine].indexOf(':') + 1).trim();
+        
+        // Find the first empty line after the operation line
+        let emptyLineIndex = -1;
+        for (let i = operationLine + 1; i < lines.length; i++) {
+          if (lines[i].trim() === '') {
+            emptyLineIndex = i;
+            break;
+          }
+        }
+        
+        contentStartIndex = emptyLineIndex > 0 ? emptyLineIndex + 1 : operationLine + 1;
+      } 
+      // Try old format with path="..." syntax
+      else {
+        // Look for path="..." in the first line
+        const firstLine = lines[0];
+        const pathMatch = firstLine.match(/path\s*=\s*["']([^"']+)["']/i);
+        const opMatch = firstLine.match(/(create|edit)/i);
+        
+        if (pathMatch) {
+          filePath = pathMatch[1];
+          contentStartIndex = 1; // Skip the first line
+          
+          if (opMatch) {
+            operation = opMatch[1].toUpperCase();
+          }
+        }
+        // Try simple "language /path/to/file.js create" format
+        else {
+          const parts = firstLine.trim().split(/\s+/);
+          if (parts.length >= 2) {
+            // First part is language, second is path
+            filePath = parts[1];
+            if (!filePath.startsWith('/')) {
+              filePath = '/' + filePath;
+            }
+            
+            // Third part might be operation
+            if (parts.length >= 3 && (parts[2].toLowerCase() === 'create' || parts[2].toLowerCase() === 'edit')) {
+              operation = parts[2].toUpperCase();
+            }
+            
+            contentStartIndex = 1;
+          }
+        }
+      }
+
+      // If we couldn't find a file path using any method, it's an invalid format
+      if (!filePath) {
+        console.log("Could not extract file path");
+        // If all else fails, look for patterns like /src/components/Example.js anywhere in the first few lines
+        for (let i = 0; i < Math.min(5, lines.length); i++) {
+          const pathMatches = lines[i].match(/\/[\w\/\-.]+\.\w+/);
+          if (pathMatches) {
+            filePath = pathMatches[0];
+            contentStartIndex = i + 1;
+            break;
+          }
+        }
+        
+        if (!filePath) {
+          return null;
+        }
+      }
+
+      // Extract content based on the determined start index
+      const content = lines.slice(contentStartIndex).join('\n');
+
+      console.log("Parsed code block:", { language, filePath, operation, contentStartIndex });
+      
+      return { 
+        language, 
+        filePath, 
+        operation, 
+        content 
+      };
+    } catch (error) {
+      console.error("Error parsing code block:", error);
+      return null;
     }
-    
-    // Format 2: ```js /path/to/file.js create
-    const simpleRegex = /^(\w+)\s+(\/?[\/\w\.\-_]+)(?:\s+(create|edit))?$/i;
-    const simpleMatch = firstLine.match(simpleRegex);
-    
-    if (simpleMatch) {
-      const [_, language, rawPath, operation = 'create'] = simpleMatch;
-      const filePath = rawPath.startsWith('/') ? rawPath : '/' + rawPath;
-      const content = lines.slice(1).join('\n');
-      return { language, filePath, operation, content };
-    }
-    
-    return null;
   };
 
   const handleAcceptCode = (code: string, index: number) => {
-    const codeInfo = parseCodeBlockInfo(code);
+    const codeInfo = parseCodeBlock(code);
     
     if (!codeInfo) {
+      console.error("Failed to parse code block:", code);
       toast.error('Invalid code format', {
-        description: 'Could not parse file path from the code block'
+        description: 'Could not parse file path from the code block. Please check console for details.'
       });
       return;
     }
@@ -325,6 +416,7 @@ export function CodeBuddyChat() {
     const { filePath, content } = codeInfo;
     
     try {
+      // Check if the file exists in our system
       const existingFile = files.find(file => file.path === filePath);
       
       if (existingFile) {
@@ -388,7 +480,7 @@ export function CodeBuddyChat() {
 
   // Extract file path from code block for display purposes
   const extractFilePathForDisplay = (code: string): string | null => {
-    const codeInfo = parseCodeBlockInfo(code);
+    const codeInfo = parseCodeBlock(code);
     return codeInfo ? codeInfo.filePath : null;
   };
 
