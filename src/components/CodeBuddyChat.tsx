@@ -280,14 +280,29 @@ export function CodeBuddyChat() {
     }, 2000);
   };
 
-  const parseFileHeader = (code: string): { language: string, filePath: string, operation?: string } | null => {
-    // Check if the first line contains file metadata
+  const extractFilePath = (codeNode: any): string | null => {
+    const properties = codeNode?.properties || {};
+    
+    if (properties.path) {
+      return properties.path.toString();
+    }
+    
+    const className = properties.className?.join(' ') || '';
+    const codeContent = codeNode?.children?.[0]?.value || '';
+    const firstLine = codeContent.split('\n')[0].trim();
+    
+    const pathMatch = firstLine.match(/path\s*=\s*["']([^"']+)["']/i);
+    if (pathMatch) {
+      return pathMatch[1];
+    }
+    
+    return parseTraditionalHeader(codeContent)?.filePath || null;
+  };
+
+  const parseTraditionalHeader = (code: string): { language: string, filePath: string, operation?: string } | null => {
     const firstLine = code.split('\n')[0].trim();
     
-    // Try to extract language and file path at minimum, operation is optional
-    // This regex is more flexible and will look for at least a language and a file path
     const regex = /^([a-zA-Z0-9]+)\s+([\/\w\.\-_]+)(?:\s+(create|edit))?$/i;
-    // Also handle paths that start with a slash
     const altRegex = /^([a-zA-Z0-9]+)\s+\/([\/\w\.\-_]+)(?:\s+(create|edit))?$/i;
     
     let match = firstLine.match(regex);
@@ -301,7 +316,6 @@ export function CodeBuddyChat() {
       };
     }
     
-    // Try the alternate format
     match = firstLine.match(altRegex);
     
     if (match) {
@@ -313,8 +327,6 @@ export function CodeBuddyChat() {
       };
     }
     
-    // More lenient parsing - look for any text that might be language and filepath
-    // This is a fallback for malformed headers
     const parts = firstLine.split(/\s+/);
     if (parts.length >= 2) {
       const language = parts[0];
@@ -322,64 +334,62 @@ export function CodeBuddyChat() {
       return {
         language,
         filePath,
-        operation: 'create'  // Default to create if not specified
+        operation: 'create'
       };
     }
     
     return null;
   };
 
-  const handleAcceptCode = (code: string, index: number) => {
-    // Parse file header
-    const fileInfo = parseFileHeader(code);
+  const handleAcceptCode = (code: string, index: number, filePath?: string) => {
+    let path = filePath;
     
-    if (!fileInfo) {
-      toast.error('Invalid file header format', {
-        description: 'The code block should start with a line in the format: "language filepath operation"'
-      });
-      return;
+    if (!path) {
+      const fileInfo = parseTraditionalHeader(code);
+      if (!fileInfo) {
+        toast.error('Invalid file header format', {
+          description: 'Could not determine file path for this code block'
+        });
+        return;
+      }
+      path = fileInfo.filePath;
     }
     
-    const { language, filePath, operation } = fileInfo;
-    
-    // Remove header line from code content
-    const codeContent = code.split('\n').slice(1).join('\n');
+    let codeContent = code;
+    const firstLine = code.split('\n')[0].trim();
+    if (firstLine.match(/^[a-zA-Z0-9]+\s+[\/\w\.\-_]+/)) {
+      codeContent = code.split('\n').slice(1).join('\n');
+    }
     
     try {
-      // Check if file exists
-      const existingFile = files.find(file => file.path === filePath);
+      const existingFile = files.find(file => file.path === path);
       
       if (existingFile) {
-        // File exists, update it
         updateFileContent(existingFile.id, codeContent);
         setAcceptedCodeBlockIndex(index);
         
         toast.success('File updated successfully', {
-          description: `Updated ${filePath}`,
+          description: `Updated ${path}`,
           icon: <CheckCircle size={18} />
         });
       } else {
-        // File doesn't exist, create it
-        // Get the parent path for the new file
-        const lastSlashIndex = filePath.lastIndexOf('/');
-        const parentPath = lastSlashIndex > 0 ? filePath.substring(0, lastSlashIndex) : '/';
-        const fileName = filePath.substring(lastSlashIndex + 1);
+        const lastSlashIndex = path.lastIndexOf('/');
+        const parentPath = lastSlashIndex > 0 ? path.substring(0, lastSlashIndex) : '/';
+        const fileName = path.substring(lastSlashIndex + 1);
         
-        // Create the new file
         const newFileId = createFile(parentPath, fileName, 'file');
         
         if (newFileId) {
-          // Update the content of the newly created file
           updateFileContent(newFileId, codeContent);
           setAcceptedCodeBlockIndex(index);
           
           toast.success('File created successfully', {
-            description: `Created ${filePath}`,
+            description: `Created ${path}`,
             icon: <CheckCircle size={18} />
           });
         } else {
           toast.error('Failed to create file', {
-            description: `Could not create ${filePath}`
+            description: `Could not create ${path}`
           });
         }
       }
@@ -469,6 +479,14 @@ export function CodeBuddyChat() {
                   const codeBlock = isCodeBlock(className);
                   const code = String(children).replace(/\n$/, '');
                   
+                  let filePath = null;
+                  
+                  if (props.path) {
+                    filePath = props.path.toString();
+                  } else if (props.node && props.node.properties && props.node.properties.path) {
+                    filePath = props.node.properties.path.toString();
+                  }
+                  
                   if (codeBlock) {
                     const codeBlockIndex = messages
                       .filter(msg => msg.role === 'model')
@@ -476,16 +494,29 @@ export function CodeBuddyChat() {
                     
                     const language = detectLanguage(className);
                     
+                    if (!filePath) {
+                      const firstLine = code.split('\n')[0];
+                      const pathMatch = firstLine.match(/path\s*=\s*["']([^"']+)["']/i);
+                      if (pathMatch) {
+                        filePath = pathMatch[1];
+                      }
+                    }
+                    
                     return (
-                      <div className="relative group my-4 rounded-md overflow-hidden border">
+                      <div className="relative group my-4 rounded-md overflow-hidden border" data-path={filePath}>
                         <div className="border-b flex justify-between items-center px-4 py-2 text-xs text-gray-300">
                           <div className="flex items-center gap-2">
                             <Code size={14} />
                             <span className="font-medium uppercase">{language}</span>
+                            {filePath && (
+                              <span className="text-gray-400 ml-2">
+                                Path: {filePath}
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => handleAcceptCode(code, codeBlockIndex)}
+                              onClick={() => handleAcceptCode(code, codeBlockIndex, filePath)}
                               className="flex items-center text-xs text-gray-400 hover:text-white transition-colors"
                               aria-label="Accept"
                             >
@@ -539,6 +570,7 @@ export function CodeBuddyChat() {
                             textAlign: 'right',
                             paddingRight: '1em',
                           }}
+                          data-path={filePath}
                         >
                           {code}
                         </SyntaxHighlighter>
