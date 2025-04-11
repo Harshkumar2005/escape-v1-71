@@ -39,7 +39,7 @@ const systemPrompt = `You are ** CodeBuddy**, an expert programming assistant me
 
 2. ** Code Output Format - Simple Text Format:** When providing code, you ** must ** use the following text format to encapsulate the entire file content.This is non - negotiable:
 
-    \`\`\`[programming language] [file path here] [create | edit]
+    \`\`\`[programming language] path="[file path here]" [create | edit]
     [Full content of the file goes here]
     \`\`\`
 
@@ -52,7 +52,7 @@ const systemPrompt = `You are ** CodeBuddy**, an expert programming assistant me
 
   For creating a new Javascript file at "/src/components/MyComponent.js":
 
-\`\`\`js /src/components/MyComponent.js create
+\`\`\`js path="/src/components/MyComponent.js" create
     // Full content of MyComponent.js will be here
     import React from 'react';
 
