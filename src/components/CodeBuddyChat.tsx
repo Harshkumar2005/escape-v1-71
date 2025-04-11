@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
@@ -11,6 +12,7 @@ import {
   ChevronDown,
   Code,
   CheckCircle,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import remarkGfm from 'remark-gfm';
@@ -75,6 +77,7 @@ export function CodeBuddyChat() {
   const [selectedAgent, setSelectedAgent] = useState<AIAgent>(availableAgents[1]);
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
   const [copiedCodeBlockIndex, setCopiedCodeBlockIndex] = useState<number | null>(null);
+  const [acceptedCodeBlockIndex, setAcceptedCodeBlockIndex] = useState<number | null>(null);
   const [useDarkTheme, setUseDarkTheme] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -84,7 +87,9 @@ export function CodeBuddyChat() {
     files,
     selectedFile,
     getFileById,
-    getAllFiles
+    getAllFiles,
+    createFile,
+    updateFileContent
   } = useFileSystem();
   
   // Use the Editor context to get the active tab's content
@@ -231,6 +236,82 @@ export function CodeBuddyChat() {
     }, 2000);
   };
 
+  const parseFileHeader = (code: string): { language: string, filePath: string, operation: 'create' | 'edit' } | null => {
+    // Check if the first line contains file metadata
+    const firstLine = code.split('\n')[0].trim();
+    const regex = /^([a-zA-Z0-9]+)\s+([\w\/\.\-_]+)\s+(create|edit)$/;
+    const match = firstLine.match(regex);
+    
+    if (match) {
+      const [_, language, filePath, operation] = match;
+      return {
+        language,
+        filePath,
+        operation: operation as 'create' | 'edit'
+      };
+    }
+    
+    return null;
+  };
+
+  const handleAcceptCode = (code: string, index: number) => {
+    // Parse file header
+    const fileInfo = parseFileHeader(code);
+    
+    if (!fileInfo) {
+      toast.error('Invalid file header format', {
+        description: 'The code block should start with a line in the format: "language filepath operation"'
+      });
+      return;
+    }
+    
+    const { language, filePath, operation } = fileInfo;
+    
+    // Remove header line from code content
+    const codeContent = code.split('\n').slice(1).join('\n');
+    
+    try {
+      if (operation === 'create') {
+        // Create a new file
+        createFile(filePath, codeContent, language);
+        setAcceptedCodeBlockIndex(index);
+        
+        toast.success('File created successfully', {
+          description: `Created ${filePath}`,
+          icon: <CheckCircle size={18} />
+        });
+      } else if (operation === 'edit') {
+        // Find the existing file
+        const existingFile = files.find(file => file.path === filePath);
+        
+        if (!existingFile) {
+          toast.error('File not found', {
+            description: `Could not find ${filePath} to edit`
+          });
+          return;
+        }
+        
+        // Update the file content
+        updateFileContent(existingFile.id, codeContent);
+        setAcceptedCodeBlockIndex(index);
+        
+        toast.success('File updated successfully', {
+          description: `Updated ${filePath}`,
+          icon: <CheckCircle size={18} />
+        });
+      }
+      
+      setTimeout(() => {
+        setAcceptedCodeBlockIndex(null);
+      }, 2000);
+    } catch (error) {
+      console.error('Error handling file operation:', error);
+      toast.error('Failed to process file operation', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  };
+
   const getCurrentFileName = () => {
     const currentFile = getCurrentFileInfo();
     return currentFile ? currentFile.path.split('/').pop() : null;
@@ -284,14 +365,6 @@ export function CodeBuddyChat() {
               </div>
             )}
           </div>
-          
-          {/* <button
-            onClick={() => setUseDarkTheme(!useDarkTheme)}
-            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-gray-300 text-sm"
-            title={useDarkTheme ? "Switch to light theme" : "Switch to dark theme"}
-          >
-            <Code size={14} />
-          </button>*/}
         </div>
       </div>
       
@@ -327,23 +400,42 @@ export function CodeBuddyChat() {
                             <Code size={14} />
                             <span className="font-medium uppercase">{language}</span>
                           </div>
-                          <button
-                            onClick={() => handleCopyCode(code, codeBlockIndex)}
-                            className="flex items-center text-xs text-gray-400 hover:text-white transition-colors"
-                            aria-label="Copy"
-                          >
-                            {copiedCodeBlockIndex === codeBlockIndex ? (
-                              <>
-                                <Check size={14} className="mr-1" />
-                                <span>Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy size={14} className="mr-1" />
-                                <span>Copy</span>
-                              </>
-                            )}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleAcceptCode(code, codeBlockIndex)}
+                              className="flex items-center text-xs text-gray-400 hover:text-white transition-colors"
+                              aria-label="Accept"
+                            >
+                              {acceptedCodeBlockIndex === codeBlockIndex ? (
+                                <>
+                                  <Check size={14} className="mr-1" />
+                                  <span>Accepted!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Save size={14} className="mr-1" />
+                                  <span>Accept</span>
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleCopyCode(code, codeBlockIndex)}
+                              className="flex items-center text-xs text-gray-400 hover:text-white transition-colors"
+                              aria-label="Copy"
+                            >
+                              {copiedCodeBlockIndex === codeBlockIndex ? (
+                                <>
+                                  <Check size={14} className="mr-1" />
+                                  <span>Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy size={14} className="mr-1" />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
                         <SyntaxHighlighter
                           style={useDarkTheme ? customDarkTheme : customLightTheme}
