@@ -410,7 +410,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
         <div className="min-h-screen flex flex-col bg-sidebar">
           <header className="p-6">
             <div className="justify-center flex items-center">
-              <Ghost className="mt-2 h-14 w-14 mr-4 text-sidebar-foreground" />
+              <Ghost strokeWidth={3.5} className="mt-2 h-14 w-14 mr-4 text-sidebar-foreground" />
               <h1 className="text-6xl font-extrabold text-sidebar-foreground">
                 ESCAPE.esc
               </h1>
