@@ -1,12 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import FileTree from './FileTree';
 import Editor from './Editor';
 import Terminal from './Terminal';
 import Tabs from './Tabs';
 import StatusBar from './StatusBar';
-import { useEditor } from '@/contexts/EditorContext';
-import { toast } from 'sonner';
+import { File, Folder } from 'lucide-react';
 
 const fileTreeData = [
   {
@@ -49,43 +48,11 @@ const terminalOutput = [
 const CodeEditor: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState('index.ts');
   const [activeTab, setActiveTab] = useState('index.ts');
-  const { openedTabs, activeTabId, updateTabContent } = useEditor();
 
   const handleFileSelect = (fileName: string) => {
     setSelectedFile(fileName);
     setActiveTab(fileName);
   };
-
-  // Handle global events for code updates
-  useEffect(() => {
-    const handleCodeAccepted = (event: CustomEvent) => {
-      const { filePath, content } = event.detail;
-      
-      if (filePath && content) {
-        // Find if the file is already open in the editor
-        if (openedTabs.some(tab => tab.path === filePath)) {
-          // Remove the first 3 lines of the code before updating
-          const lines = content.split('\n');
-          const cleanedContent = lines.length > 3 ? lines.slice(3).join('\n') : content;
-          
-          // Update the content in the editor context
-          const tab = openedTabs.find(tab => tab.path === filePath);
-          if (tab) {
-            updateTabContent(tab.id, cleanedContent);
-            toast.success(`Updated ${filePath} in editor`);
-          }
-        }
-      }
-    };
-    
-    // Add event listener
-    window.addEventListener('code-accepted', handleCodeAccepted as EventListener);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('code-accepted', handleCodeAccepted as EventListener);
-    };
-  }, [openedTabs, updateTabContent]);
 
   return (
     <div className="flex flex-col h-screen">
