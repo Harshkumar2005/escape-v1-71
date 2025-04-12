@@ -147,7 +147,7 @@ export const ProjectStartup = () => {
         <DialogContent className="max-w-5xl p-0 bg-sidebar border-border overflow-hidden rounded-lg">
           <div className="h-screen flex flex-col justify-center items-center bg-sidebar">
             <div className="mb-8 flex items-center">
-              <Ghost className="mt-2 h-16 w-16 mr-4 text-sidebar-foreground" />
+              <Ghost strokeWidth={3.5} className="mt-2 h-16 w-16 mr-4 text-sidebar-foreground" />
               <h1 className="text-7xl font-extrabold text-sidebar-foreground">
                 ESCAPE.esc
               </h1>
