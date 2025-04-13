@@ -1,563 +1,455 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Types
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+// File system types
 export type FileType = 'file' | 'folder';
 
 export interface FileSystemItem {
   id: string;
   name: string;
+  path: string;
   type: FileType;
   content?: string;
   language?: string;
   children?: FileSystemItem[];
-  path: string;
   isOpen?: boolean;
-  isModified?: boolean;
-  parentId?: string;
 }
 
-export interface Log {
-  id: string;
-  type: 'info' | 'success' | 'error' | 'warning';
+interface LogMessage {
+  type: 'info' | 'error' | 'success' | 'warning';
   message: string;
   timestamp: Date;
 }
 
-interface FileSystemContextType {
+interface FileSystemContextProps {
   files: FileSystemItem[];
   selectedFile: string | null;
-  logs: Log[];
-  createFile: (parentPath: string, name: string, type: FileType) => string | undefined;
+  getFileById: (id: string) => FileSystemItem | null;
+  createFile: (parentPath: string, name: string, type: FileType) => void;
   renameFile: (id: string, newName: string) => void;
   deleteFile: (id: string) => void;
   updateFileContent: (id: string, content: string) => void;
-  selectFile: (id: string) => void;
-  getFileById: (id: string) => FileSystemItem | undefined;
   toggleFolder: (id: string) => void;
+  setSelectedFile: (id: string | null) => void;
   searchFiles: (query: string) => FileSystemItem[];
-  moveFile: (fileId: string, newParentId: string) => void;
-  addLogMessage: (type: 'info' | 'success' | 'error' | 'warning', message: string) => void;
-  clearLogs: () => void;
-  removeLog: (id: string) => void;
-  resetFileSystem: () => void;
-  replaceFileSystem: (newRootName: string) => void;
   getAllFiles: () => FileSystemItem[];
+  getChildrenOf: (path: string) => FileSystemItem[];
+  logs: LogMessage[];
+  addLogMessage: (type: LogMessage['type'], message: string) => void;
+  clearLogs: () => void;
 }
 
-const FileSystemContext = createContext<FileSystemContextType | undefined>(undefined);
+const FileSystemContext = createContext<FileSystemContextProps | null>(null);
 
-// Helper function to determine language based on file extension
-const getLanguageFromExtension = (filename: string): string => {
-  const extension = filename.split('.').pop()?.toLowerCase() || '';
-  
-  const extensionMap: Record<string, string> = {
-    // Web
-    'html': 'html',
-    'htm': 'html',
-    'css': 'css',
-    'scss': 'scss',
-    'sass': 'sass',
-    'less': 'less',
-    
-    // JavaScript family
-    'js': 'javascript',
-    'jsx': 'javascript',
-    'ts': 'typescript',
-    'tsx': 'typescript',
-    'json': 'json',
-    
-    // Python
-    'py': 'python',
-    'pyc': 'python',
-    'pyd': 'python',
-    'pyo': 'python',
-    
-    // Java
-    'java': 'java',
-    
-    // C family
-    'c': 'c',
-    'cpp': 'cpp',
-    'h': 'c',
-    'hpp': 'cpp',
-    'cs': 'csharp',
-    
-    // Ruby
-    'rb': 'ruby',
-    
-    // PHP
-    'php': 'php',
-    
-    // Go
-    'go': 'go',
-    
-    // Rust
-    'rs': 'rust',
-    
-    // Swift
-    'swift': 'swift',
-    
-    // Kotlin
-    'kt': 'kotlin',
-    
-    // Shell
-    'sh': 'shell',
-    'bash': 'bash',
-    
-    // SQL
-    'sql': 'sql',
-    
-    // Markup and config
-    'md': 'markdown',
-    'yml': 'yaml',
-    'yaml': 'yaml',
-    'xml': 'xml',
-    'toml': 'toml',
-    'ini': 'ini',
-    
-    // Other
-    'graphql': 'graphql',
-    'dockerfile': 'dockerfile',
-  };
-  
-  return extensionMap[extension] || 'plaintext';
-};
-
-// Sample initial file system
-const initialFileSystem: FileSystemItem[] = [
+// Sample initial data
+const initialFiles: FileSystemItem[] = [
   {
     id: 'root',
-    name: 'new-project',
+    name: 'project',
+    path: 'project',
     type: 'folder',
-    path: '/new-project',
     isOpen: true,
-    children: []
+    children: [
+      {
+        id: 'src',
+        name: 'src',
+        path: 'project/src',
+        type: 'folder',
+        isOpen: true,
+        children: [
+          {
+            id: 'app.js',
+            name: 'app.js',
+            path: 'project/src/app.js',
+            type: 'file',
+            language: 'javascript',
+            content: `import React from 'react';
+
+const App = () => {
+  return (
+    <div>
+      <h1>Hello, World!</h1>
+    </div>
+  );
+};
+
+export default App;`
+          },
+          {
+            id: 'styles.css',
+            name: 'styles.css',
+            path: 'project/src/styles.css',
+            type: 'file',
+            language: 'css',
+            content: `body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+h1 {
+  color: #333;
+}`
+          }
+        ]
+      },
+      {
+        id: 'package.json',
+        name: 'package.json',
+        path: 'project/package.json',
+        type: 'file',
+        language: 'json',
+        content: `{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "A sample project",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}`
+      }
+    ]
   }
 ];
 
-// Helper function to generate unique IDs
-const generateId = () => Math.random().toString(36).substring(2, 9);
-
-// Helper function to find an item by ID in the file system tree
-const findItemById = (files: FileSystemItem[], id: string): FileSystemItem | undefined => {
-  for (const file of files) {
-    if (file.id === id) return file;
-    if (file.children) {
-      const found = findItemById(file.children, id);
-      if (found) return found;
-    }
-  }
-  return undefined;
-};
-
-// Helper function to get all files as a flat array (including files in subdirectories)
-const getAllFilesFlat = (files: FileSystemItem[]): FileSystemItem[] => {
-  let result: FileSystemItem[] = [];
-  
-  for (const file of files) {
-    if (file.type === 'file') {
-      result.push(file);
-    }
-    
-    if (file.children) {
-      result = result.concat(getAllFilesFlat(file.children));
-    }
-  }
-  
-  return result;
-};
-
-// Helper function to find a parent by child ID
-const findParentById = (files: FileSystemItem[], childId: string): FileSystemItem | undefined => {
-  for (const file of files) {
-    if (file.children?.some(child => child.id === childId)) return file;
-    if (file.children) {
-      const found = findParentById(file.children, childId);
-      if (found) return found;
-    }
-  }
-  return undefined;
-};
-
-// Empty file system for new projects
-const createEmptyFileSystem = (rootName: string = 'new-project'): FileSystemItem[] => {
-  return [
-    {
-      id: 'root',
-      name: rootName,
-      type: 'folder',
-      path: `/${rootName}`,
-      isOpen: true,
-      children: []
-    }
-  ];
-};
-
 export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [files, setFiles] = useState<FileSystemItem[]>(initialFileSystem);
+  const [files, setFiles] = useState<FileSystemItem[]>(initialFiles);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [logs, setLogs] = useState<Log[]>([
-    {
-      id: '1',
-      type: 'info',
-      message: 'IDE initialized successfully',
-      timestamp: new Date()
-    },
-    {
-      id: '2',
-      type: 'success',
-      message: 'Project files loaded',
-      timestamp: new Date(Date.now() - 60000)
-    }
-  ]);
-
-  // Get file by ID
-  const getFileById = (id: string) => {
-    return findItemById(files, id);
-  };
+  const [logs, setLogs] = useState<LogMessage[]>([]);
   
-  // Get all files as a flat array
-  const getAllFiles = () => {
-    return getAllFilesFlat(files);
-  };
-
-  // Create new file or folder
+  // Generate unique ID
+  const generateId = () => Math.random().toString(36).substring(2, 9);
+  
+  // Get file by ID
+  const getFileById = useCallback((id: string): FileSystemItem | null => {
+    const findById = (items: FileSystemItem[]): FileSystemItem | null => {
+      for (const item of items) {
+        if (item.id === id) {
+          return item;
+        }
+        
+        if (item.type === 'folder' && item.children) {
+          const found = findById(item.children);
+          if (found) return found;
+        }
+      }
+      
+      return null;
+    };
+    
+    return findById(files);
+  }, [files]);
+  
+  // Create a new file or folder
   const createFile = (parentPath: string, name: string, type: FileType) => {
     const newId = generateId();
-    const path = `${parentPath}/${name}`;
     
-    setFiles(prevFiles => {
-      const newFiles = [...prevFiles];
-      
-      // Find the parent folder in which to create the new item
-      const findAndAddToParent = (items: FileSystemItem[]) => {
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          
+    const insertItem = (items: FileSystemItem[]): FileSystemItem[] => {
+      return items.map(item => {
+        if (item.path === parentPath || (item.type === 'folder' && parentPath.startsWith(item.path + '/'))) {
           if (item.path === parentPath) {
-            // Found the parent, add the new item to its children
             const newItem: FileSystemItem = {
               id: newId,
               name,
+              path: `${parentPath}/${name}`,
               type,
-              path,
-              parentId: item.id,
-              isOpen: false,
+              ...(type === 'folder' ? { children: [], isOpen: true } : { content: '', language: getLanguageFromName(name) })
             };
             
-            if (type === 'folder') {
-              newItem.children = [];
-            } else {
-              newItem.content = '';
-              newItem.language = getLanguageFromExtension(name);
-
-              newItem.isModified = false;
-            }
-            
-            item.children = [...(item.children || []), newItem];
-            return true;
-          }
-          
-          if (item.children) {
-            const added = findAndAddToParent(item.children);
-            if (added) return true;
+            return {
+              ...item,
+              children: [...(item.children || []), newItem],
+              isOpen: true
+            };
+          } else if (item.children) {
+            return {
+              ...item,
+              children: insertItem(item.children),
+              isOpen: true
+            };
           }
         }
         
-        return false;
-      };
-      
-      findAndAddToParent(newFiles);
-      return newFiles;
-    });
+        return item;
+      });
+    };
+    
+    setFiles(insertItem(files));
+    addLogMessage('success', `Created new ${type}: ${name}`);
     
     if (type === 'file') {
       setSelectedFile(newId);
     }
-    
-    return newId;
   };
-
+  
   // Rename a file or folder
   const renameFile = (id: string, newName: string) => {
-    setFiles(prevFiles => {
-      const newFiles = [...prevFiles];
-      
-      const updateItem = (items: FileSystemItem[]) => {
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
+    const updatePath = (oldPath: string, oldName: string, newName: string) => {
+      return oldPath.replace(new RegExp(`/${oldName}($|/)`, 'g'), `/${newName}$1`);
+    };
+    
+    const updateNames = (items: FileSystemItem[]): FileSystemItem[] => {
+      return items.map(item => {
+        if (item.id === id) {
+          const newPath = updatePath(item.path, item.name, newName);
           
-          if (item.id === id) {
-            const oldPathParts = item.path.split('/');
-            oldPathParts[oldPathParts.length - 1] = newName;
-            const newPath = oldPathParts.join('/');
-            
-            // Update item
-            item.name = newName;
-            item.path = newPath;
-            
-            // Update language if file extension changed
-            if (item.type === 'file') {
-              item.language = getLanguageFromExtension(newName);
-            }
-            
-            // Update paths of all children recursively
-            const updateChildrenPaths = (parentItem: FileSystemItem, oldParentPath: string, newParentPath: string) => {
-              if (!parentItem.children) return;
-              
-              for (const child of parentItem.children) {
-                child.path = child.path.replace(oldParentPath, newParentPath);
+          if (item.type === 'folder' && item.children) {
+            // Update paths of all children
+            const updateChildPaths = (children: FileSystemItem[], oldPath: string, newPath: string): FileSystemItem[] => {
+              return children.map(child => {
+                const childNewPath = child.path.replace(oldPath, newPath);
                 
-                if (child.children) {
-                  updateChildrenPaths(child, oldParentPath, newParentPath);
+                if (child.type === 'folder' && child.children) {
+                  return {
+                    ...child,
+                    path: childNewPath,
+                    children: updateChildPaths(child.children, child.path, childNewPath)
+                  };
                 }
-              }
+                
+                return {
+                  ...child,
+                  path: childNewPath
+                };
+              });
             };
             
-            if (item.children) {
-              const oldItemPath = item.path.split('/').slice(0, -1).join('/') + '/' + item.name;
-              updateChildrenPaths(item, oldItemPath, newPath);
-            }
-            
-            return true;
+            return {
+              ...item,
+              name: newName,
+              path: newPath,
+              children: updateChildPaths(item.children, item.path, newPath)
+            };
           }
           
-          if (item.children) {
-            const updated = updateItem(item.children);
-            if (updated) return true;
-          }
+          return {
+            ...item,
+            name: newName,
+            path: newPath,
+            language: getLanguageFromName(newName)
+          };
         }
         
-        return false;
-      };
-      
-      updateItem(newFiles);
-      return newFiles;
-    });
+        if (item.type === 'folder' && item.children) {
+          return {
+            ...item,
+            children: updateNames(item.children)
+          };
+        }
+        
+        return item;
+      });
+    };
+    
+    const oldFile = getFileById(id);
+    setFiles(updateNames(files));
+    addLogMessage('info', `Renamed ${oldFile?.name} to ${newName}`);
   };
-
+  
   // Delete a file or folder
   const deleteFile = (id: string) => {
-    setFiles(prevFiles => {
-      const newFiles = [...prevFiles];
+    const removeItem = (items: FileSystemItem[]): FileSystemItem[] => {
+      const filtered = items.filter(item => item.id !== id);
       
-      const removeItem = (items: FileSystemItem[]) => {
-        for (let i = 0; i < items.length; i++) {
-          if (items[i].id === id) {
-            items.splice(i, 1);
-            return true;
-          }
-          
-          if (items[i].children) {
-            const removed = removeItem(items[i].children!);
-            if (removed) return true;
-          }
+      return filtered.map(item => {
+        if (item.type === 'folder' && item.children) {
+          return {
+            ...item,
+            children: removeItem(item.children)
+          };
         }
         
-        return false;
-      };
-      
-      // Don't allow deleting the root folder
-      if (id !== 'root') {
-        removeItem(newFiles);
-      }
-      
-      return newFiles;
-    });
+        return item;
+      });
+    };
+    
+    const fileToDelete = getFileById(id);
+    setFiles(removeItem(files));
     
     if (selectedFile === id) {
       setSelectedFile(null);
     }
+    
+    addLogMessage('warning', `Deleted ${fileToDelete?.name}`);
   };
-
+  
   // Update file content
   const updateFileContent = (id: string, content: string) => {
-    setFiles(prevFiles => {
-      const newFiles = [...prevFiles];
-      
-      const updateItem = (items: FileSystemItem[]) => {
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          
-          if (item.id === id && item.type === 'file') {
-            const isContentChanged = item.content !== content;
-            
-            item.content = content;
-            item.isModified = isContentChanged;
-            
-            return true;
-          }
-          
-          if (item.children) {
-            const updated = updateItem(item.children);
-            if (updated) return true;
-          }
+    const updateContent = (items: FileSystemItem[]): FileSystemItem[] => {
+      return items.map(item => {
+        if (item.id === id) {
+          return {
+            ...item,
+            content
+          };
         }
         
-        return false;
-      };
-      
-      updateItem(newFiles);
-      return newFiles;
-    });
+        if (item.type === 'folder' && item.children) {
+          return {
+            ...item,
+            children: updateContent(item.children)
+          };
+        }
+        
+        return item;
+      });
+    };
+    
+    setFiles(updateContent(files));
   };
-
-  // Select a file
-  const selectFile = (id: string) => {
-    setSelectedFile(id);
-  };
-
+  
   // Toggle folder open/closed
   const toggleFolder = (id: string) => {
-    setFiles(prevFiles => {
-      const newFiles = [...prevFiles];
-      
-      const toggleItem = (items: FileSystemItem[]) => {
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          
-          if (item.id === id && item.type === 'folder') {
-            item.isOpen = !item.isOpen;
-            return true;
-          }
-          
-          if (item.children) {
-            const toggled = toggleItem(item.children);
-            if (toggled) return true;
-          }
+    const toggle = (items: FileSystemItem[]): FileSystemItem[] => {
+      return items.map(item => {
+        if (item.id === id && item.type === 'folder') {
+          return {
+            ...item,
+            isOpen: !item.isOpen
+          };
         }
         
-        return false;
-      };
-      
-      toggleItem(newFiles);
-      return newFiles;
-    });
+        if (item.type === 'folder' && item.children) {
+          return {
+            ...item,
+            children: toggle(item.children)
+          };
+        }
+        
+        return item;
+      });
+    };
+    
+    setFiles(toggle(files));
   };
-
-  // Search files by name
-  const searchFiles = (query: string) => {
-    if (!query.trim()) return [];
-    
+  
+  // Search files
+  const searchFiles = (query: string): FileSystemItem[] => {
     const results: FileSystemItem[] = [];
-    const searchQuery = query.toLowerCase();
     
-    const searchInItems = (items: FileSystemItem[]) => {
+    const findMatches = (items: FileSystemItem[]) => {
       for (const item of items) {
-        if (item.name.toLowerCase().includes(searchQuery)) {
+        if (item.name.toLowerCase().includes(query.toLowerCase())) {
           results.push(item);
         }
         
         if (item.type === 'folder' && item.children) {
-          searchInItems(item.children);
+          findMatches(item.children);
         }
       }
     };
     
-    searchInItems(files);
+    findMatches(files);
     return results;
   };
-
-  // Move a file or folder to a new parent
-  const moveFile = (fileId: string, newParentId: string) => {
-    setFiles(prevFiles => {
-      const newFiles = [...prevFiles];
-      
-      // Find the item to move
-      const fileToMove = findItemById(newFiles, fileId);
-      if (!fileToMove) return prevFiles;
-      
-      // Find the new parent
-      const newParent = findItemById(newFiles, newParentId);
-      if (!newParent || newParent.type !== 'folder') return prevFiles;
-      
-      // Find the current parent
-      const currentParent = findParentById(newFiles, fileId);
-      if (!currentParent) return prevFiles;
-      
-      // Remove from current parent
-      currentParent.children = currentParent.children!.filter(child => child.id !== fileId);
-      
-      // Update path and parentId
-      const oldPath = fileToMove.path;
-      fileToMove.path = `${newParent.path}/${fileToMove.name}`;
-      fileToMove.parentId = newParentId;
-      
-      // Update paths of all children
-      const updateChildPaths = (item: FileSystemItem, oldBasePath: string, newBasePath: string) => {
-        if (item.children) {
-          for (const child of item.children) {
-            child.path = child.path.replace(oldBasePath, newBasePath);
-            updateChildPaths(child, oldBasePath, newBasePath);
-          }
+  
+  // Get all files (flat list)
+  const getAllFiles = useCallback((): FileSystemItem[] => {
+    const allFiles: FileSystemItem[] = [];
+    
+    const collectFiles = (items: FileSystemItem[]) => {
+      for (const item of items) {
+        allFiles.push(item);
+        
+        if (item.type === 'folder' && item.children) {
+          collectFiles(item.children);
         }
-      };
-      
-      updateChildPaths(fileToMove, oldPath, fileToMove.path);
-      
-      // Add to new parent
-      newParent.children = [...(newParent.children || []), fileToMove];
-      
-      return newFiles;
-    });
-  };
-
-  // Add a log message
-  const addLogMessage = (type: 'info' | 'success' | 'error' | 'warning', message: string) => {
-    const newLog: Log = {
-      id: generateId(),
-      type,
-      message,
-      timestamp: new Date()
+      }
     };
     
-    setLogs(prevLogs => [...prevLogs, newLog]);
+    collectFiles(files);
+    return allFiles;
+  }, [files]);
+  
+  // Get children of a path
+  const getChildrenOf = (path: string): FileSystemItem[] => {
+    const findChildren = (items: FileSystemItem[]): FileSystemItem[] => {
+      for (const item of items) {
+        if (item.path === path && item.type === 'folder' && item.children) {
+          return item.children;
+        }
+        
+        if (item.type === 'folder' && item.children) {
+          const found = findChildren(item.children);
+          if (found.length > 0) return found;
+        }
+      }
+      
+      return [];
+    };
+    
+    return findChildren(files);
   };
-
-  // Clear all logs
+  
+  // Add log message
+  const addLogMessage = (type: LogMessage['type'], message: string) => {
+    setLogs(prev => [...prev, { type, message, timestamp: new Date() }]);
+  };
+  
+  // Clear logs
   const clearLogs = () => {
     setLogs([]);
   };
-
-  // Remove a specific log
-  const removeLog = (id: string) => {
-    setLogs(prevLogs => prevLogs.filter(log => log.id !== id));
+  
+  // Helper function to guess language from file extension
+  const getLanguageFromName = (fileName: string): string => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    
+    const languageMap: Record<string, string> = {
+      'js': 'javascript',
+      'jsx': 'javascript',
+      'ts': 'typescript',
+      'tsx': 'typescript',
+      'html': 'html',
+      'css': 'css',
+      'scss': 'scss',
+      'json': 'json',
+      'md': 'markdown',
+      'py': 'python',
+      'java': 'java',
+      'c': 'c',
+      'cpp': 'cpp',
+      'go': 'go',
+      'rs': 'rust',
+      'php': 'php',
+      'rb': 'ruby',
+      'swift': 'swift',
+      'kt': 'kotlin',
+      'sh': 'bash',
+      'sql': 'sql',
+      'xml': 'xml',
+      'yaml': 'yaml',
+      'yml': 'yaml',
+    };
+    
+    return languageMap[ext] || 'plaintext';
   };
-
-  // Reset file system to default empty state
-  const resetFileSystem = () => {
-    setFiles(createEmptyFileSystem());
-    setSelectedFile(null);
-    addLogMessage('info', 'File system reset to default empty state');
-  };
-
-  // Replace file system with a completely new one (for imports)
-  const replaceFileSystem = (newRootName: string) => {
-    setFiles(createEmptyFileSystem(newRootName));
-    setSelectedFile(null);
-    addLogMessage('info', `Prepared new file system for ${newRootName}`);
-  };
-
+  
   return (
     <FileSystemContext.Provider value={{
       files,
       selectedFile,
-      logs,
+      getFileById,
       createFile,
       renameFile,
       deleteFile,
       updateFileContent,
-      selectFile,
-      getFileById,
       toggleFolder,
+      setSelectedFile,
       searchFiles,
-      moveFile,
+      getAllFiles,
+      getChildrenOf,
+      logs,
       addLogMessage,
-      clearLogs,
-      removeLog,
-      resetFileSystem,
-      replaceFileSystem,
-      getAllFiles
+      clearLogs
     }}>
       {children}
     </FileSystemContext.Provider>
@@ -566,8 +458,10 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
 export const useFileSystem = () => {
   const context = useContext(FileSystemContext);
-  if (context === undefined) {
+  
+  if (context === null) {
     throw new Error('useFileSystem must be used within a FileSystemProvider');
   }
+  
   return context;
 };

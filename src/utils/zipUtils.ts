@@ -1,43 +1,57 @@
-import JSZip from 'jszip';
-import { toast } from 'sonner';
-import { readFile } from '@/api/fileSystem';
 
-export async function createAndDownloadZip(files: string[]): Promise<void> {
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { FileSystemItem } from '@/contexts/FileSystemContext';
+
+/**
+ * Creates and downloads a ZIP file containing all provided files
+ * @param files Array of file system items to include in the ZIP
+ * @param zipFileName Name for the downloaded ZIP file
+ */
+export const downloadFilesAsZip = async (
+  files: FileSystemItem[],
+  zipFileName: string = 'project-files.zip'
+): Promise<void> => {
   try {
     const zip = new JSZip();
     
-    // Add all files to the zip
-    await Promise.all(
-      files.map(async (filePath) => {
-        try {
-          const content = await readFile(filePath);
-          zip.file(filePath, content);
-        } catch (error) {
-          console.error(`Error adding file ${filePath} to zip:`, error);
-          // Continue with other files even if one fails
+    // Function to recursively add files and folders to the ZIP
+    const addToZip = (items: FileSystemItem[], currentPath: string = '') => {
+      for (const item of items) {
+        const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name;
+        
+        if (item.type === 'file') {
+          // Add file content to the ZIP
+          zip.file(itemPath, item.content || '');
+          console.log(`Added file to ZIP: ${itemPath}`);
+        } else if (item.type === 'folder' && item.children) {
+          // Create folder and add its contents recursively
+          const folderPath = itemPath;
+          addToZip(item.children, folderPath);
+          console.log(`Added folder to ZIP: ${folderPath}`);
         }
-      })
-    );
+      }
+    };
     
-    // Generate the zip file
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    // Start adding files to the ZIP
+    console.log('Starting ZIP creation process');
+    addToZip(files);
     
-    // Create a download link and trigger the download
-    const url = URL.createObjectURL(zipBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'codebase.zip';
-    document.body.appendChild(link);
-    link.click();
+    // Generate the ZIP file
+    const zipBlob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    });
     
-    // Clean up
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    console.log(`ZIP file created successfully: ${zipFileName}, size: ${zipBlob.size} bytes`);
     
-    toast.success('Project files downloaded successfully');
+    // Download the ZIP file
+    saveAs(zipBlob, zipFileName);
+    
+    return Promise.resolve();
   } catch (error) {
-    console.error('Error creating zip file:', error);
-    toast.error('Failed to create zip file');
-    throw error;
+    console.error('Error creating ZIP file:', error);
+    return Promise.reject(error);
   }
-}
+};
