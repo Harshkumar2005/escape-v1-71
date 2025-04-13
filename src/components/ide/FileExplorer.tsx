@@ -25,7 +25,8 @@ import {
   Terminal,
   GearFill,
   FileEarmark,
-  FileEarmarkCode
+  FileEarmarkCode,
+  FileEarmarkLock
 } from 'react-bootstrap-icons';
 
 
@@ -179,24 +180,7 @@ case 'js':
     case 'ini':
     case 'env':
     case 'config':
-      return (
-        <div
-          className="file-icon config-file-icon"
-          style={{ position: 'relative', display: 'inline-block' }}
-        >
-          <FiletypeTxt size={17} />
-          <GearFill
-            size={10}
-            style={{
-              position: 'absolute',
-              bottom: -2,
-              right: -2,
-              backgroundColor: 'white',
-              borderRadius: '50%',
-            }}
-          />
-        </div>
-      );
+       return <FileEarmarkLock size={17} className="file-icon" />;
 
     case 'csv':
     case 'xls':
@@ -600,7 +584,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
           <span className={`mr-1 ${
           isSelected ? 'text-white' : 'group-hover:text-white text-slate-400 group-hover:opacity-100'
         }`}>
-            {item.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            {item.isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
           </span>
         )}
         
@@ -608,7 +592,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
           isSelected ? 'text-white' : 'group-hover:text-white text-slate-400 group-hover:opacity-100'
         }`}>
           {item.type === 'folder' 
-            ? (item.isOpen ? <FolderOpen size={16} /> : <Folder size={16} />)
+            ? (item.isOpen ? <FolderOpen size={17} /> : <Folder size={17} />)
             : getFileIcon(item.name)
           }
         </span>
@@ -635,7 +619,7 @@ const FileExplorerItem: React.FC<FileExplorerItemProps> = ({
           style={{ paddingLeft: `${((depth + 1) * 12) + 4}px` }}
         >
           <span className="mr-1 text-slate-400">
-            {newItemType === 'folder' ? <Folder size={16} /> : <File size={16} />}
+            {newItemType === 'folder' ? <Folder size={17} /> : <File size={17} />}
           </span>
           <input
             type="text"
@@ -692,7 +676,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ item, handleItemCon
       onContextMenu={(e) => handleItemContextMenu(e, item)}
     >
       <span className="mr-2 text-slate-400">
-        {item.type === 'folder' ? <Folder size={16} /> : getFileIcon(item.name)}
+        {item.type === 'folder' ? <Folder size={17} /> : getFileIcon(item.name)}
       </span>
       <span className="text-sm text-sidebar-foreground hover:text-white opacity-90 truncate">{item.name}</span>
       <span className="text-xs text-slate-500 ml-2 truncate opacity-70">{item.path}</span>
