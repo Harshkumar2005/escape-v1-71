@@ -1,13 +1,12 @@
-
-import React, { useState, useEffect } from 'react';
+//components/ide/TopBar.tsx
+import React, { useState } from 'react';
 import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid, Ghost, Option, Undo2, Redo2, Loader2 } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import FontSelector from './FontSelector';
 import { toast } from 'sonner';
-import { createAndDownloadZip, setupFileSystemForZip } from '@/utils/zipUtils';
-import { listFiles } from '@/api/fileSystem';
+import { createAndDownloadZip } from '@/utils/zipUtils';
 
 const TopBar: React.FC = () => {
   const { saveActiveFile, activeTabId, undoLastAction, redoLastAction } = useEditor();
@@ -15,13 +14,8 @@ const TopBar: React.FC = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Set up the file system for ZIP creation
-    setupFileSystemForZip({ getAllFiles });
-    console.log("File system setup for ZIP creation");
-  }, [getAllFiles]);
   
+  // Handle opening/closing menus
   const toggleMenu = (menuName: string) => {
     if (activeMenu === menuName) {
       setActiveMenu(null);
@@ -33,34 +27,27 @@ const TopBar: React.FC = () => {
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
-      addLogMessage('info', 'Creating ZIP file of all project files...');
       
+      // Get all files from the file system
       const allFiles = getAllFiles();
-      console.log("Files to be included in ZIP:", allFiles);
       
-      // Get all file paths
+      // Extract file paths to pass to the zip utility
       const filePaths = allFiles.map(file => file.path);
       
-      // Ensure we have files to add
-      if (filePaths.length === 0) {
-        toast.error('No files found to download');
-        addLogMessage('error', 'No files found to download');
-        setIsDownloading(false);
-        return;
-      }
-      
-      console.log("File paths for ZIP:", filePaths);
+      // Create and download the zip
       await createAndDownloadZip(filePaths);
+      
       addLogMessage('success', 'Project downloaded as ZIP file');
     } catch (error) {
       console.error('Error downloading project:', error);
       toast.error('Failed to download project');
-      addLogMessage('error', 'Failed to create ZIP file');
+      addLogMessage('error', 'Failed to download project');
     } finally {
       setIsDownloading(false);
     }
   };
   
+  // Handle menu item actions
   const handleAction = (action: string) => {
     switch (action) {
       case 'new-file':
@@ -115,6 +102,7 @@ const TopBar: React.FC = () => {
         break;
     }
     
+    // Close menu after action
     setActiveMenu(null);
   };
   
@@ -123,7 +111,6 @@ const TopBar: React.FC = () => {
       <div className="flex items-center space-x-1">
         <Ghost className="text-sidebar-foreground" strokeWidth={2.25} size={16} />
         <h1 className="text-sidebar-foreground font-medium mr-4">ESCAPE.esc</h1>
-        
         <div className="relative" style={{
             marginLeft: '20px',
           }}>
@@ -180,6 +167,7 @@ const TopBar: React.FC = () => {
       
       <div className="flex items-center space-x-2">
         <p className="p-1 hover:text-white transition-colors">Logs:</p>
+       
       </div>
     </div>
   );
