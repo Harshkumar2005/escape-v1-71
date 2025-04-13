@@ -143,7 +143,7 @@ const TopBar: React.FC = () => {
         </div>
          <div className="relative">
          <button 
-          className="py-0.5 gap-1.5 flex items-center hover:text-white"
+          className="px-2 py-0.5 gap-1.5 flex items-center hover:text-white"
           onClick={handleDownload}
           disabled={isDownloading}
         >
