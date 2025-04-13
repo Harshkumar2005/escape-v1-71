@@ -121,7 +121,7 @@ const TopBar: React.FC = () => {
           Undo
         </button>
         </div>
-        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px' }} />
+        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <div className="relative">
         <button 
           className="py-0.5 gap-1 flex items-center hover:text-white"
@@ -132,7 +132,7 @@ const TopBar: React.FC = () => {
           Redo
         </button>
         </div>
-        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px' }} />
+        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <div className="relative">
          <button 
           className="py-0.5 gap-1.5 flex items-center hover:text-white"
@@ -143,7 +143,7 @@ const TopBar: React.FC = () => {
            Save
         </button>
         </div>
-        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px' }} />
+        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
          <div className="relative">
          <button 
           className="py-0.5 gap-1.5 flex items-center hover:text-white"
