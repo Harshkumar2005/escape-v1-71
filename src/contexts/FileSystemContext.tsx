@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 // File system types
@@ -16,6 +15,7 @@ export interface FileSystemItem {
 }
 
 interface LogMessage {
+  id: string; // Added id field to LogMessage
   type: 'info' | 'error' | 'success' | 'warning';
   message: string;
   timestamp: Date;
@@ -25,23 +25,27 @@ interface FileSystemContextProps {
   files: FileSystemItem[];
   selectedFile: string | null;
   getFileById: (id: string) => FileSystemItem | null;
-  createFile: (parentPath: string, name: string, type: FileType) => void;
+  createFile: (parentPath: string, name: string, type: FileType) => string | undefined; // Return fileId or undefined
   renameFile: (id: string, newName: string) => void;
   deleteFile: (id: string) => void;
   updateFileContent: (id: string, content: string) => void;
   toggleFolder: (id: string) => void;
   setSelectedFile: (id: string | null) => void;
+  selectFile: (id: string) => void; // Add selectFile method
   searchFiles: (query: string) => FileSystemItem[];
   getAllFiles: () => FileSystemItem[];
   getChildrenOf: (path: string) => FileSystemItem[];
   logs: LogMessage[];
   addLogMessage: (type: LogMessage['type'], message: string) => void;
   clearLogs: () => void;
+  removeLog: (id: string) => void; // Add removeLog method
+  resetFileSystem: () => void; // Add resetFileSystem method
+  replaceFileSystem: (rootName: string) => void; // Add replaceFileSystem method
 }
 
 const FileSystemContext = createContext<FileSystemContextProps | null>(null);
 
-// Sample initial data
+// Sample initial files
 const initialFiles: FileSystemItem[] = [
   {
     id: 'root',
@@ -148,8 +152,14 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return findById(files);
   }, [files]);
   
+  // Select a file (set as selected and ensure it's loaded)
+  const selectFile = (id: string) => {
+    setSelectedFile(id);
+    // Additional loading logic could be added here if needed
+  };
+  
   // Create a new file or folder
-  const createFile = (parentPath: string, name: string, type: FileType) => {
+  const createFile = (parentPath: string, name: string, type: FileType): string | undefined => {
     const newId = generateId();
     
     const insertItem = (items: FileSystemItem[]): FileSystemItem[] => {
@@ -188,6 +198,36 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (type === 'file') {
       setSelectedFile(newId);
     }
+    
+    return newId; // Return the new file ID
+  };
+  
+  // Reset file system to initial state
+  const resetFileSystem = () => {
+    setFiles(initialFiles);
+    setSelectedFile(null);
+    addLogMessage('info', 'File system reset to initial state');
+  };
+  
+  // Replace file system with a new one (for importing projects)
+  const replaceFileSystem = (rootName: string) => {
+    const newRoot: FileSystemItem = {
+      id: 'root',
+      name: rootName,
+      path: rootName,
+      type: 'folder',
+      isOpen: true,
+      children: []
+    };
+    
+    setFiles([newRoot]);
+    setSelectedFile(null);
+    addLogMessage('info', `Created new project: ${rootName}`);
+  };
+  
+  // Remove a specific log by ID
+  const removeLog = (id: string) => {
+    setLogs(prevLogs => prevLogs.filter(log => log.id !== id));
   };
   
   // Rename a file or folder
@@ -391,7 +431,13 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   // Add log message
   const addLogMessage = (type: LogMessage['type'], message: string) => {
-    setLogs(prev => [...prev, { type, message, timestamp: new Date() }]);
+    const newLog = {
+      id: generateId(),  // Add unique ID to each log message
+      type, 
+      message, 
+      timestamp: new Date()
+    };
+    setLogs(prev => [...prev, newLog]);
   };
   
   // Clear logs
@@ -444,12 +490,16 @@ export const FileSystemProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateFileContent,
       toggleFolder,
       setSelectedFile,
+      selectFile,
       searchFiles,
       getAllFiles,
       getChildrenOf,
       logs,
       addLogMessage,
-      clearLogs
+      clearLogs,
+      removeLog,
+      resetFileSystem,
+      replaceFileSystem
     }}>
       {children}
     </FileSystemContext.Provider>
