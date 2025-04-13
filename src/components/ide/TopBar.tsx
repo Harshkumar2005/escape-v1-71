@@ -138,7 +138,7 @@ const TopBar: React.FC = () => {
           onClick={() => handleAction('save')}
           title="Save (Ctrl+S)"
         >
-          <FloppyDisk size={15} />
+          <FloppyDisk size={17} />
            Save
         </button>
         </div>
