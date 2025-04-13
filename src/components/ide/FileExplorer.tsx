@@ -4,6 +4,39 @@ import {
   FileCode, FileText, FileImage, FileVideo, FileAudio, FileJson, FileCheck, 
   FileCog, FileSpreadsheet, Edit, Trash, FolderPlus
 } from 'lucide-react';
+
+
+import {
+  FiletypeJs,
+  FiletypeJsx,
+  FiletypeTs,
+  FiletypeTsx,
+  FiletypeHtml,
+  FiletypeCss,
+  FiletypePhp,
+  FiletypePython,
+  FiletypeRuby,
+  FiletypeJava,
+  FiletypeGo,
+  FiletypeC,
+  FiletypeCpp,
+  FiletypeCsharp,
+  FiletypeMd,
+  FileEarmarkText,
+  FileEarmarkImage,
+  FileEarmarkPlay,
+  FileEarmarkMusic,
+  FiletypeJson,
+  FiletypeXls,
+  Terminal,
+  GearFill,
+  FileEarmark
+} from 'react-bootstrap-icons';
+
+
+
+
+
 import { useFileSystem, FileSystemItem, FileType } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import 'react-contexify/ReactContexify.css';
@@ -16,7 +49,7 @@ const getFileIcon = (fileName: string) => {
   const extension = fileName.split('.').pop()?.toLowerCase();
   
   switch(extension) {
-    case 'js':
+  /*  case 'js':
     case 'jsx':
     case 'ts':
     case 'tsx':
@@ -82,7 +115,107 @@ const getFileIcon = (fileName: string) => {
       return <FileCheck size={16} className="file-icon" />;
     
     default:
-      return <File size={16} className="file-icon" />;
+      return <File size={16} className="file-icon" />;*/
+
+case 'js':
+      return <FiletypeJs size={17} className="file-icon" />;
+    case 'jsx':
+      return <FiletypeJsx size={17} className="file-icon" />;
+    case 'ts':
+      return <FiletypeTs size={17} className="file-icon" />;
+    case 'tsx':
+      return <FiletypeTsx size={17} className="file-icon" />;
+    case 'html':
+      return <FiletypeHtml size={17} className="file-icon" />;
+    case 'css':
+      return <FiletypeCss size={17} className="file-icon" />;
+    case 'php':
+      return <FiletypePhp size={17} className="file-icon" />;
+    case 'py':
+      return <FiletypePython size={17} className="file-icon" />;
+    case 'rb':
+      return <FiletypeRuby size={17} className="file-icon" />;
+    case 'java':
+      return <FiletypeJava size={17} className="file-icon" />;
+    case 'go':
+      return <FiletypeGo size={17} className="file-icon" />;
+    case 'c':
+      return <FiletypeC size={17} className="file-icon" />;
+    case 'cpp':
+      return <FiletypeCpp size={17} className="file-icon" />;
+    case 'cs':
+      return <FiletypeCsharp size={17} className="file-icon" />;
+
+    case 'txt':
+    case 'rtf':
+    case 'log':
+      return <FileEarmarkText size={17} className="file-icon" />;
+    case 'md':
+      return <FiletypeMd size={17} className="file-icon" />;
+
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+    case 'svg':
+    case 'bmp':
+    case 'ico':
+      return <FileEarmarkImage size={17} className="file-icon" />;
+
+    case 'mp4':
+    case 'avi':
+    case 'mov':
+    case 'wmv':
+    case 'webm':
+      return <FileEarmarkPlay size={17} className="file-icon" />;
+
+    case 'mp3':
+    case 'wav':
+    case 'ogg':
+    case 'flac':
+      return <FileEarmarkMusic size={17} className="file-icon" />;
+
+    case 'json':
+      return <FiletypeJson size={17} className="file-icon" />;
+
+    case 'yml':
+    case 'yaml':
+    case 'toml':
+    case 'ini':
+    case 'env':
+    case 'config':
+      return (
+        <div
+          className="file-icon config-file-icon"
+          style={{ position: 'relative', display: 'inline-block' }}
+        >
+          <FileEarmarkText size={17} />
+          <GearFill
+            size={10}
+            style={{
+              position: 'absolute',
+              bottom: -2,
+              right: -2,
+              backgroundColor: 'white',
+              borderRadius: '50%',
+            }}
+          />
+        </div>
+      );
+
+    case 'csv':
+    case 'xls':
+    case 'xlsx':
+      return <FiletypeXls size={17} className="file-icon" />;
+
+    case 'exe':
+    case 'bat':
+    case 'sh':
+      return <Terminal size={17} className="file-icon" />;
+
+    default:
+      return <FileEarmark size={17} className="file-icon" />;
+      
   }
 };
 
