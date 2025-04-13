@@ -1,16 +1,18 @@
 
-import React from 'react';
-import { Download } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, Loader2 } from 'lucide-react';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { downloadFilesAsZip } from '@/utils/zipUtils';
 import { toast } from 'sonner';
 
 const ZipDownloader: React.FC = () => {
   const { files } = useFileSystem();
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const handleDownload = async () => {
     try {
-      // Show loading toast
+      // Show loading state
+      setIsDownloading(true);
       toast.loading('Generating ZIP file...');
       
       // Start the download process
@@ -25,17 +27,29 @@ const ZipDownloader: React.FC = () => {
       // Show error toast
       toast.dismiss();
       toast.error('Failed to generate ZIP file');
+    } finally {
+      setIsDownloading(false);
     }
   };
   
   return (
     <button
       onClick={handleDownload}
+      disabled={isDownloading}
       className="flex items-center gap-1 text-sm text-slate-400 hover:text-white hover:bg-[#cccccc29] rounded px-1.5 py-0.5 transition-colors"
       title="Download project as ZIP"
     >
-      <Download size={14} />
-      <span>Download ZIP</span>
+      {isDownloading ? (
+        <>
+          <Loader2 size={14} className="animate-spin" />
+          <span>Creating ZIP</span>
+        </>
+      ) : (
+        <>
+          <Download size={14} />
+          <span>Download ZIP</span>
+        </>
+      )}
     </button>
   );
 };
