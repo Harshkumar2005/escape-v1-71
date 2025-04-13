@@ -1,6 +1,7 @@
 //components/ide/TopBar.tsx
 import React, { useState } from 'react';
 import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid, HardDriveDownload, Ghost, Option, Undo2, Redo2, Loader2 } from 'lucide-react';
+import FloppyDisk from "@phosphor-icons/react"
 import { useEditor } from '@/contexts/EditorContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
@@ -137,7 +138,7 @@ const TopBar: React.FC = () => {
           onClick={() => handleAction('save')}
           title="Save (Ctrl+S)"
         >
-          <Save size={15} />
+          <FloppyDisk size={15} />
            Save
         </button>
         </div>
