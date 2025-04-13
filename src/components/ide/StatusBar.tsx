@@ -88,7 +88,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
       <div className="flex items-center space-x-1">
         {activeFileInfo.path && (
           <span className="text-slate-500 max-w-xs truncate text-[13px]" title={activeFileInfo.path}>
-            {activeFileInfo.path}
+            {activeFileInfo.path.replace("/", "")}
           </span>
         )}
         <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
