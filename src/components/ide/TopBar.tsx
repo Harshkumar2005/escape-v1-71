@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid, Ghost, Option, Undo2, Redo2, Loader2 } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
@@ -16,7 +17,9 @@ const TopBar: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   useEffect(() => {
+    // Set up the file system for ZIP creation
     setupFileSystemForZip({ getAllFiles });
+    console.log("File system setup for ZIP creation");
   }, [getAllFiles]);
   
   const toggleMenu = (menuName: string) => {
@@ -33,8 +36,20 @@ const TopBar: React.FC = () => {
       addLogMessage('info', 'Creating ZIP file of all project files...');
       
       const allFiles = getAllFiles();
+      console.log("Files to be included in ZIP:", allFiles);
+      
+      // Get all file paths
       const filePaths = allFiles.map(file => file.path);
       
+      // Ensure we have files to add
+      if (filePaths.length === 0) {
+        toast.error('No files found to download');
+        addLogMessage('error', 'No files found to download');
+        setIsDownloading(false);
+        return;
+      }
+      
+      console.log("File paths for ZIP:", filePaths);
       await createAndDownloadZip(filePaths);
       addLogMessage('success', 'Project downloaded as ZIP file');
     } catch (error) {

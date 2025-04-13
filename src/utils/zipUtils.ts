@@ -1,7 +1,16 @@
 
 import JSZip from 'jszip';
 import { toast } from 'sonner';
-import { useFileSystem } from '@/contexts/FileSystemContext';
+import { FileSystemItem } from '@/contexts/FileSystemContext';
+
+// Define the interface for our global window property
+declare global {
+  interface Window {
+    fileSystemInstance: {
+      getAllFiles: () => FileSystemItem[];
+    } | undefined;
+  }
+}
 
 export async function createAndDownloadZip(files: string[]): Promise<void> {
   try {
@@ -15,20 +24,21 @@ export async function createAndDownloadZip(files: string[]): Promise<void> {
         const pathSegments = filePath.split('/');
         const fileName = pathSegments[pathSegments.length - 1];
         
-        // This is a mock implementation for demo purposes
-        // In a real app, you would get the actual file content from the FileSystemContext
-        // Instead of trying to use the readFile API which works with real files
+        // Get access to the file system instance
         const fs = window.fileSystemInstance;
         if (!fs) {
           toast.error("File system not initialized");
+          console.error("File system not initialized for ZIP creation");
           return;
         }
         
         const allFiles = fs.getAllFiles();
-        const fileToAdd = allFiles.find(f => f.path.endsWith(filePath) || f.path === filePath);
+        console.log("Available files for ZIP:", allFiles.map(f => f.path));
+        
+        const fileToAdd = allFiles.find(f => f.path === filePath);
         
         if (fileToAdd && fileToAdd.content) {
-          // Use the actual file path as the name in the zip
+          console.log(`Adding file to ZIP: ${filePath}`);
           zip.file(filePath, fileToAdd.content);
         } else {
           console.warn(`File content not found for ${filePath}`);
@@ -63,7 +73,7 @@ export async function createAndDownloadZip(files: string[]): Promise<void> {
 }
 
 // Helper to make the FileSystem instance accessible globally for the ZIP generation
-export function setupFileSystemForZip(fileSystemInstance: any): void {
+export function setupFileSystemForZip(fileSystemInstance: { getAllFiles: () => FileSystemItem[] }): void {
   // Store the file system instance in the window object for access during ZIP creation
-  (window as any).fileSystemInstance = fileSystemInstance;
+  window.fileSystemInstance = fileSystemInstance;
 }
