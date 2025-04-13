@@ -1,62 +1,67 @@
-
+//src/utils/zipUtils.ts
 import JSZip from 'jszip';
 import { toast } from 'sonner';
 import { FileSystemItem } from '@/contexts/FileSystemContext';
 
-// Define the interface for our global window property
-declare global {
-  interface Window {
-    fileSystemInstance: {
-      getAllFiles: () => FileSystemItem[];
-    } | undefined;
-  }
-}
-
-export async function createAndDownloadZip(files: string[]): Promise<void> {
+export async function createAndDownloadZip(filePaths: string[]): Promise<void> {
   try {
     const zip = new JSZip();
     
-    // Add all files to the zip
-    for (const filePath of files) {
-      try {
-        // Use the content from our virtual file system instead of trying to read actual files
-        // Get the filePath segment after the project root name
-        const pathSegments = filePath.split('/');
-        const fileName = pathSegments[pathSegments.length - 1];
+    // Get all files from the file system context
+    // We'll need to access this through the current module scope
+    // The file system data should be coming through the filePaths parameter
+    
+    // First check if we have any files to zip
+    if (!filePaths || filePaths.length === 0) {
+      toast.error('No files found to download');
+      return;
+    }
+    
+    // Get access to all files in the file system
+    // We need to access the FileSystemContext directly here
+    // This is handled by getting the file System data from React Context
+    // which will be passed as file paths from the TopBar component
+    
+    // Import and get the fileSystem from the context
+    const { useFileSystem } = await import('@/contexts/FileSystemContext');
+    const fileSystem = useFileSystem();
+    const allFiles = fileSystem.getAllFiles();
+    
+    console.log("Available files for ZIP:", allFiles.map(f => f.path));
+    
+    // Add each file to the zip
+    let filesAdded = 0;
+    
+    for (const filePath of filePaths) {
+      // Skip folders, we only want to add files
+      const fileItem = allFiles.find(file => file.path === filePath && file.type === 'file');
+      
+      if (fileItem && fileItem.content !== undefined) {
+        // For the zip structure, we want to maintain the relative path
+        // but remove the project root folder name
+        const pathInZip = fileItem.path.split('/').slice(2).join('/');
         
-        // Get access to the file system instance
-        const fs = window.fileSystemInstance;
-        if (!fs) {
-          toast.error("File system not initialized");
-          console.error("File system not initialized for ZIP creation");
-          return;
+        // Only add if there's actual content
+        if (pathInZip) {
+          zip.file(pathInZip, fileItem.content || '');
+          filesAdded++;
         }
-        
-        const allFiles = fs.getAllFiles();
-        console.log("Available files for ZIP:", allFiles.map(f => f.path));
-        
-        const fileToAdd = allFiles.find(f => f.path === filePath);
-        
-        if (fileToAdd && fileToAdd.content) {
-          console.log(`Adding file to ZIP: ${filePath}`);
-          zip.file(filePath, fileToAdd.content);
-        } else {
-          console.warn(`File content not found for ${filePath}`);
-        }
-      } catch (error) {
-        console.error(`Error adding file ${filePath} to zip:`, error);
-        // Continue with other files even if one fails
       }
     }
     
-    // Generate the zip file
+    if (filesAdded === 0) {
+      toast.warning('No valid files found to add to ZIP');
+      return;
+    }
+    
+    // Generate the zip file as a blob
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     
     // Create a download link and trigger the download
     const url = URL.createObjectURL(zipBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'codebase.zip';
+    link.download = 'project-files.zip';
     document.body.appendChild(link);
     link.click();
     
@@ -64,16 +69,10 @@ export async function createAndDownloadZip(files: string[]): Promise<void> {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    toast.success('Project files downloaded successfully');
+    toast.success(`Project downloaded with ${filesAdded} files`);
   } catch (error) {
     console.error('Error creating zip file:', error);
     toast.error('Failed to create zip file');
     throw error;
   }
-}
-
-// Helper to make the FileSystem instance accessible globally for the ZIP generation
-export function setupFileSystemForZip(fileSystemInstance: { getAllFiles: () => FileSystemItem[] }): void {
-  // Store the file system instance in the window object for access during ZIP creation
-  window.fileSystemInstance = fileSystemInstance;
 }
