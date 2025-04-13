@@ -31,11 +31,8 @@ const TopBar: React.FC = () => {
       // Get all files from the file system
       const allFiles = getAllFiles();
       
-      // Extract file paths to pass to the zip utility
-      const filePaths = allFiles.map(file => file.path);
-      
-      // Create and download the zip
-      await createAndDownloadZip(filePaths);
+      // Important: We directly pass the file objects, not just the paths
+      await createAndDownloadZip(allFiles);
       
       addLogMessage('success', 'Project downloaded as ZIP file');
     } catch (error) {
