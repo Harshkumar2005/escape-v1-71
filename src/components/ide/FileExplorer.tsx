@@ -9,28 +9,23 @@ import {
 import {
   FiletypeJs,
   FiletypeJsx,
-  FiletypeTs,
   FiletypeTsx,
   FiletypeHtml,
   FiletypeCss,
   FiletypePhp,
-  FiletypePython,
-  FiletypeRuby,
+  FiletypePy,
+  FiletypeRb,
   FiletypeJava,
-  FiletypeGo,
-  FiletypeC,
-  FiletypeCpp,
-  FiletypeCsharp,
   FiletypeMd,
-  FileEarmarkText,
+  FileEarmarkTxt,
   FileEarmarkImage,
   FileEarmarkPlay,
-  FileEarmarkMusic,
   FiletypeJson,
   FiletypeXls,
   Terminal,
   GearFill,
-  FileEarmark
+  FileEarmark,
+  FileEarmarkCode
 } from 'react-bootstrap-icons';
 
 
@@ -122,7 +117,7 @@ case 'js':
     case 'jsx':
       return <FiletypeJsx size={17} className="file-icon" />;
     case 'ts':
-      return <FiletypeTs size={17} className="file-icon" />;
+      return <FiletypeTsx size={17} className="file-icon" />;
     case 'tsx':
       return <FiletypeTsx size={17} className="file-icon" />;
     case 'html':
@@ -132,24 +127,24 @@ case 'js':
     case 'php':
       return <FiletypePhp size={17} className="file-icon" />;
     case 'py':
-      return <FiletypePython size={17} className="file-icon" />;
+      return <FiletypePy size={17} className="file-icon" />;
     case 'rb':
-      return <FiletypeRuby size={17} className="file-icon" />;
+      return <FiletypeRb size={17} className="file-icon" />;
     case 'java':
       return <FiletypeJava size={17} className="file-icon" />;
     case 'go':
-      return <FiletypeGo size={17} className="file-icon" />;
+      return <FileEarmarkCode size={17} className="file-icon" />;
     case 'c':
-      return <FiletypeC size={17} className="file-icon" />;
+      return <FileEarmarkCode size={17} className="file-icon" />;
     case 'cpp':
-      return <FiletypeCpp size={17} className="file-icon" />;
+      return <FileEarmarkCode size={17} className="file-icon" />;
     case 'cs':
-      return <FiletypeCsharp size={17} className="file-icon" />;
+      return <FileEarmarkCode size={17} className="file-icon" />;
 
     case 'txt':
     case 'rtf':
     case 'log':
-      return <FileEarmarkText size={17} className="file-icon" />;
+      return <FileEarmarkTxt size={17} className="file-icon" />;
     case 'md':
       return <FiletypeMd size={17} className="file-icon" />;
 
@@ -173,7 +168,7 @@ case 'js':
     case 'wav':
     case 'ogg':
     case 'flac':
-      return <FileEarmarkMusic size={17} className="file-icon" />;
+      return <FileEarmarkPlay size={17} className="file-icon" />;
 
     case 'json':
       return <FiletypeJson size={17} className="file-icon" />;
@@ -214,7 +209,7 @@ case 'js':
       return <Terminal size={17} className="file-icon" />;
 
     default:
-      return <FileEarmark size={17} className="file-icon" />;
+      return <FileEarmarkCode size={17} className="file-icon" />;
       
   }
 };
