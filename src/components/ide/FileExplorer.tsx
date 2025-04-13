@@ -17,7 +17,7 @@ import {
   FiletypeRb,
   FiletypeJava,
   FiletypeMd,
-  FileEarmarkTxt,
+  FiletypeTxt,
   FileEarmarkImage,
   FileEarmarkPlay,
   FiletypeJson,
@@ -144,7 +144,7 @@ case 'js':
     case 'txt':
     case 'rtf':
     case 'log':
-      return <FileEarmarkTxt size={17} className="file-icon" />;
+      return <FiletypeTxt size={17} className="file-icon" />;
     case 'md':
       return <FiletypeMd size={17} className="file-icon" />;
 
@@ -184,7 +184,7 @@ case 'js':
           className="file-icon config-file-icon"
           style={{ position: 'relative', display: 'inline-block' }}
         >
-          <FileEarmarkText size={17} />
+          <FiletypeTxt size={17} />
           <GearFill
             size={10}
             style={{
