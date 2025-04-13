@@ -4,7 +4,7 @@ import { GitBranch, Terminal, Columns, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
-
+import { SlashLg } from 'react-bootstrap-icons';
 interface StatusBarProps {
   toggleTerminal: () => void;
   toggleLeftSidebar: () => void;
@@ -59,12 +59,12 @@ const StatusBar: React.FC<StatusBarProps> = ({
   
   return (
     <div className="flex items-center justify-between px-2 py-1.5 bg-status-bar text-slate-400 text-xs border-t border-border">
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-1">
         <div className="flex items-center text-[13px]">
           <GitBranch size={14} className="mr-1" />
           <span>main</span>
         </div>
-        
+        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <button 
           className="flex items-center hover:text-white transition-colors text-[13px]"
           onClick={() => {
@@ -75,6 +75,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
           <Columns size={14} className="mr-1" />
           <span>Explorer</span>
         </button>
+        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <button
           className="flex items-center hover:text-white transition-colors"
           onClick={toggleTerminal}
@@ -84,17 +85,17 @@ const StatusBar: React.FC<StatusBarProps> = ({
         </button>
       </div>
       
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-1">
         {activeFileInfo.path && (
           <span className="text-slate-500 max-w-xs truncate text-[13px]" title={activeFileInfo.path}>
             {activeFileInfo.path}
           </span>
         )}
-        
+        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <span className="text-[13px]">{activeFileInfo.language}</span>
-        
+        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <span className="text-[13px]">{time}</span>
-        
+        <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <button
           className="flex items-center hover:text-white transition-colors"
           onClick={() => {
