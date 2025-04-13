@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid, Ghost, Option, Undo2, Redo2 } from 'lucide-react';
+import { Command, Save, Settings, File as FileIcon, Edit as EditIcon, Eye, HelpCircle, Copy, Clipboard, Download, Upload, Trash2, Undo, Redo, RotateCcw, X, LayoutGrid, Ghost, Option, Undo2, Redo2, Loader2 } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import FontSelector from './FontSelector';
 import { toast } from 'sonner';
+import { createAndDownloadZip } from '@/utils/zipUtils';
+import { listFiles } from '@/api/fileSystem';
 
 const TopBar: React.FC = () => {
   const { saveActiveFile, activeTabId, undoLastAction, redoLastAction } = useEditor();
   const { createFile, deleteFile, addLogMessage } = useFileSystem();
+   const [isDownloading, setIsDownloading] = useState(false);
   
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   
@@ -17,6 +21,23 @@ const TopBar: React.FC = () => {
       setActiveMenu(null);
     } else {
       setActiveMenu(menuName);
+    }
+  };
+
+const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      
+      // Get all file paths
+      const filePaths = await listFiles();
+      
+      // Create and download the zip
+      await createAndDownloadZip(filePaths);
+    } catch (error) {
+      console.error('Error downloading project:', error);
+      toast.error('Failed to download project');
+    } finally {
+      setIsDownloading(false);
     }
   };
   
@@ -224,6 +245,25 @@ const TopBar: React.FC = () => {
         >
           <Save size={15} />
            Save
+        </button>
+        </div>
+         <div className="relative">
+         <button 
+          className="py-0.5 gap-1.5 flex items-center hover:text-white"
+          onClick={handleDownload}
+          disabled={isDownloading}
+        >
+        {isDownloading ? (
+            <>
+              <Loader2 size={15} className="animate-spin" />
+              <span>Creating ZIP</span>
+            </>
+          ) : (
+            <>
+              <Download size={15} />
+              <span>Download</span>
+            </>
+          )}
         </button>
         </div>
       </div>
