@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { toast } from 'sonner';
-import { GithubRepoLoader } from './GithubRepoLoader';
+import GithubRepoLoader from './GithubRepoLoader';
 
 export const ProjectStartup = () => {
   const [isOpen, setIsOpen] = useState(true);
