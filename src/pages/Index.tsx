@@ -5,7 +5,7 @@ import { CodeBuddyChat } from '@/components/CodeBuddyChat';
 
 const Index = () => {
   return (
-    <div className="h-screen w-screen overflow-hidden">
+    <div className= "h-screen w-screen overflow-hidden" style = {{ filter: 'brightness(1.1)' }}>
       <CodeEditorIDE />
     </div>
   );
