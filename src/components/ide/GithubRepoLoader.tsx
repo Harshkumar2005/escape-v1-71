@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFileSystem } from '@/contexts/FileSystemContext';
-import { toast } from 'sonner';
+import { //toast } from 'sonner';
 
 // Types for GitHub API responses
 interface GithubFile {
@@ -106,7 +106,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
       setProgress('Processing repository files...');
       await processGithubContents(contents, `/${repoData.name}`);
       
-      toast.success(`Repository ${repoData.name} imported successfully!`);
+      //toast.success(`Repository ${repoData.name} imported successfully!`);
       setLoading(false);
       addLogMessage('success', `Imported GitHub repository: ${repoData.full_name}`);
       onClose();
@@ -138,7 +138,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
       } else if (item.type === 'file') {
         // Skip large files (>500KB) to prevent performance issues
         if (item.size && item.size > 500000) {
-          toast.warning(`Skipped large file: ${item.name}`);
+          //toast.warning(`Skipped large file: ${item.name}`);
           continue;
         }
         
@@ -236,7 +236,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFileSystem } from '@/contexts/FileSystemContext';
-import { toast } from 'sonner';
+//import { //toast } from 'sonner';
 
 // Types for GitHub API responses
 interface GithubFile {
@@ -339,7 +339,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
       await processGithubContents(contents, `/${repoData.name}`);
       
       setProgressPercentage(100);
-      toast.success(`Repository ${repoData.name} imported successfully!`);
+      //toast.success(`Repository ${repoData.name} imported successfully!`);
       setLoading(false);
       addLogMessage('success', `Imported GitHub repository: ${repoData.full_name}`);
       onClose();
@@ -374,7 +374,7 @@ export const GithubRepoLoader: React.FC<GithubRepoLoaderProps> = ({ isOpen, onCl
       } else if (item.type === 'file') {
         // Skip large files (>500KB) to prevent performance issues
         if (item.size && item.size > 500000) {
-          toast.warning(`Skipped large file: ${item.name}`);
+          //toast.warning(`Skipped large file: ${item.name}`);
           continue;
         }
         
