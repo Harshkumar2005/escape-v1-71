@@ -380,7 +380,7 @@ const FileExplorer: React.FC = () => {
 
   return (
     <div 
-      className="h-full overflow-auto bg-sidebar flex flex-col"
+      className="h-full bg-sidebar flex flex-col"
       onContextMenu={handleContextMenu}
     >
       <div className="px-2 py-0.5 flex justify-between items-center border-b border-border">
@@ -427,7 +427,7 @@ const FileExplorer: React.FC = () => {
         </div>
       )}
       
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 h-full overflow-auto" style={{scrollbarWidth: 'none',}}>
         {isSearching ? (
           <div className="px-2 py-1">
             {searchResults.length > 0 ? (
