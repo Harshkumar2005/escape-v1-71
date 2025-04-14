@@ -131,7 +131,15 @@ const initialFileSystem: FileSystemItem[] = [
     type: 'folder',
     path: '/new-project',
     isOpen: true,
-    children: []
+    children: [  {
+         id: 'package',
+         name: 'package.json',
+         type: 'file',
+         path: '/new-project/package.json',
+         language: 'json',
+         content: ''{\n  \"name\": \"my-project\",\n  \"version\": \"1.0.0\",\n  \"scripts\": {\n    \"start\": \"vite\"\n  },\n  \"dependencies\": {\n    \"react\": \"^18.0.0\",\n    \"react-dom\": \"^18.0.0\"\n  },\n  \"devDependencies\": {\n    \"vite\": \"^5.0.0\"\n  }\n}',
+         parentId: 'root',
+       }]
   }
 ];
 
