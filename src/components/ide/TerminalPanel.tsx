@@ -1,11 +1,10 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import { Plus, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { toast } from 'sonner';
+import { //toast } from 'sonner';
 
 interface TerminalTabProps {
   terminalId: string;
@@ -198,13 +197,13 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
       if (maximizeTerminal) {
         maximizeTerminal();
       }
-      toast.info("Terminal maximized");
+      //toast.info("Terminal maximized");
     } else {
       // Restore the terminal panel
       if (minimizeTerminal) {
         minimizeTerminal();
       }
-      toast.info("Terminal restored");
+      //toast.info("Terminal restored");
     }
     
     // Resize terminals after the animation completes
@@ -238,7 +237,7 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({ maximizeTerminal, minimiz
             className="p-1 text-slate-400 hover:text-white rounded-sm"
             onClick={() => {
               createTerminal();
-              toast.success("New terminal created");
+              //toast.success("New terminal created");
             }}
             title="New Terminal"
           >
