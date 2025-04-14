@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { editor } from 'monaco-editor';
 import { useFileSystem } from './FileSystemContext';
-import { toast } from 'sonner';
+//import { //toast } from 'sonner';
 
 interface TabInfo {
   id: string;
@@ -246,7 +246,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       )
     );
     
-    toast.success(`File ${openedTabs.find(tab => tab.id === activeTabId)?.name} saved`);
+    //toast.success(`File ${openedTabs.find(tab => tab.id === activeTabId)?.name} saved`);
   };
 
   // Save all open files
@@ -261,7 +261,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       prevTabs.map(tab => ({ ...tab, isModified: false }))
     );
     
-    toast.success('All files saved');
+    //toast.success('All files saved');
   };
 
   // Move tab (for drag and drop reordering)
@@ -301,7 +301,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         sessionStorage.setItem(`${STORAGE_KEY_PREFIX}${lastAction.tabId}`, lastAction.previousContent);
       }
       
-      toast.info('Undid last edit');
+      //toast.info('Undid last edit');
     } else if (lastAction.type === 'tab' && lastAction.tabInfo) {
       // Restore closed tab
       setOpenedTabs(prevTabs => [...prevTabs, lastAction.tabInfo!]);
@@ -311,7 +311,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         sessionStorage.setItem(`${STORAGE_KEY_PREFIX}${lastAction.tabId}`, lastAction.tabInfo.content);
       }
       
-      toast.info(`Restored tab: ${lastAction.tabInfo.name}`);
+      //toast.info(`Restored tab: ${lastAction.tabInfo.name}`);
     }
   };
 
@@ -342,7 +342,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         sessionStorage.setItem(`${STORAGE_KEY_PREFIX}${lastRedoAction.tabId}`, lastRedoAction.content);
       }
       
-      toast.info('Redid last edit');
+      //toast.info('Redid last edit');
     } else if (lastRedoAction.type === 'tab') {
       // Remove the tab again
       setOpenedTabs(prevTabs => prevTabs.filter(tab => tab.id !== lastRedoAction.tabId));
@@ -350,7 +350,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Remove from session storage
       sessionStorage.removeItem(`${STORAGE_KEY_PREFIX}${lastRedoAction.tabId}`);
       
-      toast.info(`Closed tab: ${lastRedoAction.tabInfo?.name}`);
+      //toast.info(`Closed tab: ${lastRedoAction.tabInfo?.name}`);
     }
   };
 
