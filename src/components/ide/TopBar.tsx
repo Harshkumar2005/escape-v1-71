@@ -6,7 +6,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import FontSelector from './FontSelector';
-import { toast } from 'sonner';
+//import { //toast } from 'sonner';
 import { createAndDownloadZip } from '@/utils/zipUtils';
 import { SlashLg } from 'react-bootstrap-icons';
 const TopBar: React.FC = () => {
@@ -38,7 +38,7 @@ const TopBar: React.FC = () => {
       addLogMessage('success', 'Project downloaded as ZIP file');
     } catch (error) {
       console.error('Error downloading project:', error);
-      toast.error('Failed to download project');
+      //toast.error('Failed to download project');
       addLogMessage('error', 'Failed to download project');
     } finally {
       setIsDownloading(false);
@@ -65,17 +65,17 @@ const TopBar: React.FC = () => {
         break;
       case 'copy':
         if (document.execCommand('copy')) {
-          toast.success('Content copied to clipboard');
+          //toast.success('Content copied to clipboard');
         }
         break;
       case 'cut':
         if (document.execCommand('cut')) {
-          toast.success('Content cut to clipboard');
+          //toast.success('Content cut to clipboard');
         }
         break;
       case 'paste':
         if (document.execCommand('paste')) {
-          toast.success('Content pasted from clipboard');
+          //toast.success('Content pasted from clipboard');
         }
         break;
       case 'undo':
@@ -91,7 +91,7 @@ const TopBar: React.FC = () => {
         addLogMessage('success', 'Word wrap toggled');
         break;
       case 'keyboard-shortcuts':
-        toast.info('Keyboard shortcuts: Ctrl+S to save, Ctrl+Z to undo, Ctrl+Y to redo');
+        //toast.info('Keyboard shortcuts: Ctrl+S to save, Ctrl+Z to undo, Ctrl+Y to redo');
         break;
       case 'about':
         addLogMessage('info', 'Code Editor IDE - Version 1.0.0');
