@@ -11,7 +11,6 @@ import {
   initFileWatcher
 } from './src/api/fileSystem';
 import type { IncomingMessage, ServerResponse } from 'http';
-
 type NextFunction = () => void;
 
 // https://vitejs.dev/config/
@@ -23,8 +22,17 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
+      // Add the COOP and COEP headers here
+      headers: {
+        'Cross-Origin-Embedder-Policy': 'require-corp',
+        'Cross-Origin-Opener-Policy': 'same-origin'
+      },
       middleware: [
         async (req: IncomingMessage, res: ServerResponse, next: NextFunction) => {
+          // Ensure CORS headers are set
+          res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+          res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+          
           if (req.url === '/api/list-files') {
             const response = await handleListFiles(new Request(`http://localhost${req.url}`));
             res.statusCode = response.status;
@@ -88,12 +96,6 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
-    },
-     server: {
-    headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin'
     }
-  }
   };
 });
