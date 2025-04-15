@@ -1,12 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { GitBranch, Terminal, Columns, Sun, Moon, Music } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { SlashLg } from 'react-bootstrap-icons';
-import MusicStatusBar from './MusicStatusBar';
-import { useMusic } from '@/contexts/MusicContext';
+import { MusicStatusBar, useMusic } from '@/contexts/MusicContext';
 
 interface StatusBarProps {
   toggleTerminal: () => void;
