@@ -1,10 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { GitBranch, Terminal, Columns, Sun, Moon } from 'lucide-react';
+import { GitBranch, Terminal, Columns, Sun, Moon, Music } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { SlashLg } from 'react-bootstrap-icons';
+import MusicStatusBar from './MusicStatusBar';
+import { useMusic } from '@/contexts/MusicContext';
+
 interface StatusBarProps {
   toggleTerminal: () => void;
   toggleLeftSidebar: () => void;
@@ -19,6 +22,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
   const { theme, toggleTheme } = useTheme();
   const { activeTabId } = useEditor();
   const { getFileById, addLogMessage } = useFileSystem();
+  const { toggleMusicPanel } = useMusic();
   const [time, setTime] = useState<string>('');
   const [activeFileInfo, setActiveFileInfo] = useState({ 
     language: 'Text', 
@@ -78,18 +82,23 @@ const StatusBar: React.FC<StatusBarProps> = ({
         <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <button
           className="flex items-center hover:text-white transition-colors"
-          onClick={toggleTerminal}
+          onClick={toggleMusicPanel}
         >
-          <Terminal size={14} className="mr-1" />
-          <span>Terminal</span>
+          <Music size={14} className="mr-1" />
+          <span>Music</span>
         </button>
       </div>
       
       <div className="flex items-center space-x-1">
+        <MusicStatusBar />
+        
         {activeFileInfo.path && (
-          <span className="text-slate-500 max-w-xs truncate text-[13px]" title={activeFileInfo.path}>
-            {activeFileInfo.path.replace("/", "")}
-          </span>
+          <>
+            <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
+            <span className="text-slate-500 max-w-xs truncate text-[13px]" title={activeFileInfo.path}>
+              {activeFileInfo.path.replace("/", "")}
+            </span>
+          </>
         )}
         <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <span className="text-[13px]">{activeFileInfo.language}</span>
