@@ -6,7 +6,7 @@ import EditorArea from './EditorArea';
 import AICoworker from './AICoworker';
 import { CodeBuddyChat } from '../CodeBuddyChat';
 import StatusBar from './StatusBar';
-//import WebContainerPanel from './WebContainerPanel';
+import WebContainerPanel from './WebContainerPanel';
 import CommandPalette from './CommandPalette';
 import { FileSystemProvider } from '@/contexts/FileSystemContext';
 import { EditorProvider } from '@/contexts/EditorContext';
@@ -98,7 +98,7 @@ const CodeEditorIDE: React.FC = () => {
                           <EditorArea />
                         </ResizablePanel>
                         
-                        {/* Terminal 
+                        {/* Terminal */}
                         {showTerminal && (
                           <>
                             <ResizableHandle withHandle />
@@ -106,7 +106,7 @@ const CodeEditorIDE: React.FC = () => {
                               <WebContainerPanel />
                             </ResizablePanel>
                           </>
-                        )}*/}
+                        )}
                       </ResizablePanelGroup>
                     </ResizablePanel>
 
