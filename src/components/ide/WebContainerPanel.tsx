@@ -1,4 +1,406 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { WebContainer } from '@webcontainer/api';
+import { Terminal as XTerm } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import { Power, RefreshCcw } from 'lucide-react';
+import 'xterm/css/xterm.css';
+
+const WebContainerPanel = () => {
+  // Core state
+  const [webcontainer, setWebcontainer] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [initialized, setInitialized] = useState(false);
+  const [webContainerSupported, setWebContainerSupported] = useState(null);
+  
+  // Terminal state
+  const [terminal, setTerminal] = useState(null);
+  const terminalRef = useRef(null);
+  const fitAddonRef = useRef(null);
+  
+  // Logs for debugging
+  const [logs, setLogs] = useState([]);
+  
+  // Add log for debugging
+  const addLog = (type, message) => {
+    console.log(`[${type}]`, message);
+    setLogs(prev => [...prev, { type, message, timestamp: new Date().toISOString() }]);
+  };
+
+  // Check if WebContainer is supported
+  useEffect(() => {
+    const checkSupport = async () => {
+      try {
+        // Check if we're in a secure context (HTTPS or localhost)
+        const isSecure = window.isSecureContext || 
+                       window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+        
+        if (!isSecure) {
+          setWebContainerSupported(false);
+          setError('WebContainer requires HTTPS or localhost environment');
+          addLog('error', 'Environment not secure (requires HTTPS or localhost)');
+          return;
+        }
+        
+        // Try importing the WebContainer module
+        await import('@webcontainer/api');
+        setWebContainerSupported(true);
+        addLog('info', 'WebContainer API is supported in this browser');
+      } catch (err) {
+        setWebContainerSupported(false);
+        setError(`WebContainer not supported: ${err.message}`);
+        addLog('error', `WebContainer API not supported: ${err.message}`);
+      }
+    };
+    
+    checkSupport();
+  }, []);
+
+  // Initialize WebContainer
+  const initWebContainer = async () => {
+    if (initialized) {
+      addLog('info', 'WebContainer already initialized');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    addLog('info', 'Starting WebContainer initialization...');
+    
+    try {
+      // Boot WebContainer
+      const { WebContainer } = await import('@webcontainer/api');
+      addLog('info', 'WebContainer module imported successfully');
+      
+      const wc = await WebContainer.boot();
+      setWebcontainer(wc);
+      addLog('success', 'WebContainer booted successfully');
+      
+      // Setup minimal file system
+      await setupBaseFileSystem(wc);
+      
+      // Create terminal
+      createTerminal(wc);
+      
+      setInitialized(true);
+      setLoading(false);
+      addLog('success', 'WebContainer fully initialized');
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setError(`Failed to initialize WebContainer: ${errorMsg}`);
+      addLog('error', `WebContainer initialization failed: ${errorMsg}`);
+      setLoading(false);
+    }
+  };
+
+  // Setup a minimal file system
+  const setupBaseFileSystem = async (wc) => {
+    addLog('info', 'Setting up basic file system...');
+    
+    try {
+      // Create a minimal file structure
+      const files = {
+        'index.html': {
+          file: {
+            contents: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WebContainer Demo</title>
+</head>
+<body>
+  <h1>WebContainer is running!</h1>
+  <p>This is a simple demo page.</p>
+</body>
+</html>`
+          }
+        }
+      };
+      
+      // Mount files to WebContainer
+      await wc.mount(files);
+      addLog('success', 'Files mounted successfully');
+    } catch (err) {
+      addLog('error', `Error mounting files: ${err.message}`);
+      throw err;
+    }
+  };
+
+  // Create and set up a terminal
+  const createTerminal = (wc) => {
+    addLog('info', 'Creating terminal...');
+    
+    try {
+      // Create a new terminal
+      const term = new XTerm({
+        cursorBlink: true,
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 14,
+        theme: {
+          background: '#1e1e1e',
+          foreground: '#ffffff',
+          cursor: '#ffffff',
+          selection: 'rgba(255, 255, 255, 0.3)',
+        }
+      });
+      
+      // Add the fit addon for terminal resizing
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      fitAddonRef.current = fitAddon;
+      
+      // Store the terminal instance
+      setTerminal(term);
+      
+      // Open terminal after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        if (terminalRef.current) {
+          term.open(terminalRef.current);
+          fitAddon.fit();
+          
+          // Connect terminal to shell process
+          connectTerminalToShell(wc, term);
+          
+          addLog('success', 'Terminal created and opened successfully');
+        } else {
+          addLog('error', 'Terminal DOM element not found');
+        }
+      }, 100);
+    } catch (err) {
+      addLog('error', `Failed to create terminal: ${err.message}`);
+    }
+  };
+
+  // Connect terminal to a shell process
+  const connectTerminalToShell = async (wc, term) => {
+    try {
+      addLog('info', 'Starting shell process...');
+      
+      // Try to spawn a bash shell first
+      const shellProcess = await wc.spawn('bash')
+        .catch(() => {
+          addLog('info', 'Bash not available, falling back to sh');
+          return wc.spawn('sh');
+        });
+      
+      addLog('success', 'Shell process started');
+      
+      // Handle input from terminal to shell
+      const input = shellProcess.input.getWriter();
+      term.onData((data) => {
+        input.write(data);
+      });
+      
+      // Handle output from shell to terminal
+      shellProcess.output.pipeTo(
+        new WritableStream({
+          write(data) {
+            term.write(data);
+          }
+        })
+      );
+      
+      // Handle terminal dispose
+      term.onDispose(() => {
+        input.close();
+        addLog('info', 'Terminal disposed');
+      });
+      
+      // Write welcome message
+      term.writeln('\r\n\x1b[1;32mWebContainer Shell Ready!\x1b[0m');
+      term.writeln('Type commands to interact with the file system.');
+      term.writeln('For example: ls, cat index.html, etc.\r\n');
+      
+    } catch (err) {
+      term.writeln('\r\n\x1b[1;31mFailed to start shell process.\x1b[0m');
+      term.writeln(`Error: ${err.message}`);
+      addLog('error', `Shell connection error: ${err.message}`);
+    }
+  };
+
+  // Handle window resize to fit terminal
+  useEffect(() => {
+    const handleResize = () => {
+      if (fitAddonRef.current) {
+        try {
+          fitAddonRef.current.fit();
+        } catch (err) {
+          // Terminal might be disposed
+        }
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (terminal) {
+        terminal.dispose();
+      }
+    };
+  }, [terminal]);
+
+  // Render the debugging logs panel
+  const renderLogs = () => (
+    <div className="bg-black bg-opacity-90 border-t border-gray-700 text-xs h-28 overflow-y-auto">
+      <div className="p-2">
+        <h3 className="text-white font-bold">Debug Logs:</h3>
+        {logs.map((log, i) => (
+          <div 
+            key={i} 
+            className={`py-0.5 ${
+              log.type === 'error' ? 'text-red-400' : 
+              log.type === 'success' ? 'text-green-400' : 
+              'text-gray-300'
+            }`}
+          >
+            [{new Date(log.timestamp).toLocaleTimeString()}] {log.message}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Handle checking WebContainer support status
+  if (webContainerSupported === null) {
+    return (
+      <div className="h-full flex flex-col bg-gray-900 text-white">
+        <div className="border-b border-gray-700 p-2 flex justify-between items-center">
+          <span className="font-medium">WebContainer Preview</span>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+            <p className="mt-4">Checking WebContainer support...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle unsupported environments
+  if (webContainerSupported === false) {
+    return (
+      <div className="h-full flex flex-col bg-gray-900 text-white">
+        <div className="border-b border-gray-700 p-2 flex justify-between items-center">
+          <span className="font-medium">WebContainer Preview</span>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-red-400">
+          <div className="text-center">
+            <p className="text-xl font-bold">WebContainer API Not Supported</p>
+            <p className="mt-2">Your browser does not support the WebContainer API.</p>
+            <p className="mt-1">Please use Chrome or Edge with HTTPS or localhost.</p>
+            {error && <p className="mt-2 text-sm">{error}</p>}
+          </div>
+        </div>
+        {renderLogs()}
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col bg-gray-900 text-white">
+      {/* Header with controls */}
+      <div className="border-b border-gray-700 p-2 flex justify-between items-center">
+        <span className="font-medium">WebContainer Preview</span>
+        <div className="flex space-x-2">
+          {!initialized ? (
+            <button
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm flex items-center"
+              onClick={initWebContainer}
+              disabled={loading}
+              title="Start WebContainer"
+            >
+              <Power size={16} className="mr-1" /> Start
+            </button>
+          ) : (
+            <>
+              <button
+                className="p-1 text-gray-400 hover:text-white rounded-sm"
+                onClick={() => window.location.reload()}
+                title="Refresh"
+              >
+                <RefreshCcw size={16} />
+              </button>
+              <button
+                className="p-1 text-red-400 hover:text-red-500 rounded-sm"
+                onClick={() => {
+                  if (terminal) terminal.dispose();
+                  setInitialized(false);
+                  setWebcontainer(null);
+                  addLog('info', 'WebContainer shut down');
+                }}
+                title="Shutdown WebContainer"
+              >
+                <Power size={16} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+      
+      {/* Main content area */}
+      <div className="flex-1 overflow-hidden relative">
+        {!initialized ? (
+          // Not initialized yet - show start screen
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-xl font-bold">WebContainer Preview</p>
+              <p className="mt-2">Click the Start button to initialize the WebContainer.</p>
+              <p className="mt-1 text-sm text-gray-400">This will allow you to run and preview your web project.</p>
+              {loading && (
+                <div className="mt-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                  <p className="mt-2">Starting WebContainer...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : loading ? (
+          // Loading state
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+              <p className="mt-4">Initializing WebContainer...</p>
+            </div>
+          </div>
+        ) : error ? (
+          // Error state
+          <div className="h-full flex items-center justify-center text-red-400">
+            <div className="text-center">
+              <p className="text-xl font-bold">Error</p>
+              <p className="mt-2">{error}</p>
+              <button 
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={initWebContainer}
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        ) : (
+          // Show terminal when initialized
+          <div className="h-full flex flex-col">
+            <div 
+              ref={terminalRef} 
+              className="flex-1 p-1"
+            />
+          </div>
+        )}
+      </div>
+      
+      {/* Debug logs panel */}
+      {renderLogs()}
+    </div>
+  );
+};
+
+export default WebContainerPanel;
+/*import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { WebContainer } from '@webcontainer/api';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
@@ -615,7 +1017,7 @@ const WebContainerPanel: React.FC = () => {
   
   return (
     <div className={`h-full flex flex-col bg-terminal text-terminal-foreground ${maximized ? 'fixed inset-0 z-50' : ''}`}>
-      {/* Header with controls */}
+      {/* Header with controls 
       <div className="border-b border-border p-2 flex justify-between items-center">
         <span className="font-medium">WebContainer Preview</span>
         <div className="flex space-x-2">
@@ -670,7 +1072,7 @@ const WebContainerPanel: React.FC = () => {
         </div>
       </div>
       
-      {/* Content area */}
+      {/* Content area 
       <div className="flex-1 overflow-hidden">
         {!initialized ? (
           // Not initialized yet
@@ -731,7 +1133,7 @@ const WebContainerPanel: React.FC = () => {
             ) : (
               // Terminal Tabs & Container
               <div className="h-full flex flex-col">
-                {/* Terminal tabs */}
+                {/* Terminal tabs 
                 <div className="flex items-center justify-between bg-sidebar border-b border-border">
                   <div className="flex overflow-x-auto">
                     {terminals.map(term => (
@@ -766,7 +1168,7 @@ const WebContainerPanel: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Terminal containers */}
+                {/* Terminal containers 
                 <div className="flex-1 relative">
                   {terminals.length === 0 ? (
                     <div className="absolute inset-0 flex items-center justify-center text-slate-400">
@@ -801,3 +1203,4 @@ const WebContainerPanel: React.FC = () => {
 };
 
 export default WebContainerPanel;
+*/
