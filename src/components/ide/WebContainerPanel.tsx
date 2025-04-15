@@ -5,7 +5,7 @@ import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { X, RefreshCcw, Play, Maximize2, Minimize2, Layout, Plus } from 'lucide-react';
+import { X, RefreshCcw, Play, Maximize2, Minimize2, Layout, Plus, Power } from 'lucide-react';
 import 'xterm/css/xterm.css';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -16,122 +16,71 @@ interface TerminalState {
   containerRef: React.RefObject<HTMLDivElement>;
 }
 
+interface WebContainerFileSystem {
+  [path: string]: {
+    file?: {
+      contents: string;
+    };
+    directory?: Record<string, never>;
+  };
+}
+
 const WebContainerPanel: React.FC = () => {
   const [webcontainer, setWebcontainer] = useState<WebContainer | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState<boolean>(true);
   const [terminals, setTerminals] = useState<TerminalState[]>([]);
   const [activeTerminalId, setActiveTerminalId] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { files, logs, addLogMessage, getFileById } = useFileSystem();
   const { openedTabs, activeTabId } = useEditor();
   const { terminalTheme } = useTheme();
   
-  // Initialize WebContainer
-  useEffect(() => {
-    const initWebContainer = async () => {
-      try {
-        setLoading(true);
-        // Loading WebContainer
-        addLogMessage('info', 'Initializing WebContainer...');
-        const wc = await WebContainer.boot();
-        setWebcontainer(wc);
-        addLogMessage('success', 'WebContainer initialized successfully');
-        
-        // Set up file system in WebContainer
-        await setupFiles(wc);
-        
-        // Start a dev server
-        try {
-          const serverUrl = await startDevServer(wc);
-          setPreviewURL(serverUrl);
-          addLogMessage('success', `Preview server started at ${serverUrl}`);
-        } catch (err) {
-          addLogMessage('info', 'No package.json found, using static server');
-          // Start a simple static server if there's no package.json
-          const staticUrl = await startStaticServer(wc);
-          setPreviewURL(staticUrl);
+  // Convert our file system structure to WebContainer format - improved version
+  const convertFilesToWebContainerFormat = (fileItems: any[]): WebContainerFileSystem => {
+    const result: WebContainerFileSystem = {};
+    
+    // Process a single item and add it to the result
+    const processItem = (item: any) => {
+      // Skip the root folder itself
+      if (item.id === 'root') {
+        if (item.children) {
+          item.children.forEach(processItem);
         }
-        
-        // Create initial terminal
-        createTerminal(wc);
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Failed to initialize WebContainer:', err);
-        setError(`Failed to initialize WebContainer: ${err instanceof Error ? err.message : String(err)}`);
-        addLogMessage('error', `WebContainer initialization failed: ${err instanceof Error ? err.message : String(err)}`);
-        setLoading(false);
+        return;
       }
-    };
-    
-    initWebContainer();
-    
-    // Cleanup function
-    return () => {
-      terminals.forEach(term => {
-        term.terminal.dispose();
-      });
-    };
-  }, []);
-  
-  // Setup files in WebContainer based on IDE's file system
-  const setupFiles = async (wc: WebContainer) => {
-    if (!wc) return;
-    
-    addLogMessage('info', 'Setting up files in WebContainer...');
-    
-    // Convert our file system structure to the format expected by WebContainer
-    const fileSystemEntries = await convertFilesToWebContainerFormat(files);
-    
-    try {
-      // Mount all files to the WebContainer
-      await wc.mount(fileSystemEntries);
-      addLogMessage('success', 'Files mounted successfully');
-    } catch (err) {
-      console.error('Error mounting files:', err);
-      addLogMessage('error', `Error mounting files: ${err instanceof Error ? err.message : String(err)}`);
-      throw err;
-    }
-  };
-  
-  // Convert our file system structure to WebContainer format
-  const convertFilesToWebContainerFormat = async (fileItems: any[]) => {
-    const result: any = {};
-    
-    // Recursive function to convert file tree
-    const processItems = (items: any[], parentPath = '') => {
-      for (const item of items) {
-        const relativePath = item.path.startsWith('/') ? item.path.substring(1) : item.path;
+      
+      // Get the relative path by removing initial slash if present
+      let relativePath = item.path.startsWith('/') ? item.path.substring(1) : item.path;
+      
+      // Handle file or directory
+      if (item.type === 'file') {
+        result[relativePath] = {
+          file: {
+            contents: item.content || '',
+          },
+        };
+      } else if (item.type === 'folder') {
+        result[relativePath] = {
+          directory: {},
+        };
         
-        if (item.type === 'file') {
-          // For files, store the content
-          result[relativePath] = {
-            file: {
-              contents: item.content || '',
-            },
-          };
-        } else if (item.type === 'folder' && item.children) {
-          // For folders, create a directory entry
-          result[relativePath] = {
-            directory: {},
-          };
-          
-          // Process children
-          if (item.children && item.children.length > 0) {
-            processItems(item.children, relativePath);
-          }
+        // Process children
+        if (item.children && item.children.length > 0) {
+          item.children.forEach(processItem);
         }
       }
     };
     
-    processItems(fileItems);
+    // Start processing from the root
+    fileItems.forEach(processItem);
     
-    // Add default files if needed
-    if (!result['index.html']) {
+    // Add default index.html if not present
+    if (!Object.keys(result).some(path => path.endsWith('index.html'))) {
       result['index.html'] = {
         file: {
           contents: `<!DOCTYPE html>
@@ -151,6 +100,72 @@ const WebContainerPanel: React.FC = () => {
     }
     
     return result;
+  };
+  
+  // Initialize WebContainer - only when explicitly started
+  const initWebContainer = async () => {
+    if (initialized && webcontainer) {
+      addLogMessage('info', 'WebContainer is already running.');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Loading WebContainer
+      addLogMessage('info', 'Initializing WebContainer...');
+      
+      const wc = await WebContainer.boot();
+      setWebcontainer(wc);
+      addLogMessage('success', 'WebContainer initialized successfully');
+      
+      // Set up file system in WebContainer
+      await setupFiles(wc);
+      
+      // Start a dev server
+      try {
+        const serverUrl = await startDevServer(wc);
+        setPreviewURL(serverUrl);
+        addLogMessage('success', `Preview server started at ${serverUrl}`);
+      } catch (err) {
+        addLogMessage('info', 'No package.json found or error starting dev server, using static server');
+        // Start a simple static server if there's no package.json
+        const staticUrl = await startStaticServer(wc);
+        setPreviewURL(staticUrl);
+      }
+      
+      // Create initial terminal
+      createTerminal(wc);
+      
+      setInitialized(true);
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to initialize WebContainer:', err);
+      setError(`Failed to initialize WebContainer: ${err instanceof Error ? err.message : String(err)}`);
+      addLogMessage('error', `WebContainer initialization failed: ${err instanceof Error ? err.message : String(err)}`);
+      setLoading(false);
+    }
+  };
+  
+  // Setup files in WebContainer based on IDE's file system
+  const setupFiles = async (wc: WebContainer) => {
+    if (!wc) return;
+    
+    addLogMessage('info', 'Setting up files in WebContainer...');
+    
+    // Convert our file system structure to the format expected by WebContainer
+    const fileSystemEntries = convertFilesToWebContainerFormat(files);
+    
+    try {
+      // Mount all files to the WebContainer
+      await wc.mount(fileSystemEntries);
+      addLogMessage('success', 'Files mounted successfully');
+    } catch (err) {
+      console.error('Error mounting files:', err);
+      addLogMessage('error', `Error mounting files: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    }
   };
   
   // Start a development server if package.json exists
@@ -224,7 +239,7 @@ const WebContainerPanel: React.FC = () => {
       
       // Fallback to simple http-server if no suitable script found
       addLogMessage('info', 'No dev script found, using http-server');
-      const serverProcess = await wc.spawn('npx', ['http-server', '-p', '3000']);
+      await wc.spawn('npx', ['http-server', '-p', '3000']);
       return 'http://0.0.0.0:3000';
       
     } catch (err) {
@@ -243,7 +258,7 @@ const WebContainerPanel: React.FC = () => {
       await installProcess.exit;
       
       // Start http-server
-      const serverProcess = await wc.spawn('http-server', ['-p', '3000']);
+      await wc.spawn('http-server', ['-p', '3000']);
       
       addLogMessage('success', 'Static server started at http://0.0.0.0:3000');
       return 'http://0.0.0.0:3000';
@@ -350,9 +365,9 @@ const WebContainerPanel: React.FC = () => {
     return { id, terminal, fitAddon, containerRef: newTermRef };
   };
   
-  // Handle file changes for syncing with WebContainer
+  // Handle file changes for syncing with WebContainer - using a more efficient approach
   useEffect(() => {
-    if (!webcontainer) return;
+    if (!webcontainer || !initialized) return;
     
     // Sync the currently active file when it's saved
     const syncActiveFile = async () => {
@@ -371,15 +386,18 @@ const WebContainerPanel: React.FC = () => {
         const dirs = relativePath.split('/');
         dirs.pop(); // Remove filename
         
-        let currentPath = '';
-        for (const dir of dirs) {
-          if (!dir) continue;
-          
-          currentPath += dir + '/';
-          try {
-            await webcontainer.fs.mkdir(currentPath, { recursive: true });
-          } catch (err) {
-            // Directory might already exist, continue
+        if (dirs.length > 0 && dirs[0]) {
+          let currentPath = '';
+          for (const dir of dirs) {
+            if (!dir) continue;
+            
+            currentPath += currentPath ? `/${dir}` : dir;
+            try {
+              await webcontainer.fs.mkdir(currentPath, { recursive: true });
+            } catch (err) {
+              // Directory might already exist, continue
+              console.log(`Directory ${currentPath} might already exist, continuing`);
+            }
           }
         }
         
@@ -400,8 +418,13 @@ const WebContainerPanel: React.FC = () => {
       }
     };
     
-    syncActiveFile();
-  }, [openedTabs, activeTabId, webcontainer]);
+    // Debounce the file sync to prevent excessive operations
+    const timeoutId = setTimeout(() => {
+      syncActiveFile();
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [openedTabs, activeTabId, webcontainer, initialized]);
   
   // Refresh the preview iframe
   const refreshPreview = () => {
@@ -435,8 +458,7 @@ const WebContainerPanel: React.FC = () => {
       if (remainingTerminals.length > 0) {
         setActiveTerminalId(remainingTerminals[0].id);
       } else {
-        // Create a new terminal if we closed the last one
-        createTerminal();
+        setActiveTerminalId(null);
       }
     }
   };
@@ -481,11 +503,32 @@ const WebContainerPanel: React.FC = () => {
     }
   };
   
+  // Shutdown the container to free resources
+  const shutdownContainer = () => {
+    // Dispose all terminals
+    terminals.forEach(term => {
+      term.terminal.dispose();
+    });
+    setTerminals([]);
+    setActiveTerminalId(null);
+    
+    // Clear WebContainer reference
+    setWebcontainer(null);
+    setInitialized(false);
+    setPreviewURL(null);
+    
+    addLogMessage('info', 'WebContainer shutdown successfully');
+  };
+  
   // Resize terminals when window resizes
   useEffect(() => {
     const handleResize = () => {
       terminals.forEach(term => {
-        term.fitAddon.fit();
+        try {
+          term.fitAddon.fit();
+        } catch (err) {
+          // Terminal might be disposed already
+        }
       });
     };
     
@@ -493,8 +536,20 @@ const WebContainerPanel: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [terminals]);
   
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      terminals.forEach(term => {
+        term.terminal.dispose();
+      });
+    };
+  }, []);
+  
+  // Check if WebContainer API is available
+  const isWebContainerSupported = typeof window !== 'undefined' && 'WebContainer' in window;
+  
   // If WebContainer API is not supported
-  if (typeof window !== 'undefined' && window.WebContainer === undefined) {
+  if (!isWebContainerSupported) {
     return (
       <div className="h-full flex flex-col bg-terminal text-terminal-foreground">
         <div className="border-b border-border p-2 flex justify-between items-center">
@@ -512,45 +567,80 @@ const WebContainerPanel: React.FC = () => {
   }
   
   return (
-    <div className="h-full flex flex-col bg-terminal text-terminal-foreground">
+    <div className={`h-full flex flex-col bg-terminal text-terminal-foreground ${maximized ? 'fixed inset-0 z-50' : ''}`}>
       {/* Header with controls */}
       <div className="border-b border-border p-2 flex justify-between items-center">
         <span className="font-medium">WebContainer Preview</span>
         <div className="flex space-x-2">
-          <button
-            className="p-1 text-slate-400 hover:text-white rounded-sm"
-            onClick={toggleView}
-            title={showPreview ? "Show Terminal" : "Show Preview"}
-          >
-            <Layout size={16} />
-          </button>
-          <button
-            className="p-1 text-slate-400 hover:text-white rounded-sm"
-            onClick={refreshPreview}
-            title="Refresh Preview"
-          >
-            <RefreshCcw size={16} />
-          </button>
-          <button
-            className="p-1 text-slate-400 hover:text-white rounded-sm"
-            onClick={restartContainer}
-            title="Restart WebContainer"
-          >
-            <Play size={16} />
-          </button>
-          <button
-            className="p-1 text-slate-400 hover:text-white rounded-sm"
-            onClick={toggleMaximize}
-            title={maximized ? "Restore WebContainer" : "Maximize WebContainer"}
-          >
-            {maximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          </button>
+          {!initialized ? (
+            <button
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm flex items-center"
+              onClick={initWebContainer}
+              disabled={loading}
+              title="Start WebContainer"
+            >
+              <Power size={16} className="mr-1" /> Start
+            </button>
+          ) : (
+            <>
+              <button
+                className="p-1 text-slate-400 hover:text-white rounded-sm"
+                onClick={toggleView}
+                title={showPreview ? "Show Terminal" : "Show Preview"}
+              >
+                <Layout size={16} />
+              </button>
+              <button
+                className="p-1 text-slate-400 hover:text-white rounded-sm"
+                onClick={refreshPreview}
+                title="Refresh Preview"
+              >
+                <RefreshCcw size={16} />
+              </button>
+              <button
+                className="p-1 text-slate-400 hover:text-white rounded-sm"
+                onClick={restartContainer}
+                title="Restart WebContainer"
+              >
+                <Play size={16} />
+              </button>
+              <button
+                className="p-1 text-slate-400 hover:text-white rounded-sm"
+                onClick={toggleMaximize}
+                title={maximized ? "Restore WebContainer" : "Maximize WebContainer"}
+              >
+                {maximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
+              <button
+                className="p-1 text-red-400 hover:text-red-500 rounded-sm"
+                onClick={shutdownContainer}
+                title="Shutdown WebContainer"
+              >
+                <Power size={16} />
+              </button>
+            </>
+          )}
         </div>
       </div>
       
       {/* Content area */}
       <div className="flex-1 overflow-hidden">
-        {loading ? (
+        {!initialized ? (
+          // Not initialized yet
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-xl font-bold">WebContainer Preview</p>
+              <p className="mt-2">Click the Start button to initialize the WebContainer.</p>
+              <p className="mt-1 text-sm text-slate-400">This will allow you to run and preview your web project.</p>
+              {loading && (
+                <div className="mt-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                  <p className="mt-2">Starting WebContainer...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : loading ? (
           // Loading state
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
@@ -605,7 +695,7 @@ const WebContainerPanel: React.FC = () => {
                         }`}
                         onClick={() => setActiveTerminalId(term.id)}
                       >
-                        <span className="text-sm">Terminal {term.id.replace('term-', '')}</span>
+                        <span className="text-sm">Term {term.id.replace('term-', '').substring(0, 4)}</span>
                         <button 
                           className="ml-2 p-0.5 text-slate-400 hover:text-white rounded-sm"
                           onClick={(e) => {
@@ -631,14 +721,28 @@ const WebContainerPanel: React.FC = () => {
                 
                 {/* Terminal containers */}
                 <div className="flex-1 relative">
-                  {terminals.map(term => (
-                    <div
-                      key={term.id}
-                      ref={term.containerRef}
-                      className="absolute inset-0 p-2"
-                      style={{ display: term.id === activeTerminalId ? 'block' : 'none' }}
-                    />
-                  ))}
+                  {terminals.length === 0 ? (
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-400">
+                      <div className="text-center">
+                        <p>No active terminals</p>
+                        <button 
+                          className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm"
+                          onClick={() => createTerminal()}
+                        >
+                          Create Terminal
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    terminals.map(term => (
+                      <div
+                        key={term.id}
+                        ref={term.containerRef}
+                        className="absolute inset-0 p-2"
+                        style={{ display: term.id === activeTerminalId ? 'block' : 'none' }}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             )}
