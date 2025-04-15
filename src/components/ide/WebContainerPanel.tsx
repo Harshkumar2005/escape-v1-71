@@ -77,50 +77,71 @@ const WebContainerPanel = () => {
   // Convert IDE file system to WebContainer format
   const convertFilesToWebContainerFormat = useCallback((fileItems) => {
     addLog('info', 'Converting files to WebContainer format...');
+    
+    // This will hold our final WebContainer file structure
     const result = {};
     
+    // Find the root project folder name to remove from paths
+    let rootProjectName = '';
+    if (fileItems.length > 0 && fileItems[0].id === 'root' && fileItems[0].name) {
+      rootProjectName = fileItems[0].name;
+      addLog('info', `Detected root project name: ${rootProjectName}`);
+    }
+    
     // Process all file system items recursively
-    const processItem = (item) => {
-      // Skip root folder
-      if (item.id === 'root') {
-        if (item.children) {
-          item.children.forEach(processItem);
+    const processItems = (items) => {
+      for (const item of items) {
+        // Skip the root itself
+        if (item.id === 'root') {
+          if (item.children) {
+            processItems(item.children);
+          }
+          continue;
         }
-        return;
-      }
-      
-      // Fix path handling - ensure proper format without duplicate project names
-      let relativePath = item.path;
-      
-      // Remove initial slash if present
-      if (relativePath.startsWith('/')) {
-        relativePath = relativePath.substring(1);
-      }
-      
-      // Handle file or directory
-      if (item.type === 'file') {
-        result[relativePath] = {
-          file: {
-            contents: item.content || '',
-          },
-        };
-      } else if (item.type === 'folder') {
-        result[relativePath] = {
-          directory: {},
-        };
         
-        // Process children
-        if (item.children && item.children.length > 0) {
-          item.children.forEach(processItem);
+        // Extract the correct path without the project name prefix
+        let relativePath = item.path;
+        
+        // Remove leading slash if present
+        if (relativePath.startsWith('/')) {
+          relativePath = relativePath.substring(1);
+        }
+        
+        // Remove project name prefix if present
+        if (rootProjectName && relativePath.startsWith(rootProjectName + '/')) {
+          relativePath = relativePath.substring(rootProjectName.length + 1);
+        }
+        
+        // Handle files
+        if (item.type === 'file') {
+          result[relativePath] = {
+            file: {
+              contents: item.content || '',
+            },
+          };
+          addLog('info', `Added file: ${relativePath}`);
+        } 
+        // Handle directories
+        else if (item.type === 'folder') {
+          // Create the directory entry
+          result[relativePath] = {
+            directory: {},
+          };
+          addLog('info', `Added directory: ${relativePath}`);
+          
+          // Process children
+          if (item.children && item.children.length > 0) {
+            processItems(item.children);
+          }
         }
       }
     };
     
-    // Start processing from the root
-    fileItems.forEach(processItem);
+    // Start processing from all items
+    processItems(fileItems);
     
     // Add default index.html if not present
-    if (!Object.keys(result).some(path => path.endsWith('index.html'))) {
+    if (!Object.keys(result).some(path => path === 'index.html' || path.endsWith('/index.html'))) {
       result['index.html'] = {
         file: {
           contents: `<!DOCTYPE html>
@@ -137,9 +158,10 @@ const WebContainerPanel = () => {
 </html>`,
         },
       };
+      addLog('info', 'Added default index.html file');
     }
     
-    addLog('info', `Converted ${Object.keys(result).length} files`);
+    addLog('info', `Converted ${Object.keys(result).length} files/folders to WebContainer format`);
     return result;
   }, []);
 
@@ -217,6 +239,8 @@ const WebContainerPanel = () => {
     try {
       // Check if package.json exists
       const rootFiles = await wc.fs.readdir('/');
+      addLog('info', `Root files: ${rootFiles.join(', ')}`);
+      
       if (!rootFiles.includes('package.json')) {
         throw new Error('No package.json found');
       }
@@ -406,12 +430,29 @@ const WebContainerPanel = () => {
     
     addLog('info', 'Setting up file system sync...');
     
+    // Find the root project folder name to remove from paths
+    let rootProjectName = '';
+    if (files.length > 0 && files[0].id === 'root' && files[0].name) {
+      rootProjectName = files[0].name;
+    }
+    
     // Function to synchronize a file with WebContainer
     const syncFileToWebContainer = async (file) => {
       if (!file || file.type !== 'file') return;
       
       try {
-        const relativePath = file.path.startsWith('/') ? file.path.substring(1) : file.path;
+        // Extract the correct path without the project name prefix
+        let relativePath = file.path;
+        
+        // Remove leading slash if present
+        if (relativePath.startsWith('/')) {
+          relativePath = relativePath.substring(1);
+        }
+        
+        // Remove project name prefix if present
+        if (rootProjectName && relativePath.startsWith(rootProjectName + '/')) {
+          relativePath = relativePath.substring(rootProjectName.length + 1);
+        }
         
         // Create parent directories if they don't exist
         const dirs = relativePath.split('/');
