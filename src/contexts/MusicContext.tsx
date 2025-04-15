@@ -1,94 +1,94 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Search, Music, X, Minimize2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Search, Music, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 
-export interface Song {
+export interface Media {
   id: string;
-  song: string;
-  singers: string;
+  title: string;
+  artists: string;
   image: string;
   media_url: string;
   duration: string;
   album?: string;
+  type: 'audio' | 'video'; // Add media type
 }
 
-interface MusicContextType {
-  currentSong: Song | null;
+interface MediaContextType {
+  currentMedia: Media | null;
   isPlaying: boolean;
-  searchResults: Song[];
+  searchResults: Media[];
   searchQuery: string;
-  showMusicPanel: boolean;
-  isMinimized: boolean;
+  showMediaPanel: boolean;
+  isCompact: boolean;
   volume: number;
   currentTime: number;
   duration: number;
-  audioRef: React.RefObject<HTMLAudioElement>;
-  playSong: (song: Song) => void;
+  mediaRef: React.RefObject<HTMLVideoElement>;
+  playMedia: (media: Media) => void;
   togglePlay: () => void;
   setSearchQuery: (query: string) => void;
-  searchSongs: () => Promise<void>;
-  toggleMusicPanel: () => void;
-  toggleMinimize: () => void;
+  searchMedia: () => Promise<void>;
+  toggleMediaPanel: () => void;
+  toggleCompactMode: () => void;
   setVolume: (volume: number) => void;
   setCurrentTime: (time: number) => void;
   handleNext: () => void;
   handlePrevious: () => void;
 }
 
-const MusicContext = createContext<MusicContextType | undefined>(undefined);
+const MediaContext = createContext<MediaContextType | undefined>(undefined);
 
-export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentSong, setCurrentSong] = useState<Song | null>(null);
+export const MediaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentMedia, setCurrentMedia] = useState<Media | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [searchResults, setSearchResults] = useState<Song[]>([]);
+  const [searchResults, setSearchResults] = useState<Media[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showMusicPanel, setShowMusicPanel] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [showMediaPanel, setShowMediaPanel] = useState(false);
+  const [isCompact, setIsCompact] = useState(true);
   const [volume, setVolume] = useState(0.7);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const mediaRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    const media = mediaRef.current;
+    if (!media) return;
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleDurationChange = () => setDuration(audio.duration);
+    const handleTimeUpdate = () => setCurrentTime(media.currentTime);
+    const handleDurationChange = () => setDuration(media.duration);
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
-      // Optionally play next song
+      // Optionally play next media
       handleNext();
     };
 
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('durationchange', handleDurationChange);
-    audio.addEventListener('ended', handleEnded);
+    media.addEventListener('timeupdate', handleTimeUpdate);
+    media.addEventListener('durationchange', handleDurationChange);
+    media.addEventListener('ended', handleEnded);
 
     return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('durationchange', handleDurationChange);
-      audio.removeEventListener('ended', handleEnded);
+      media.removeEventListener('timeupdate', handleTimeUpdate);
+      media.removeEventListener('durationchange', handleDurationChange);
+      media.removeEventListener('ended', handleEnded);
     };
-  }, [currentSong]);
+  }, [currentMedia]);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
+    if (mediaRef.current) {
+      mediaRef.current.volume = volume;
     }
   }, [volume]);
 
-  const playSong = (song: Song) => {
-    setCurrentSong(song);
+  const playMedia = (media: Media) => {
+    setCurrentMedia(media);
     setIsPlaying(true);
     setTimeout(() => {
-      if (audioRef.current) {
-        // Handle both MP3 and MP4 audio files
-        audioRef.current.play().catch(err => {
-          console.error('Error playing audio:', err);
+      if (mediaRef.current) {
+        mediaRef.current.play().catch(err => {
+          console.error('Error playing media:', err);
           setIsPlaying(false);
         });
       }
@@ -96,20 +96,20 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const togglePlay = () => {
-    if (!currentSong) return;
+    if (!currentMedia) return;
     
     if (isPlaying) {
-      audioRef.current?.pause();
+      mediaRef.current?.pause();
     } else {
-      audioRef.current?.play().catch(err => {
-        console.error('Error playing audio:', err);
+      mediaRef.current?.play().catch(err => {
+        console.error('Error playing media:', err);
       });
     }
     
     setIsPlaying(!isPlaying);
   };
 
-  const searchSongs = async () => {
+  const searchMedia = async () => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
       return;
@@ -122,72 +122,72 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (Array.isArray(data)) {
         setSearchResults(data.map((item: any) => ({
           id: item.id,
-          song: item.song,
-          singers: item.singers,
+          title: item.song,
+          artists: item.singers,
           image: item.image,
           media_url: item.media_url,
           duration: item.duration,
-          album: item.album
+          album: item.album,
+          // Determine if it's a video based on the file extension or mime type
+          type: item.media_url?.toLowerCase().endsWith('.mp4') ? 'video' : 'audio'
         })));
-        setShowMusicPanel(true);
-        setIsMinimized(false);
+        setShowMediaPanel(true);
       } else {
         setSearchResults([]);
       }
     } catch (error) {
-      console.error('Error searching songs:', error);
+      console.error('Error searching media:', error);
       setSearchResults([]);
     }
   };
 
-  const toggleMusicPanel = () => {
-    setShowMusicPanel(prev => !prev);
-    if (isMinimized) setIsMinimized(false);
+  const toggleMediaPanel = () => {
+    setShowMediaPanel(prev => !prev);
   };
 
-  const toggleMinimize = () => {
-    setIsMinimized(prev => !prev);
+  const toggleCompactMode = () => {
+    setIsCompact(prev => !prev);
   };
 
   const handleNext = () => {
-    if (!currentSong || searchResults.length === 0) return;
+    if (!currentMedia || searchResults.length === 0) return;
     
-    const currentIndex = searchResults.findIndex(song => song.id === currentSong.id);
+    const currentIndex = searchResults.findIndex(media => media.id === currentMedia.id);
     if (currentIndex === -1 || currentIndex === searchResults.length - 1) return;
     
-    const nextSong = searchResults[currentIndex + 1];
-    playSong(nextSong);
+    const nextMedia = searchResults[currentIndex + 1];
+    playMedia(nextMedia);
   };
 
   const handlePrevious = () => {
-    if (!currentSong || searchResults.length === 0) return;
+    if (!currentMedia || searchResults.length === 0) return;
     
-    const currentIndex = searchResults.findIndex(song => song.id === currentSong.id);
+    const currentIndex = searchResults.findIndex(media => media.id === currentMedia.id);
     if (currentIndex === -1 || currentIndex === 0) return;
     
-    const prevSong = searchResults[currentIndex - 1];
-    playSong(prevSong);
+    const prevMedia = searchResults[currentIndex - 1];
+    playMedia(prevMedia);
   };
 
   return (
-    <MusicContext.Provider
+    <MediaContext.Provider
       value={{
-        currentSong,
+        currentMedia,
         isPlaying,
         searchResults,
         searchQuery,
-        showMusicPanel,
-        isMinimized,
+        showMediaPanel,
+        isCompact,
         volume,
         currentTime,
         duration,
-        audioRef,
-        playSong,
+        mediaRef,
+        playMedia,
         togglePlay,
         setSearchQuery,
-        searchSongs,
-        toggleMusicPanel,
-        toggleMinimize,
+        searchMedia,
+        toggleMediaPanel,
+        toggleCompactMode,
         setVolume,
         setCurrentTime,
         handleNext,
@@ -195,42 +195,121 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }}
     >
       {children}
-      {/* Audio element supporting both mp3 and mp4 formats */}
-      <audio ref={audioRef} />
-    </MusicContext.Provider>
+      <video ref={mediaRef} hidden />
+    </MediaContext.Provider>
   );
 };
 
-export const useMusic = () => {
-  const context = useContext(MusicContext);
+export const useMedia = () => {
+  const context = useContext(MediaContext);
   if (context === undefined) {
-    throw new Error('useMusic must be used within a MusicProvider');
+    throw new Error('useMedia must be used within a MediaProvider');
   }
   return context;
 };
 
-// MusicPlayerPanel component with improved design for code editor
-export const MusicPlayerPanel: React.FC = () => {
+// Visualizer component
+const AudioVisualizer: React.FC = () => {
+  const { isPlaying, mediaRef } = useMedia();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [analyzer, setAnalyzer] = useState<AnalyserNode | null>(null);
+  const animationRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!isPlaying || !mediaRef.current) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      return;
+    }
+
+    if (!audioContext) {
+      const newAudioContext = new AudioContext();
+      const newAnalyzer = newAudioContext.createAnalyser();
+      newAnalyzer.fftSize = 128;
+      
+      const source = newAudioContext.createMediaElementSource(mediaRef.current);
+      source.connect(newAnalyzer);
+      newAnalyzer.connect(newAudioContext.destination);
+      
+      setAudioContext(newAudioContext);
+      setAnalyzer(newAnalyzer);
+    }
+
+    if (analyzer && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const bufferLength = analyzer.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      const draw = () => {
+        if (!ctx || !analyzer) return;
+        
+        analyzer.getByteFrequencyData(dataArray);
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const barWidth = canvas.width / bufferLength;
+        let x = 0;
+        
+        for (let i = 0; i < bufferLength; i++) {
+          const barHeight = (dataArray[i] / 255) * canvas.height;
+          
+          // Color gradient from blue to purple
+          const hue = 240 - (i / bufferLength) * 60;
+          ctx.fillStyle = `hsl(${hue}, 80%, 60%)`;
+          
+          ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
+          x += barWidth;
+        }
+        
+        animationRef.current = requestAnimationFrame(draw);
+      };
+      
+      draw();
+    }
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    };
+  }, [isPlaying, mediaRef, audioContext, analyzer]);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      className="w-full h-16 rounded bg-black/20 backdrop-blur-md"
+    />
+  );
+};
+
+// MediaPlayerPanel component
+export const MediaPlayerPanel: React.FC = () => {
   const {
-    currentSong,
+    currentMedia,
     isPlaying,
     searchResults,
     searchQuery,
-    isMinimized,
     volume,
     currentTime,
     duration,
+    isCompact,
     setSearchQuery,
-    searchSongs,
-    playSong,
+    searchMedia,
+    playMedia,
     togglePlay,
-    toggleMusicPanel,
-    toggleMinimize,
+    toggleCompactMode,
     setVolume,
     setCurrentTime,
     handleNext,
     handlePrevious
-  } = useMusic();
+  } = useMedia();
   
   const [isMuted, setIsMuted] = useState(false);
   const [prevVolume, setPrevVolume] = useState(0.7);
@@ -270,181 +349,149 @@ export const MusicPlayerPanel: React.FC = () => {
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    searchSongs();
+    searchMedia();
   };
 
-  if (isMinimized && currentSong) {
-    return (
-      <div className="fixed bottom-0 right-0 w-64 bg-zinc-900 border-l border-t border-zinc-700 shadow-lg rounded-tl-md overflow-hidden z-50">
-        <div className="p-3 flex justify-between items-center border-b border-zinc-800">
-          <div className="flex items-center gap-2">
-            <button 
-              className="h-6 w-6 flex items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-700 transition-colors"
-              onClick={togglePlay}
-            >
-              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
-            </button>
-            <span className="text-xs font-medium text-zinc-300 truncate max-w-32" title={currentSong.song}>
-              {truncateText(currentSong.song, 30)}
-            </span>
-          </div>
-          <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleMinimize}>
-              <ChevronUp size={14} className="text-zinc-400" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleMusicPanel}>
-              <X size={14} className="text-zinc-400" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="fixed bottom-0 right-0 w-80 md:w-96 bg-zinc-900 border-l border-t border-zinc-700 shadow-lg rounded-tl-md overflow-hidden z-50 flex flex-col h-96 max-h-[80vh]">
-      <div className="flex justify-between items-center p-3 border-b border-zinc-800 bg-zinc-950">
-        <div className="flex items-center gap-2">
-          <Music size={16} className="text-indigo-400" />
-          <span className="text-sm font-semibold text-zinc-300">Code Player</span>
-        </div>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-zinc-800" onClick={toggleMinimize}>
-            <Minimize2 size={14} className="text-zinc-400" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-zinc-800" onClick={toggleMusicPanel}>
-            <X size={14} className="text-zinc-400" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="p-3 border-b border-zinc-800 bg-zinc-950/70">
-        <form onSubmit={handleSearch} className="flex gap-2">
+    <div className={`flex flex-col h-full bg-gray-900 text-gray-100 border border-gray-800 rounded-md overflow-hidden shadow-xl transition-all duration-300 ${isCompact ? 'max-h-96' : ''}`}>
+      <div className="px-4 py-3 border-b border-gray-800 bg-gray-950 flex items-center justify-between">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1">
           <Input
             type="text"
-            placeholder="Search for songs..."
+            placeholder="Search for media..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-zinc-800 border-zinc-700 text-zinc-200 text-sm h-8 placeholder:text-zinc-500"
+            className="flex-1 bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-500"
           />
-          <Button type="submit" size="sm" variant="secondary" className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white border-none">
-            <Search size={14} className="mr-1" />
-            <span className="text-xs">Search</span>
+          <Button type="submit" size="sm" variant="secondary" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Search size={16} className="mr-2" />
+            Search
           </Button>
         </form>
+        <Button variant="ghost" size="icon" onClick={toggleCompactMode} className="ml-2 text-gray-400 hover:text-gray-200">
+          {isCompact ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
+        </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto bg-zinc-900/90 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
-        {searchResults.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 p-3">
-            {searchResults.map((song) => (
-              <div
-                key={song.id}
-                className={`flex flex-col rounded-md overflow-hidden border transition-all hover:border-indigo-500/50 cursor-pointer ${
-                  currentSong?.id === song.id ? 'border-indigo-500 bg-indigo-500/10' : 'border-zinc-800 bg-zinc-800/50'
-                }`}
-                onClick={() => playSong(song)}
-              >
-                <div className="relative aspect-square bg-zinc-950">
-                  <img
-                    src={song.image}
-                    alt={song.song}
-                    className="w-full h-full object-cover opacity-90"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop';
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/70 opacity-0 hover:opacity-100 transition-opacity">
-                    <button className="p-3 bg-indigo-600/90 rounded-full">
-                      {currentSong?.id === song.id && isPlaying ? (
-                        <Pause size={18} className="text-white" />
-                      ) : (
-                        <Play size={18} className="text-white" />
+      {!isCompact && (
+        <div className="flex-1 overflow-y-auto bg-gray-900">
+          {searchResults.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-3 lg:grid-cols-4">
+              {searchResults.map((media) => (
+                <div
+                  key={media.id}
+                  className={`flex flex-col rounded-md overflow-hidden border border-gray-800 transition-all hover:shadow-lg cursor-pointer bg-gray-800 hover:bg-gray-750 ${
+                    currentMedia?.id === media.id ? 'ring-2 ring-indigo-500' : ''
+                  }`}
+                  onClick={() => playMedia(media)}
+                >
+                  <div className="relative aspect-square bg-black/50">
+                    <img
+                      src={media.image}
+                      alt={media.title}
+                      className="w-full h-full object-cover opacity-90"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1472396961693-142e6e269027';
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 hover:opacity-100 transition-opacity">
+                      <div className="p-3 bg-indigo-600/80 rounded-full">
+                        {currentMedia?.id === media.id && isPlaying ? (
+                          <Pause size={20} />
+                        ) : (
+                          <Play size={20} />
+                        )}
+                      </div>
+                      {media.type === 'video' && (
+                        <span className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">MP4</span>
                       )}
-                    </button>
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-medium text-sm line-clamp-1 text-gray-200" title={media.title}>
+                      {media.title}
+                    </h3>
+                    <p className="text-xs text-gray-400 line-clamp-1" title={media.artists}>
+                      {truncateText(media.artists, 30)}
+                    </p>
                   </div>
                 </div>
-                <div className="p-2">
-                  <h3 className="font-medium text-xs line-clamp-1 text-zinc-200" title={song.song}>
-                    {song.song}
-                  </h3>
-                  <p className="text-xs text-zinc-400 line-clamp-1" title={song.singers}>
-                    {truncateText(song.singers, 30)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : searchQuery && !searchResults.length ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-zinc-500">No results found for "{searchQuery}"</p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <Music size={40} className="text-indigo-400/50 mb-3" />
-            <h3 className="text-lg font-medium mb-1 text-zinc-300">Code & Music</h3>
-            <p className="text-zinc-500 text-sm max-w-64">
-              Search for your favorite tracks to enhance your coding experience
-            </p>
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          ) : searchQuery && !searchResults.length ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-400">No results found for "{searchQuery}"</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center p-4">
+              <h3 className="text-xl font-medium mb-2 text-gray-200">Code & Vibe</h3>
+              <p className="text-gray-400 mb-4">
+                Search for your favorite music/videos and code with the perfect soundtrack!
+              </p>
+              <Music size={48} className="text-indigo-500/50" />
+            </div>
+          )}
+        </div>
+      )}
 
-      {currentSong && (
-        <div className="p-3 border-t border-zinc-800 bg-zinc-950">
-          <div className="flex items-center gap-3">
+      {currentMedia && (
+        <div className="p-4 border-t border-gray-800 bg-gray-950">
+          <AudioVisualizer />
+          
+          <div className="flex items-center gap-4 mt-4">
             <img
-              src={currentSong.image}
-              alt={currentSong.song}
-              className="w-12 h-12 rounded object-cover border border-zinc-800"
+              src={currentMedia.image}
+              alt={currentMedia.title}
+              className="w-16 h-16 rounded-md object-cover border border-gray-800 shadow-lg"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&h=500&fit=crop';
+                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1472396961693-142e6e269027';
               }}
             />
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-sm truncate text-zinc-200" title={currentSong.song}>
-                {currentSong.song}
-              </h3>
-              <p className="text-xs text-zinc-500 truncate" title={currentSong.singers}>
-                {truncateText(currentSong.singers, 40)}
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium truncate text-gray-100" title={currentMedia.title}>
+                  {currentMedia.title}
+                </h3>
+                {currentMedia.type === 'video' && (
+                  <span className="bg-red-600/80 text-white text-xs px-2 py-0.5 rounded ml-2">MP4</span>
+                )}
+              </div>
+              <p className="text-sm text-gray-400 truncate" title={currentMedia.artists}>
+                {truncateText(currentMedia.artists, 40)}
               </p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] text-zinc-500 font-mono">
+                <span className="text-xs text-gray-500">
                   {formatTime(currentTime)}
                 </span>
                 <Slider
                   value={[currentTime]}
                   max={duration || 100}
                   step={1}
-                  className="flex-1 h-1"
+                  className="flex-1"
                   onValueChange={([value]) => setCurrentTime(value)}
                 />
-                <span className="text-[10px] text-zinc-500 font-mono">
+                <span className="text-xs text-gray-500">
                   {formatTime(duration)}
                 </span>
               </div>
             </div>
           </div>
           
-          <div className="flex justify-between items-center mt-3">
-            <div className="flex items-center gap-1">
+          <div className="flex justify-between items-center mt-4">
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
                 onClick={handleVolumeToggle}
+                className="text-gray-400 hover:text-gray-200"
               >
-                {isMuted || volume === 0 ? (
-                  <VolumeX size={16} />
-                ) : (
-                  <Volume2 size={16} />
-                )}
+                {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </Button>
               <Slider
                 value={[volume * 100]}
                 max={100}
                 step={1}
-                className="w-16 h-1"
+                className="w-24"
                 onValueChange={([value]) => {
                   setVolume(value / 100);
                   if (value > 0 && isMuted) setIsMuted(false);
@@ -452,34 +499,33 @@ export const MusicPlayerPanel: React.FC = () => {
               />
             </div>
             
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
                 onClick={handlePrevious}
+                className="text-gray-400 hover:text-gray-200"
               >
-                <SkipBack size={16} />
+                <SkipBack size={20} />
               </Button>
               <Button 
                 variant="default" 
                 size="icon"
-                className="h-9 w-9 rounded-full bg-indigo-600 hover:bg-indigo-700 border-none"
+                className="h-10 w-10 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
                 onClick={togglePlay}
               >
-                {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+                {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
               </Button>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
                 onClick={handleNext}
+                className="text-gray-400 hover:text-gray-200"
               >
-                <SkipForward size={16} />
+                <SkipForward size={20} />
               </Button>
             </div>
-            
-            <div className="w-16"></div> {/* Spacer to balance the layout */}
+            <div className="w-[100px]"></div> {/* Spacer to balance the layout */}
           </div>
         </div>
       )}
@@ -487,58 +533,46 @@ export const MusicPlayerPanel: React.FC = () => {
   );
 };
 
-// MusicStatusBar component for the code editor status bar
-export const MusicStatusBar: React.FC = () => {
-  const { currentSong, isPlaying, togglePlay, toggleMusicPanel } = useMusic();
+// MediaStatusBar component
+export const MediaStatusBar: React.FC = () => {
+  const { currentMedia, isPlaying, togglePlay, toggleMediaPanel } = useMedia();
 
-  if (!currentSong) return null;
+  if (!currentMedia) return null;
 
   return (
-    <div className="flex items-center gap-2 cursor-pointer px-2 py-1 hover:bg-zinc-800/50 rounded-sm text-zinc-300" onClick={toggleMusicPanel}>
+    <div className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-full bg-gray-800/80 backdrop-blur-sm hover:bg-gray-750 transition-colors" onClick={toggleMediaPanel}>
       <button 
-        className="flex items-center justify-center h-4 w-4 rounded-full bg-indigo-600"
+        className="flex items-center justify-center h-6 w-6 rounded-full bg-indigo-600/90 text-white"
         onClick={(e) => {
           e.stopPropagation();
           togglePlay();
         }}
       >
-        {isPlaying ? <Pause size={10} className="text-white" /> : <Play size={10} className="text-white ml-0.5" />}
+        {isPlaying ? <Pause size={12} /> : <Play size={12} className="ml-0.5" />}
       </button>
       
-      <div className="flex items-center max-w-32">
-        <span className="font-medium text-xs truncate">{currentSong.song}</span>
+      <div className="flex items-center max-w-[200px]">
+        <span className="font-medium text-xs truncate text-gray-200">{currentMedia.title}</span>
       </div>
       
       {isPlaying && (
-        <div className="flex items-center h-3 gap-[2px]">
-          {[1, 2, 3].map((bar) => (
+        <div className="flex items-center h-4 gap-[2px]">
+          {[1, 2, 3, 4].map((bar) => (
             <div 
               key={bar}
-              className="w-[2px] bg-indigo-400 rounded-full animate-pulse"
+              className="w-[2px] bg-indigo-500 rounded-full animate-pulse"
               style={{
-                height: `${5 + Math.random() * 5}px`,
+                height: `${6 + Math.random() * 6}px`,
                 animationDelay: `${bar * 0.1}s`
               }}
             ></div>
           ))}
         </div>
       )}
+      
+      {currentMedia.type === 'video' && (
+        <span className="bg-red-600/80 text-white text-xs px-1.5 py-0.5 rounded-full text-[9px]">MP4</span>
+      )}
     </div>
-  );
-};
-
-// Add a floating button to open the music player when it's closed
-export const MusicFloatingButton: React.FC = () => {
-  const { showMusicPanel, toggleMusicPanel } = useMusic();
-  
-  if (showMusicPanel) return null;
-  
-  return (
-    <button 
-      className="fixed bottom-4 right-4 h-10 w-10 rounded-full bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center shadow-lg z-50 transition-all hover:scale-105"
-      onClick={toggleMusicPanel}
-    >
-      <Music size={18} className="text-white" />
-    </button>
   );
 };
