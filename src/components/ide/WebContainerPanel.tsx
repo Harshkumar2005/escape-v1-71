@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { WebContainer } from '@webcontainer/api';
+import { useFileSystem } from '@/contexts/FileSystemContext';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { Power, RefreshCcw } from 'lucide-react';
+import { Power, RefreshCcw, Play, Maximize2, Minimize2 } from 'lucide-react';
 import 'xterm/css/xterm.css';
 
 const WebContainerPanel = () => {
@@ -12,11 +13,22 @@ const WebContainerPanel = () => {
   const [error, setError] = useState(null);
   const [initialized, setInitialized] = useState(false);
   const [webContainerSupported, setWebContainerSupported] = useState(null);
+  const [previewURL, setPreviewURL] = useState(null);
   
   // Terminal state
   const [terminal, setTerminal] = useState(null);
   const terminalRef = useRef(null);
   const fitAddonRef = useRef(null);
+  
+  // UI state
+  const [maximized, setMaximized] = useState(false);
+  
+  // File system context
+  const { files, addLogMessage, getFileById } = useFileSystem();
+  
+  // Refs for debouncing
+  const fileChangeDebounceRef = useRef(null);
+  const lastSyncedFileId = useRef(null);
   
   // Logs for debugging
   const [logs, setLogs] = useState([]);
@@ -25,6 +37,11 @@ const WebContainerPanel = () => {
   const addLog = (type, message) => {
     console.log(`[${type}]`, message);
     setLogs(prev => [...prev, { type, message, timestamp: new Date().toISOString() }]);
+    
+    // Also add to the FileSystem context logs if available
+    if (addLogMessage) {
+      addLogMessage(type, message);
+    }
   };
 
   // Check if WebContainer is supported
@@ -57,425 +74,13 @@ const WebContainerPanel = () => {
     checkSupport();
   }, []);
 
-  // Initialize WebContainer
-  const initWebContainer = async () => {
-    if (initialized) {
-      addLog('info', 'WebContainer already initialized');
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    addLog('info', 'Starting WebContainer initialization...');
-    
-    try {
-      // Boot WebContainer
-      const { WebContainer } = await import('@webcontainer/api');
-      addLog('info', 'WebContainer module imported successfully');
-      
-      const wc = await WebContainer.boot();
-      setWebcontainer(wc);
-      addLog('success', 'WebContainer booted successfully');
-      
-      // Setup minimal file system
-      await setupBaseFileSystem(wc);
-      
-      // Create terminal
-      createTerminal(wc);
-      
-      setInitialized(true);
-      setLoading(false);
-      addLog('success', 'WebContainer fully initialized');
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(`Failed to initialize WebContainer: ${errorMsg}`);
-      addLog('error', `WebContainer initialization failed: ${errorMsg}`);
-      setLoading(false);
-    }
-  };
-
-  // Setup a minimal file system
-  const setupBaseFileSystem = async (wc) => {
-    addLog('info', 'Setting up basic file system...');
-    
-    try {
-      // Create a minimal file structure
-      const files = {
-        'index.html': {
-          file: {
-            contents: `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>WebContainer Demo</title>
-</head>
-<body>
-  <h1>WebContainer is running!</h1>
-  <p>This is a simple demo page.</p>
-</body>
-</html>`
-          }
-        }
-      };
-      
-      // Mount files to WebContainer
-      await wc.mount(files);
-      addLog('success', 'Files mounted successfully');
-    } catch (err) {
-      addLog('error', `Error mounting files: ${err.message}`);
-      throw err;
-    }
-  };
-
-  // Create and set up a terminal
-  const createTerminal = (wc) => {
-    addLog('info', 'Creating terminal...');
-    
-    try {
-      // Create a new terminal
-      const term = new XTerm({
-        cursorBlink: true,
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 14,
-        theme: {
-          background: '#1e1e1e',
-          foreground: '#ffffff',
-          cursor: '#ffffff',
-          selection: 'rgba(255, 255, 255, 0.3)',
-        }
-      });
-      
-      // Add the fit addon for terminal resizing
-      const fitAddon = new FitAddon();
-      term.loadAddon(fitAddon);
-      fitAddonRef.current = fitAddon;
-      
-      // Store the terminal instance
-      setTerminal(term);
-      
-      // Open terminal after a short delay to ensure DOM is ready
-      setTimeout(() => {
-        if (terminalRef.current) {
-          term.open(terminalRef.current);
-          fitAddon.fit();
-          
-          // Connect terminal to shell process
-          connectTerminalToShell(wc, term);
-          
-          addLog('success', 'Terminal created and opened successfully');
-        } else {
-          addLog('error', 'Terminal DOM element not found');
-        }
-      }, 100);
-    } catch (err) {
-      addLog('error', `Failed to create terminal: ${err.message}`);
-    }
-  };
-
-  // Connect terminal to a shell process
-  const connectTerminalToShell = async (wc, term) => {
-    try {
-      addLog('info', 'Starting shell process...');
-      
-      // Try to spawn a bash shell first
-      const shellProcess = await wc.spawn('bash')
-        .catch(() => {
-          addLog('info', 'Bash not available, falling back to sh');
-          return wc.spawn('sh');
-        });
-      
-      addLog('success', 'Shell process started');
-      
-      // Handle input from terminal to shell
-      const input = shellProcess.input.getWriter();
-      term.onData((data) => {
-        input.write(data);
-      });
-      
-      // Handle output from shell to terminal
-      shellProcess.output.pipeTo(
-        new WritableStream({
-          write(data) {
-            term.write(data);
-          }
-        })
-      );
-      
-      // Handle terminal dispose
-      term.onDispose(() => {
-        input.close();
-        addLog('info', 'Terminal disposed');
-      });
-      
-      // Write welcome message
-      term.writeln('\r\n\x1b[1;32mWebContainer Shell Ready!\x1b[0m');
-      term.writeln('Type commands to interact with the file system.');
-      term.writeln('For example: ls, cat index.html, etc.\r\n');
-      
-    } catch (err) {
-      term.writeln('\r\n\x1b[1;31mFailed to start shell process.\x1b[0m');
-      term.writeln(`Error: ${err.message}`);
-      addLog('error', `Shell connection error: ${err.message}`);
-    }
-  };
-
-  // Handle window resize to fit terminal
-  useEffect(() => {
-    const handleResize = () => {
-      if (fitAddonRef.current) {
-        try {
-          fitAddonRef.current.fit();
-        } catch (err) {
-          // Terminal might be disposed
-        }
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (terminal) {
-        terminal.dispose();
-      }
-    };
-  }, [terminal]);
-
-  // Render the debugging logs panel
-  const renderLogs = () => (
-    <div className="bg-black bg-opacity-90 border-t border-gray-700 text-xs h-28 overflow-y-auto">
-      <div className="p-2">
-        <h3 className="text-white font-bold">Debug Logs:</h3>
-        {logs.map((log, i) => (
-          <div 
-            key={i} 
-            className={`py-0.5 ${
-              log.type === 'error' ? 'text-red-400' : 
-              log.type === 'success' ? 'text-green-400' : 
-              'text-gray-300'
-            }`}
-          >
-            [{new Date(log.timestamp).toLocaleTimeString()}] {log.message}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Handle checking WebContainer support status
-  if (webContainerSupported === null) {
-    return (
-      <div className="h-full flex flex-col bg-gray-900 text-white">
-        <div className="border-b border-gray-700 p-2 flex justify-between items-center">
-          <span className="font-medium">WebContainer Preview</span>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
-            <p className="mt-4">Checking WebContainer support...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Handle unsupported environments
-  if (webContainerSupported === false) {
-    return (
-      <div className="h-full flex flex-col bg-gray-900 text-white">
-        <div className="border-b border-gray-700 p-2 flex justify-between items-center">
-          <span className="font-medium">WebContainer Preview</span>
-        </div>
-        <div className="flex-1 flex items-center justify-center text-red-400">
-          <div className="text-center">
-            <p className="text-xl font-bold">WebContainer API Not Supported</p>
-            <p className="mt-2">Your browser does not support the WebContainer API.</p>
-            <p className="mt-1">Please use Chrome or Edge with HTTPS or localhost.</p>
-            {error && <p className="mt-2 text-sm">{error}</p>}
-          </div>
-        </div>
-        {renderLogs()}
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-full flex flex-col bg-gray-900 text-white">
-      {/* Header with controls */}
-      <div className="border-b border-gray-700 p-2 flex justify-between items-center">
-        <span className="font-medium">WebContainer Preview</span>
-        <div className="flex space-x-2">
-          {!initialized ? (
-            <button
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm flex items-center"
-              onClick={initWebContainer}
-              disabled={loading}
-              title="Start WebContainer"
-            >
-              <Power size={16} className="mr-1" /> Start
-            </button>
-          ) : (
-            <>
-              <button
-                className="p-1 text-gray-400 hover:text-white rounded-sm"
-                onClick={() => window.location.reload()}
-                title="Refresh"
-              >
-                <RefreshCcw size={16} />
-              </button>
-              <button
-                className="p-1 text-red-400 hover:text-red-500 rounded-sm"
-                onClick={() => {
-                  if (terminal) terminal.dispose();
-                  setInitialized(false);
-                  setWebcontainer(null);
-                  addLog('info', 'WebContainer shut down');
-                }}
-                title="Shutdown WebContainer"
-              >
-                <Power size={16} />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-      
-      {/* Main content area */}
-      <div className="flex-1 overflow-hidden relative">
-        {!initialized ? (
-          // Not initialized yet - show start screen
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-xl font-bold">WebContainer Preview</p>
-              <p className="mt-2">Click the Start button to initialize the WebContainer.</p>
-              <p className="mt-1 text-sm text-gray-400">This will allow you to run and preview your web project.</p>
-              {loading && (
-                <div className="mt-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
-                  <p className="mt-2">Starting WebContainer...</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : loading ? (
-          // Loading state
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
-              <p className="mt-4">Initializing WebContainer...</p>
-            </div>
-          </div>
-        ) : error ? (
-          // Error state
-          <div className="h-full flex items-center justify-center text-red-400">
-            <div className="text-center">
-              <p className="text-xl font-bold">Error</p>
-              <p className="mt-2">{error}</p>
-              <button 
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                onClick={initWebContainer}
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        ) : (
-          // Show terminal when initialized
-          <div className="h-full flex flex-col">
-            <div 
-              ref={terminalRef} 
-              className="flex-1 p-1"
-            />
-          </div>
-        )}
-      </div>
-      
-      {/* Debug logs panel */}
-      {renderLogs()}
-    </div>
-  );
-};
-
-export default WebContainerPanel;
-/*import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { WebContainer } from '@webcontainer/api';
-import { useFileSystem } from '@/contexts/FileSystemContext';
-import { useEditor } from '@/contexts/EditorContext';
-import { Terminal as XTerm } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import { X, RefreshCcw, Play, Maximize2, Minimize2, Layout, Plus, Power } from 'lucide-react';
-import 'xterm/css/xterm.css';
-import { useTheme } from '@/contexts/ThemeContext';
-
-interface TerminalState {
-  id: string;
-  terminal: XTerm;
-  fitAddon: FitAddon;
-  containerRef: React.RefObject<HTMLDivElement>;
-}
-
-interface WebContainerFileSystem {
-  [path: string]: {
-    file?: { contents: string };
-    directory?: Record<string, never>;
-  };
-}
-
-const WebContainerPanel: React.FC = () => {
-  // State management
-  const [webcontainer, setWebcontainer] = useState<WebContainer | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [previewURL, setPreviewURL] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState<boolean>(true);
-  const [terminals, setTerminals] = useState<TerminalState[]>([]);
-  const [activeTerminalId, setActiveTerminalId] = useState<string | null>(null);
-  const [maximized, setMaximized] = useState(false);
-  const [initialized, setInitialized] = useState(false);
-  const [webContainerSupported, setWebContainerSupported] = useState<boolean | null>(null);
-  
-  // Refs
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const fileChangeDebounceRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSyncedFileId = useRef<string | null>(null);
-  
-  // Contexts
-  const { files, logs, addLogMessage, getFileById } = useFileSystem();
-  const { openedTabs, activeTabId } = useEditor();
-  const { terminalTheme } = useTheme();
-
-  // Check WebContainer support
-  useEffect(() => {
-    const checkWebContainerSupport = async () => {
-      try {
-        await import('@webcontainer/api');
-        const isSecureContext = window.isSecureContext;
-        const isLocalhost = window.location.hostname === 'localhost' || 
-                          window.location.hostname === '127.0.0.1';
-        
-        if (isSecureContext || isLocalhost) {
-          setWebContainerSupported(true);
-        } else {
-          setWebContainerSupported(false);
-          setError('WebContainer requires HTTPS or localhost environment');
-        }
-      } catch (err) {
-        setWebContainerSupported(false);
-      }
-    };
-    
-    checkWebContainerSupport();
-  }, []);
-  
   // Convert IDE file system to WebContainer format
-  const convertFilesToWebContainerFormat = useCallback((fileItems: any[]): WebContainerFileSystem => {
-    const result: WebContainerFileSystem = {};
+  const convertFilesToWebContainerFormat = useCallback((fileItems) => {
+    addLog('info', 'Converting files to WebContainer format...');
+    const result = {};
     
     // Process all file system items recursively
-    const processItem = (item: any) => {
+    const processItem = (item) => {
       // Skip root folder
       if (item.id === 'root') {
         if (item.children) {
@@ -534,77 +139,81 @@ const WebContainerPanel: React.FC = () => {
       };
     }
     
+    addLog('info', `Converted ${Object.keys(result).length} files`);
     return result;
   }, []);
-  
+
   // Initialize WebContainer
-  const initWebContainer = useCallback(async () => {
-    if (initialized && webcontainer) {
-      addLogMessage('info', 'WebContainer is already running.');
+  const initWebContainer = async () => {
+    if (initialized) {
+      addLog('info', 'WebContainer already initialized');
       return;
     }
     
+    setLoading(true);
+    setError(null);
+    addLog('info', 'Starting WebContainer initialization...');
+    
     try {
-      setLoading(true);
-      setError(null);
-      addLogMessage('info', 'Initializing WebContainer...');
-      
-      // Lazy load WebContainer API
+      // Boot WebContainer
       const { WebContainer } = await import('@webcontainer/api');
+      addLog('info', 'WebContainer module imported successfully');
+      
       const wc = await WebContainer.boot();
       setWebcontainer(wc);
-      addLogMessage('success', 'WebContainer initialized successfully');
+      addLog('success', 'WebContainer booted successfully');
       
-      // Set up file system in WebContainer
-      await setupFiles(wc);
+      // Set up file system from the FileSystemContext
+      await setupFileSystem(wc);
       
-      // Start a dev server
+      // Try to start a dev server if there's a package.json
       try {
         const serverUrl = await startDevServer(wc);
         setPreviewURL(serverUrl);
-        addLogMessage('success', `Preview server started at ${serverUrl}`);
+        addLog('success', `Development server started at ${serverUrl}`);
       } catch (err) {
-        addLogMessage('info', 'No package.json found or error starting dev server, using static server');
-        // Start a simple static server if there's no package.json
+        addLog('info', 'No package.json found or error starting dev server, using static server');
+        // Start a simple static server as fallback
         const staticUrl = await startStaticServer(wc);
         setPreviewURL(staticUrl);
       }
       
-      // Create initial terminal
+      // Create terminal
       createTerminal(wc);
       
       setInitialized(true);
       setLoading(false);
+      addLog('success', 'WebContainer fully initialized');
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       setError(`Failed to initialize WebContainer: ${errorMsg}`);
-      addLogMessage('error', `WebContainer initialization failed: ${errorMsg}`);
+      addLog('error', `WebContainer initialization failed: ${errorMsg}`);
       setLoading(false);
     }
-  }, [initialized, webcontainer, addLogMessage]);
-  
-  // Setup files in WebContainer based on IDE's file system
-  const setupFiles = async (wc: WebContainer) => {
-    if (!wc) return;
-    
-    addLogMessage('info', 'Setting up files in WebContainer...');
-    
-    // Convert IDE file system structure to WebContainer format
-    const fileSystemEntries = convertFilesToWebContainerFormat(files);
+  };
+
+  // Setup file system using the FileSystemContext
+  const setupFileSystem = async (wc) => {
+    addLog('info', 'Setting up file system from FileSystemContext...');
     
     try {
-      // Mount all files to the WebContainer
+      // Convert file system to WebContainer format
+      const fileSystemEntries = convertFilesToWebContainerFormat(files);
+      
+      // Log the file structure (for debugging)
+      addLog('info', `File system entries: ${Object.keys(fileSystemEntries).join(', ')}`);
+      
+      // Mount files to WebContainer
       await wc.mount(fileSystemEntries);
-      addLogMessage('success', 'Files mounted successfully');
+      addLog('success', 'Files mounted successfully');
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      addLogMessage('error', `Error mounting files: ${errorMsg}`);
+      addLog('error', `Error mounting files: ${err.message}`);
       throw err;
     }
   };
-  
+
   // Start a development server if package.json exists
-  const startDevServer = async (wc: WebContainer) => {
+  const startDevServer = async (wc) => {
     try {
       // Check if package.json exists
       const rootFiles = await wc.fs.readdir('/');
@@ -631,7 +240,7 @@ const WebContainerPanel: React.FC = () => {
         
         if (scriptCommand) {
           // Install dependencies
-          addLogMessage('info', 'Installing dependencies...');
+          addLog('info', 'Installing dependencies...');
           const installProcess = await wc.spawn('npm', ['install']);
           const installExit = await installProcess.exit;
           
@@ -639,16 +248,16 @@ const WebContainerPanel: React.FC = () => {
             throw new Error(`npm install failed with exit code ${installExit}`);
           }
           
-          addLogMessage('success', 'Dependencies installed');
+          addLog('success', 'Dependencies installed');
           
           // Start dev server
-          addLogMessage('info', `Starting dev server with: ${scriptCommand}`);
+          addLog('info', `Starting dev server with: ${scriptCommand}`);
           const serverProcess = await wc.spawn('sh', ['-c', scriptCommand]);
           
           // Find URL from server logs
           const urlPattern = /(https?:\/\/localhost:[0-9]+)/;
           
-          return new Promise<string>((resolve) => {
+          return new Promise((resolve) => {
             // Listen for server output to find URL
             serverProcess.output.pipeTo(new WritableStream({
               write(data) {
@@ -670,7 +279,7 @@ const WebContainerPanel: React.FC = () => {
       }
       
       // Fallback to simple http-server if no suitable script found
-      addLogMessage('info', 'No dev script found, using http-server');
+      addLog('info', 'No dev script found, using http-server');
       await wc.spawn('npx', ['http-server', '-p', '3000', '--no-dotfiles']);
       return 'http://0.0.0.0:3000';
       
@@ -679,142 +288,136 @@ const WebContainerPanel: React.FC = () => {
       throw err;
     }
   };
-  
+
   // Start a simple static server
-  const startStaticServer = async (wc: WebContainer) => {
+  const startStaticServer = async (wc) => {
     try {
-      addLogMessage('info', 'Starting static server with http-server...');
+      addLog('info', 'Starting static server with http-server...');
       await wc.spawn('npx', ['http-server', '-p', '3000', '--no-dotfiles']);
-      addLogMessage('success', 'Static server started at http://0.0.0.0:3000');
+      addLog('success', 'Static server started at http://0.0.0.0:3000');
       return 'http://0.0.0.0:3000';
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      addLogMessage('error', `Error starting static server: ${errorMsg}`);
+      addLog('error', `Error starting static server: ${errorMsg}`);
       return null;
     }
   };
-  
-  // Create a new terminal connected to WebContainer
-  const createTerminal = (wc: WebContainer | null = webcontainer) => {
-    if (!wc) return;
+
+  // Create and set up a terminal
+  const createTerminal = (wc) => {
+    addLog('info', 'Creating terminal...');
     
-    const id = `term-${Date.now()}`;
-    const terminal = new XTerm({
-      cursorBlink: true,
-      fontFamily: "var(--font-family), 'JetBrains Mono', monospace",
-      fontSize: 14,
-      theme: {
-        background: terminalTheme.background,
-        foreground: terminalTheme.foreground,
-        cursor: terminalTheme.cursor,
-        selectionBackground: terminalTheme.selection,
-      }
-    });
-    
-    const fitAddon = new FitAddon();
-    terminal.loadAddon(fitAddon);
-    
-    const newTermRef = React.createRef<HTMLDivElement>();
-    
-    setTerminals(prev => [...prev, { id, terminal, fitAddon, containerRef: newTermRef }]);
-    setActiveTerminalId(id);
-    
-    // Set up terminal integration with WebContainer
-    setTimeout(() => {
-      if (newTermRef.current) {
-        terminal.open(newTermRef.current);
-        fitAddon.fit();
-        
-        // Setup shell process
-        const setupShell = async () => {
-          try {
-            // Start a shell in the WebContainer
-            const shellProcess = await wc.spawn('bash');
-            
-            // Set up input from terminal to shell
-            const input = shellProcess.input.getWriter();
-            
-            terminal.onData((data) => {
-              input.write(data);
-            });
-            
-            // Set up output from shell to terminal
-            shellProcess.output.pipeTo(
-              new WritableStream({
-                write(data) {
-                  terminal.write(data);
-                }
-              })
-            );
-            
-            // Clean up on terminal close
-            terminal.onDispose(() => {
-              input.close();
-            });
-          } catch (error) {
-            // Try fallback with sh instead of bash
-            try {
-              const shellProcess = await wc.spawn('sh');
-              
-              const input = shellProcess.input.getWriter();
-              
-              terminal.onData((data) => {
-                input.write(data);
-              });
-              
-              shellProcess.output.pipeTo(
-                new WritableStream({
-                  write(data) {
-                    terminal.write(data);
-                  }
-                })
-              );
-              
-              terminal.onDispose(() => {
-                input.close();
-              });
-            } catch (fallbackError) {
-              terminal.writeln('\r\n\x1b[1;31mFailed to start shell. Terminal will be in read-only mode.\x1b[0m');
-            }
-          }
-        };
-        
-        setupShell();
-      }
-    }, 0);
-    
-    return { id, terminal, fitAddon, containerRef: newTermRef };
-  };
-  
-  // Efficient file sync with WebContainer - only sync active file when needed
-  useEffect(() => {
-    if (!webcontainer || !initialized || !activeTabId) return;
-    
-    // Clear previous debounce timer
-    if (fileChangeDebounceRef.current) {
-      clearTimeout(fileChangeDebounceRef.current);
+    try {
+      // Create a new terminal
+      const term = new XTerm({
+        cursorBlink: true,
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 14,
+        theme: {
+          background: '#1e1e1e',
+          foreground: '#ffffff',
+          cursor: '#ffffff',
+          selection: 'rgba(255, 255, 255, 0.3)',
+        }
+      });
+      
+      // Add the fit addon for terminal resizing
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      fitAddonRef.current = fitAddon;
+      
+      // Store the terminal instance
+      setTerminal(term);
+      
+      // Open terminal after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        if (terminalRef.current) {
+          addLog('info', 'Opening terminal...');
+          term.open(terminalRef.current);
+          fitAddon.fit();
+          
+          // Connect terminal to shell process
+          connectTerminalToShell(wc, term);
+          
+          addLog('success', 'Terminal created and opened successfully');
+        } else {
+          addLog('error', 'Terminal DOM element not found');
+        }
+      }, 100);
+    } catch (err) {
+      addLog('error', `Failed to create terminal: ${err.message}`);
     }
+  };
+
+  // Connect terminal to a shell process
+  const connectTerminalToShell = async (wc, term) => {
+    try {
+      addLog('info', 'Starting shell process...');
+      
+      let shellProcess;
+      try {
+        // Try to spawn a bash shell first
+        shellProcess = await wc.spawn('bash');
+        addLog('info', 'Using bash shell');
+      } catch (err) {
+        // Fall back to sh if bash is not available
+        addLog('info', 'Bash not available, falling back to sh');
+        shellProcess = await wc.spawn('sh');
+      }
+      
+      addLog('success', 'Shell process started');
+      
+      // Handle input from terminal to shell
+      const input = shellProcess.input.getWriter();
+      term.onData((data) => {
+        input.write(data);
+      });
+      
+      // Handle output from shell to terminal
+      shellProcess.output.pipeTo(
+        new WritableStream({
+          write(data) {
+            term.write(data);
+          }
+        })
+      );
+      
+      // Handle terminal dispose
+      term.onDispose(() => {
+        input.close();
+        addLog('info', 'Terminal disposed');
+      });
+      
+      // Write welcome message
+      term.writeln('\r\n\x1b[1;32mWebContainer Shell Ready!\x1b[0m');
+      term.writeln('Type commands to interact with the file system.');
+      term.writeln('For example: ls, cat index.html, etc.\r\n');
+      
+    } catch (err) {
+      term.writeln('\r\n\x1b[1;31mFailed to start shell process.\x1b[0m');
+      term.writeln(`Error: ${err.message}`);
+      addLog('error', `Shell connection error: ${err.message}`);
+    }
+  };
+
+  // Sync files when they change
+  useEffect(() => {
+    if (!webcontainer || !initialized || !files.length) return;
     
-    // Debounce file changes to prevent excessive operations
-    fileChangeDebounceRef.current = setTimeout(async () => {
-      const activeTab = openedTabs.find(tab => tab.id === activeTabId);
-      if (!activeTab) return;
-      
-      // Skip if already synced this file recently
-      if (lastSyncedFileId.current === activeTabId) return;
-      
-      const file = getFileById(activeTab.id);
+    addLog('info', 'Setting up file system sync...');
+    
+    // Function to synchronize a file with WebContainer
+    const syncFileToWebContainer = async (file) => {
       if (!file || file.type !== 'file') return;
       
       try {
-        // Get the relative path by removing initial slash if present
         const relativePath = file.path.startsWith('/') ? file.path.substring(1) : file.path;
         
         // Create parent directories if they don't exist
         const dirs = relativePath.split('/');
         dirs.pop(); // Remove filename
         
-        if (dirs.length > 0 && dirs[0]) {
+        if (dirs.length > 0) {
           let currentPath = '';
           for (const dir of dirs) {
             if (!dir) continue;
@@ -830,87 +433,95 @@ const WebContainerPanel: React.FC = () => {
         
         // Write file content
         await webcontainer.fs.writeFile(relativePath, file.content || '');
-        lastSyncedFileId.current = activeTabId;
-        
-        // Reload the preview if it's an HTML file or CSS or JS file
-        if (
-          relativePath.endsWith('.html') || 
-          relativePath.endsWith('.css') || 
-          relativePath.endsWith('.js')
-        ) {
-          refreshPreview();
-        }
+        addLog('info', `Synced file: ${relativePath}`);
       } catch (err) {
-        console.error('Error syncing file:', err);
-      }
-    }, 800); // Longer debounce for better performance
-    
-    return () => {
-      if (fileChangeDebounceRef.current) {
-        clearTimeout(fileChangeDebounceRef.current);
+        addLog('error', `Error syncing file ${file.path}: ${err.message}`);
       }
     };
-  }, [webcontainer, initialized, activeTabId, openedTabs, getFileById]);
-  
-  // Refresh the preview iframe
-  const refreshPreview = () => {
-    if (iframeRef.current && iframeRef.current.src) {
-      iframeRef.current.src = iframeRef.current.src;
-    }
-  };
-  
-  // Toggle between terminal and preview
-  const toggleView = () => {
-    setShowPreview(prev => !prev);
-  };
-  
+    
+    // Initial sync for all files
+    const initialSync = async () => {
+      // Recursive function to process files
+      const processFiles = async (items) => {
+        for (const item of items) {
+          if (item.type === 'file') {
+            await syncFileToWebContainer(item);
+          } else if (item.type === 'folder' && item.children) {
+            await processFiles(item.children);
+          }
+        }
+      };
+      
+      await processFiles(files);
+      addLog('success', 'Initial file sync complete');
+    };
+    
+    initialSync();
+  }, [webcontainer, initialized, files]);
+
+  // Handle window resize to fit terminal
+  useEffect(() => {
+    const handleResize = () => {
+      if (fitAddonRef.current) {
+        try {
+          fitAddonRef.current.fit();
+        } catch (err) {
+          // Terminal might be disposed
+        }
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (terminal) {
+        terminal.dispose();
+      }
+    };
+  }, [terminal]);
+
   // Toggle maximize
   const toggleMaximize = () => {
     setMaximized(prev => !prev);
   };
-  
-  // Handle close terminal
-  const closeTerminal = (id: string) => {
-    const terminalToClose = terminals.find(t => t.id === id);
-    if (terminalToClose) {
-      terminalToClose.terminal.dispose();
-    }
-    
-    setTerminals(prev => prev.filter(t => t.id !== id));
-    
-    // Set a new active terminal if needed
-    if (activeTerminalId === id) {
-      const remainingTerminals = terminals.filter(t => t.id !== id);
-      if (remainingTerminals.length > 0) {
-        setActiveTerminalId(remainingTerminals[0].id);
-      } else {
-        setActiveTerminalId(null);
+
+  // Refresh the preview
+  const refreshPreview = () => {
+    if (previewURL) {
+      addLog('info', 'Refreshing preview...');
+      const iframe = document.querySelector('iframe');
+      if (iframe) {
+        iframe.src = iframe.src;
       }
     }
   };
-  
-  // Restart the container
+
+  // Restart the WebContainer
   const restartContainer = async () => {
     if (!webcontainer) return;
     
     setLoading(true);
-    addLogMessage('info', 'Restarting WebContainer...');
+    addLog('info', 'Restarting WebContainer...');
     
-    // Dispose all terminals
-    terminals.forEach(term => {
-      term.terminal.dispose();
-    });
-    setTerminals([]);
+    // Clean up existing terminal
+    if (terminal) {
+      terminal.dispose();
+      setTerminal(null);
+    }
     
     try {
-      // Re-setup files
-      await setupFiles(webcontainer);
+      // Re-setup file system
+      await setupFileSystem(webcontainer);
       
       // Restart server
       try {
         const serverUrl = await startDevServer(webcontainer);
         setPreviewURL(serverUrl);
-        addLogMessage('success', `Preview server restarted at ${serverUrl}`);
+        addLog('success', `Preview server restarted at ${serverUrl}`);
       } catch (err) {
         const staticUrl = await startStaticServer(webcontainer);
         setPreviewURL(staticUrl);
@@ -920,58 +531,51 @@ const WebContainerPanel: React.FC = () => {
       createTerminal(webcontainer);
       
       setLoading(false);
-      addLogMessage('success', 'WebContainer restarted successfully');
+      addLog('success', 'WebContainer restarted successfully');
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       setError(`Error restarting WebContainer: ${errorMsg}`);
-      addLogMessage('error', `WebContainer restart failed: ${errorMsg}`);
+      addLog('error', `WebContainer restart failed: ${errorMsg}`);
       setLoading(false);
     }
   };
-  
-  // Shutdown the container to free resources
+
+  // Shutdown the WebContainer
   const shutdownContainer = () => {
-    // Dispose all terminals
-    terminals.forEach(term => {
-      term.terminal.dispose();
-    });
-    setTerminals([]);
-    setActiveTerminalId(null);
+    if (terminal) {
+      terminal.dispose();
+      setTerminal(null);
+    }
     
-    // Clear WebContainer reference
     setWebcontainer(null);
     setInitialized(false);
     setPreviewURL(null);
     
-    addLogMessage('info', 'WebContainer shutdown successfully');
+    addLog('info', 'WebContainer shutdown successfully');
   };
-  
-  // Resize terminals when window resizes
-  useEffect(() => {
-    const handleResize = () => {
-      terminals.forEach(term => {
-        try {
-          term.fitAddon.fit();
-        } catch (err) {
-          // Terminal might be disposed already
-        }
-      });
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [terminals]);
-  
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      terminals.forEach(term => {
-        term.terminal.dispose();
-      });
-    };
-  }, []);
-  
-  // UI rendering based on state
+
+  // Render the debugging logs panel
+  const renderLogs = () => (
+    <div className="bg-black bg-opacity-90 border-t border-gray-700 text-xs h-28 overflow-y-auto">
+      <div className="p-2">
+        <h3 className="text-white font-bold">Debug Logs:</h3>
+        {logs.map((log, i) => (
+          <div 
+            key={i} 
+            className={`py-0.5 ${
+              log.type === 'error' ? 'text-red-400' : 
+              log.type === 'success' ? 'text-green-400' : 
+              'text-gray-300'
+            }`}
+          >
+            [{new Date(log.timestamp).toLocaleTimeString()}] {log.message}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Handle checking WebContainer support status
   if (webContainerSupported === null) {
     return (
       <div className="h-full flex flex-col bg-terminal text-terminal-foreground">
@@ -987,7 +591,8 @@ const WebContainerPanel: React.FC = () => {
       </div>
     );
   }
-  
+
+  // Handle unsupported environments
   if (webContainerSupported === false) {
     return (
       <div className="h-full flex flex-col bg-terminal text-terminal-foreground">
@@ -998,26 +603,18 @@ const WebContainerPanel: React.FC = () => {
           <div className="text-center">
             <p className="text-xl font-bold">WebContainer API Not Supported</p>
             <p className="mt-2">Your browser does not support the WebContainer API.</p>
-            <p className="mt-1">Please use Chrome or Edge for this feature.</p>
+            <p className="mt-1">Please use Chrome or Edge with HTTPS or localhost.</p>
             {error && <p className="mt-2 text-sm">{error}</p>}
-            <div className="mt-4 bg-black bg-opacity-20 p-4 rounded text-white text-sm text-left">
-              <p className="font-bold">Troubleshooting:</p>
-              <ul className="list-disc pl-5 mt-2">
-                <li>Make sure you're using the latest Chrome or Edge browser</li>
-                <li>Your site should be served over HTTPS (or localhost)</li>
-                <li>Check that you've installed @webcontainer/api package</li>
-                <li>Try opening the browser's developer console for more details</li>
-              </ul>
-            </div>
           </div>
         </div>
+        {renderLogs()}
       </div>
     );
   }
-  
+
   return (
     <div className={`h-full flex flex-col bg-terminal text-terminal-foreground ${maximized ? 'fixed inset-0 z-50' : ''}`}>
-      {/* Header with controls 
+      {/* Header with controls */}
       <div className="border-b border-border p-2 flex justify-between items-center">
         <span className="font-medium">WebContainer Preview</span>
         <div className="flex space-x-2">
@@ -1032,13 +629,6 @@ const WebContainerPanel: React.FC = () => {
             </button>
           ) : (
             <>
-              <button
-                className="p-1 text-slate-400 hover:text-white rounded-sm"
-                onClick={toggleView}
-                title={showPreview ? "Show Terminal" : "Show Preview"}
-              >
-                <Layout size={16} />
-              </button>
               <button
                 className="p-1 text-slate-400 hover:text-white rounded-sm"
                 onClick={refreshPreview}
@@ -1072,10 +662,10 @@ const WebContainerPanel: React.FC = () => {
         </div>
       </div>
       
-      {/* Content area 
-      <div className="flex-1 overflow-hidden">
+      {/* Main content area */}
+      <div className="flex-1 overflow-hidden relative">
         {!initialized ? (
-          // Not initialized yet
+          // Not initialized yet - show start screen
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
               <p className="text-xl font-bold">WebContainer Preview</p>
@@ -1112,95 +702,31 @@ const WebContainerPanel: React.FC = () => {
             </div>
           </div>
         ) : (
-          // Normal state - Preview or Terminal
+          // Terminal display
           <div className="h-full flex flex-col">
-            {showPreview ? (
-              // Preview
-              <div className="h-full">
-                {previewURL ? (
+            <div className="flex-1 relative">
+              {previewURL && (
+                <div className="absolute inset-0" style={{ display: 'none' }}>
                   <iframe 
-                    ref={iframeRef}
                     src={previewURL} 
                     className="w-full h-full border-none"
                     title="Web Preview"
                   />
-                ) : (
-                  <div className="h-full flex items-center justify-center">
-                    <p>No preview available</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              // Terminal Tabs & Container
-              <div className="h-full flex flex-col">
-                {/* Terminal tabs 
-                <div className="flex items-center justify-between bg-sidebar border-b border-border">
-                  <div className="flex overflow-x-auto">
-                    {terminals.map(term => (
-                      <div 
-                        key={term.id}
-                        className={`flex items-center px-3 py-1 border-r border-border cursor-pointer ${
-                          term.id === activeTerminalId ? 'bg-terminal text-white' : 'bg-tab-inactive text-slate-400 hover:text-white'
-                        }`}
-                        onClick={() => setActiveTerminalId(term.id)}
-                      >
-                        <span className="text-sm">Term {term.id.replace('term-', '').substring(0, 4)}</span>
-                        <button 
-                          className="ml-2 p-0.5 text-slate-400 hover:text-white rounded-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            closeTerminal(term.id);
-                          }}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex items-center px-2">
-                    <button 
-                      className="p-1 text-slate-400 hover:text-white rounded-sm"
-                      onClick={() => createTerminal()}
-                      title="New Terminal"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
                 </div>
-                
-                {/* Terminal containers 
-                <div className="flex-1 relative">
-                  {terminals.length === 0 ? (
-                    <div className="absolute inset-0 flex items-center justify-center text-slate-400">
-                      <div className="text-center">
-                        <p>No active terminals</p>
-                        <button 
-                          className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm"
-                          onClick={() => createTerminal()}
-                        >
-                          Create Terminal
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    terminals.map(term => (
-                      <div
-                        key={term.id}
-                        ref={term.containerRef}
-                        className="absolute inset-0 p-2"
-                        style={{ display: term.id === activeTerminalId ? 'block' : 'none' }}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
+              )}
+              <div 
+                ref={terminalRef} 
+                className="absolute inset-0 p-1"
+              />
+            </div>
           </div>
         )}
       </div>
+      
+      {/* Debug logs panel */}
+      {renderLogs()}
     </div>
   );
 };
 
 export default WebContainerPanel;
-*/
