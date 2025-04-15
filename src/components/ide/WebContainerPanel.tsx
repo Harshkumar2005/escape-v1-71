@@ -1,5 +1,4 @@
-// src/components/ide/WebContainerPanel.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { WebContainer } from '@webcontainer/api';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { useEditor } from '@/contexts/EditorContext';
@@ -18,14 +17,13 @@ interface TerminalState {
 
 interface WebContainerFileSystem {
   [path: string]: {
-    file?: {
-      contents: string;
-    };
+    file?: { contents: string };
     directory?: Record<string, never>;
   };
 }
 
 const WebContainerPanel: React.FC = () => {
+  // State management
   const [webcontainer, setWebcontainer] = useState<WebContainer | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,32 +34,33 @@ const WebContainerPanel: React.FC = () => {
   const [maximized, setMaximized] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [webContainerSupported, setWebContainerSupported] = useState<boolean | null>(null);
+  
+  // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const fileChangeDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSyncedFileId = useRef<string | null>(null);
+  
+  // Contexts
   const { files, logs, addLogMessage, getFileById } = useFileSystem();
   const { openedTabs, activeTabId } = useEditor();
   const { terminalTheme } = useTheme();
-  
-  // Check if WebContainer API is supported on component mount
+
+  // Check WebContainer support
   useEffect(() => {
     const checkWebContainerSupport = async () => {
       try {
-        // Dynamic import of WebContainer API to check if it's available
         await import('@webcontainer/api');
-        
-        // Additional environment checks (https or localhost)
         const isSecureContext = window.isSecureContext;
         const isLocalhost = window.location.hostname === 'localhost' || 
-                            window.location.hostname === '127.0.0.1';
+                          window.location.hostname === '127.0.0.1';
         
         if (isSecureContext || isLocalhost) {
           setWebContainerSupported(true);
         } else {
-          console.error('WebContainer requires a secure context (HTTPS) unless on localhost');
           setWebContainerSupported(false);
           setError('WebContainer requires HTTPS or localhost environment');
         }
       } catch (err) {
-        console.error('WebContainer API not available:', err);
         setWebContainerSupported(false);
       }
     };
@@ -69,13 +68,13 @@ const WebContainerPanel: React.FC = () => {
     checkWebContainerSupport();
   }, []);
   
-  // Convert our file system structure to WebContainer format - improved version
-  const convertFilesToWebContainerFormat = (fileItems: any[]): WebContainerFileSystem => {
+  // Convert IDE file system to WebContainer format
+  const convertFilesToWebContainerFormat = useCallback((fileItems: any[]): WebContainerFileSystem => {
     const result: WebContainerFileSystem = {};
     
-    // Process a single item and add it to the result
+    // Process all file system items recursively
     const processItem = (item: any) => {
-      // Skip the root folder itself
+      // Skip root folder
       if (item.id === 'root') {
         if (item.children) {
           item.children.forEach(processItem);
@@ -83,8 +82,13 @@ const WebContainerPanel: React.FC = () => {
         return;
       }
       
-      // Get the relative path by removing initial slash if present
-      let relativePath = item.path.startsWith('/') ? item.path.substring(1) : item.path;
+      // Fix path handling - ensure proper format without duplicate project names
+      let relativePath = item.path;
+      
+      // Remove initial slash if present
+      if (relativePath.startsWith('/')) {
+        relativePath = relativePath.substring(1);
+      }
       
       // Handle file or directory
       if (item.type === 'file') {
@@ -129,10 +133,10 @@ const WebContainerPanel: React.FC = () => {
     }
     
     return result;
-  };
+  }, []);
   
-  // Initialize WebContainer - only when explicitly started
-  const initWebContainer = async () => {
+  // Initialize WebContainer
+  const initWebContainer = useCallback(async () => {
     if (initialized && webcontainer) {
       addLogMessage('info', 'WebContainer is already running.');
       return;
@@ -141,11 +145,9 @@ const WebContainerPanel: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Loading WebContainer
       addLogMessage('info', 'Initializing WebContainer...');
       
-      // Dynamically import the WebContainer API to ensure it's loaded correctly
+      // Lazy load WebContainer API
       const { WebContainer } = await import('@webcontainer/api');
       const wc = await WebContainer.boot();
       setWebcontainer(wc);
@@ -172,12 +174,12 @@ const WebContainerPanel: React.FC = () => {
       setInitialized(true);
       setLoading(false);
     } catch (err) {
-      console.error('Failed to initialize WebContainer:', err);
-      setError(`Failed to initialize WebContainer: ${err instanceof Error ? err.message : String(err)}`);
-      addLogMessage('error', `WebContainer initialization failed: ${err instanceof Error ? err.message : String(err)}`);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setError(`Failed to initialize WebContainer: ${errorMsg}`);
+      addLogMessage('error', `WebContainer initialization failed: ${errorMsg}`);
       setLoading(false);
     }
-  };
+  }, [initialized, webcontainer, addLogMessage]);
   
   // Setup files in WebContainer based on IDE's file system
   const setupFiles = async (wc: WebContainer) => {
@@ -185,7 +187,7 @@ const WebContainerPanel: React.FC = () => {
     
     addLogMessage('info', 'Setting up files in WebContainer...');
     
-    // Convert our file system structure to the format expected by WebContainer
+    // Convert IDE file system structure to WebContainer format
     const fileSystemEntries = convertFilesToWebContainerFormat(files);
     
     try {
@@ -193,8 +195,8 @@ const WebContainerPanel: React.FC = () => {
       await wc.mount(fileSystemEntries);
       addLogMessage('success', 'Files mounted successfully');
     } catch (err) {
-      console.error('Error mounting files:', err);
-      addLogMessage('error', `Error mounting files: ${err instanceof Error ? err.message : String(err)}`);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      addLogMessage('error', `Error mounting files: ${errorMsg}`);
       throw err;
     }
   };
@@ -203,13 +205,13 @@ const WebContainerPanel: React.FC = () => {
   const startDevServer = async (wc: WebContainer) => {
     try {
       // Check if package.json exists
-      const packageJsonFiles = await wc.fs.readdir('/');
-      if (!packageJsonFiles.includes('package.json')) {
+      const rootFiles = await wc.fs.readdir('/');
+      if (!rootFiles.includes('package.json')) {
         throw new Error('No package.json found');
       }
       
       // Read package.json
-      const packageJsonContent = await wc.fs.readFile('/package.json', 'utf-8');
+      const packageJsonContent = await wc.fs.readFile('package.json', 'utf-8');
       const packageJson = JSON.parse(packageJsonContent);
       
       // Check for script commands
@@ -229,8 +231,6 @@ const WebContainerPanel: React.FC = () => {
           // Install dependencies
           addLogMessage('info', 'Installing dependencies...');
           const installProcess = await wc.spawn('npm', ['install']);
-          
-          // Wait for installation to complete
           const installExit = await installProcess.exit;
           
           if (installExit !== 0) {
@@ -250,7 +250,6 @@ const WebContainerPanel: React.FC = () => {
             // Listen for server output to find URL
             serverProcess.output.pipeTo(new WritableStream({
               write(data) {
-                console.log('Server output:', data);
                 const match = data.match(urlPattern);
                 if (match && match[1]) {
                   // Replace localhost with 0.0.0.0 for WebContainer
@@ -260,17 +259,17 @@ const WebContainerPanel: React.FC = () => {
               }
             }));
             
-            // If no URL found after 10 seconds, use default
+            // If no URL found after 5 seconds, use default
             setTimeout(() => {
               resolve('http://0.0.0.0:3000');
-            }, 10000);
+            }, 5000);
           });
         }
       }
       
       // Fallback to simple http-server if no suitable script found
       addLogMessage('info', 'No dev script found, using http-server');
-      await wc.spawn('npx', ['http-server', '-p', '3000']);
+      await wc.spawn('npx', ['http-server', '-p', '3000', '--no-dotfiles']);
       return 'http://0.0.0.0:3000';
       
     } catch (err) {
@@ -283,19 +282,12 @@ const WebContainerPanel: React.FC = () => {
   const startStaticServer = async (wc: WebContainer) => {
     try {
       addLogMessage('info', 'Starting static server with http-server...');
-      
-      // Install http-server globally if not installed
-      const installProcess = await wc.spawn('npm', ['install', '-g', 'http-server']);
-      await installProcess.exit;
-      
-      // Start http-server
-      await wc.spawn('http-server', ['-p', '3000']);
-      
+      await wc.spawn('npx', ['http-server', '-p', '3000', '--no-dotfiles']);
       addLogMessage('success', 'Static server started at http://0.0.0.0:3000');
       return 'http://0.0.0.0:3000';
     } catch (err) {
-      console.error('Error starting static server:', err);
-      addLogMessage('error', `Error starting static server: ${err instanceof Error ? err.message : String(err)}`);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      addLogMessage('error', `Error starting static server: ${errorMsg}`);
       return null;
     }
   };
@@ -307,7 +299,7 @@ const WebContainerPanel: React.FC = () => {
     const id = `term-${Date.now()}`;
     const terminal = new XTerm({
       cursorBlink: true,
-      fontFamily: "var(--font-family), 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
+      fontFamily: "var(--font-family), 'JetBrains Mono', monospace",
       fontSize: 14,
       theme: {
         background: terminalTheme.background,
@@ -358,9 +350,6 @@ const WebContainerPanel: React.FC = () => {
               input.close();
             });
           } catch (error) {
-            console.error('Failed to start shell:', error);
-            terminal.writeln('\r\n\x1b[1;31mFailed to start shell. Trying fallback...\x1b[0m');
-            
             // Try fallback with sh instead of bash
             try {
               const shellProcess = await wc.spawn('sh');
@@ -383,7 +372,6 @@ const WebContainerPanel: React.FC = () => {
                 input.close();
               });
             } catch (fallbackError) {
-              console.error('Fallback shell also failed:', fallbackError);
               terminal.writeln('\r\n\x1b[1;31mFailed to start shell. Terminal will be in read-only mode.\x1b[0m');
             }
           }
@@ -396,15 +384,22 @@ const WebContainerPanel: React.FC = () => {
     return { id, terminal, fitAddon, containerRef: newTermRef };
   };
   
-  // Handle file changes for syncing with WebContainer - using a more efficient approach
+  // Efficient file sync with WebContainer - only sync active file when needed
   useEffect(() => {
-    if (!webcontainer || !initialized) return;
+    if (!webcontainer || !initialized || !activeTabId) return;
     
-    // Sync the currently active file when it's saved
-    const syncActiveFile = async () => {
-      if (!activeTabId) return;
+    // Clear previous debounce timer
+    if (fileChangeDebounceRef.current) {
+      clearTimeout(fileChangeDebounceRef.current);
+    }
+    
+    // Debounce file changes to prevent excessive operations
+    fileChangeDebounceRef.current = setTimeout(async () => {
       const activeTab = openedTabs.find(tab => tab.id === activeTabId);
       if (!activeTab) return;
+      
+      // Skip if already synced this file recently
+      if (lastSyncedFileId.current === activeTabId) return;
       
       const file = getFileById(activeTab.id);
       if (!file || file.type !== 'file') return;
@@ -427,13 +422,13 @@ const WebContainerPanel: React.FC = () => {
               await webcontainer.fs.mkdir(currentPath, { recursive: true });
             } catch (err) {
               // Directory might already exist, continue
-              console.log(`Directory ${currentPath} might already exist, continuing`);
             }
           }
         }
         
         // Write file content
         await webcontainer.fs.writeFile(relativePath, file.content || '');
+        lastSyncedFileId.current = activeTabId;
         
         // Reload the preview if it's an HTML file or CSS or JS file
         if (
@@ -445,17 +440,15 @@ const WebContainerPanel: React.FC = () => {
         }
       } catch (err) {
         console.error('Error syncing file:', err);
-        addLogMessage('error', `Error syncing file: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }, 800); // Longer debounce for better performance
+    
+    return () => {
+      if (fileChangeDebounceRef.current) {
+        clearTimeout(fileChangeDebounceRef.current);
       }
     };
-    
-    // Debounce the file sync to prevent excessive operations
-    const timeoutId = setTimeout(() => {
-      syncActiveFile();
-    }, 500);
-    
-    return () => clearTimeout(timeoutId);
-  }, [openedTabs, activeTabId, webcontainer, initialized]);
+  }, [webcontainer, initialized, activeTabId, openedTabs, getFileById]);
   
   // Refresh the preview iframe
   const refreshPreview = () => {
@@ -527,9 +520,9 @@ const WebContainerPanel: React.FC = () => {
       setLoading(false);
       addLogMessage('success', 'WebContainer restarted successfully');
     } catch (err) {
-      console.error('Error restarting WebContainer:', err);
-      setError(`Error restarting WebContainer: ${err instanceof Error ? err.message : String(err)}`);
-      addLogMessage('error', `WebContainer restart failed: ${err instanceof Error ? err.message : String(err)}`);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setError(`Error restarting WebContainer: ${errorMsg}`);
+      addLogMessage('error', `WebContainer restart failed: ${errorMsg}`);
       setLoading(false);
     }
   };
@@ -576,7 +569,7 @@ const WebContainerPanel: React.FC = () => {
     };
   }, []);
   
-  // If still checking WebContainer support
+  // UI rendering based on state
   if (webContainerSupported === null) {
     return (
       <div className="h-full flex flex-col bg-terminal text-terminal-foreground">
@@ -593,7 +586,6 @@ const WebContainerPanel: React.FC = () => {
     );
   }
   
-  // If WebContainer API is not supported
   if (webContainerSupported === false) {
     return (
       <div className="h-full flex flex-col bg-terminal text-terminal-foreground">
