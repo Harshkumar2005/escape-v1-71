@@ -35,10 +35,39 @@ const WebContainerPanel: React.FC = () => {
   const [activeTerminalId, setActiveTerminalId] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [webContainerSupported, setWebContainerSupported] = useState<boolean | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { files, logs, addLogMessage, getFileById } = useFileSystem();
   const { openedTabs, activeTabId } = useEditor();
   const { terminalTheme } = useTheme();
+  
+  // Check if WebContainer API is supported on component mount
+  useEffect(() => {
+    const checkWebContainerSupport = async () => {
+      try {
+        // Dynamic import of WebContainer API to check if it's available
+        await import('@webcontainer/api');
+        
+        // Additional environment checks (https or localhost)
+        const isSecureContext = window.isSecureContext;
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1';
+        
+        if (isSecureContext || isLocalhost) {
+          setWebContainerSupported(true);
+        } else {
+          console.error('WebContainer requires a secure context (HTTPS) unless on localhost');
+          setWebContainerSupported(false);
+          setError('WebContainer requires HTTPS or localhost environment');
+        }
+      } catch (err) {
+        console.error('WebContainer API not available:', err);
+        setWebContainerSupported(false);
+      }
+    };
+    
+    checkWebContainerSupport();
+  }, []);
   
   // Convert our file system structure to WebContainer format - improved version
   const convertFilesToWebContainerFormat = (fileItems: any[]): WebContainerFileSystem => {
@@ -116,6 +145,8 @@ const WebContainerPanel: React.FC = () => {
       // Loading WebContainer
       addLogMessage('info', 'Initializing WebContainer...');
       
+      // Dynamically import the WebContainer API to ensure it's loaded correctly
+      const { WebContainer } = await import('@webcontainer/api');
       const wc = await WebContainer.boot();
       setWebcontainer(wc);
       addLogMessage('success', 'WebContainer initialized successfully');
@@ -545,11 +576,25 @@ const WebContainerPanel: React.FC = () => {
     };
   }, []);
   
-  // Check if WebContainer API is available
-  const isWebContainerSupported = typeof window !== 'undefined' && 'WebContainer' in window;
+  // If still checking WebContainer support
+  if (webContainerSupported === null) {
+    return (
+      <div className="h-full flex flex-col bg-terminal text-terminal-foreground">
+        <div className="border-b border-border p-2 flex justify-between items-center">
+          <span className="font-medium">WebContainer Preview</span>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+            <p className="mt-4">Checking WebContainer support...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   // If WebContainer API is not supported
-  if (!isWebContainerSupported) {
+  if (webContainerSupported === false) {
     return (
       <div className="h-full flex flex-col bg-terminal text-terminal-foreground">
         <div className="border-b border-border p-2 flex justify-between items-center">
@@ -560,6 +605,16 @@ const WebContainerPanel: React.FC = () => {
             <p className="text-xl font-bold">WebContainer API Not Supported</p>
             <p className="mt-2">Your browser does not support the WebContainer API.</p>
             <p className="mt-1">Please use Chrome or Edge for this feature.</p>
+            {error && <p className="mt-2 text-sm">{error}</p>}
+            <div className="mt-4 bg-black bg-opacity-20 p-4 rounded text-white text-sm text-left">
+              <p className="font-bold">Troubleshooting:</p>
+              <ul className="list-disc pl-5 mt-2">
+                <li>Make sure you're using the latest Chrome or Edge browser</li>
+                <li>Your site should be served over HTTPS (or localhost)</li>
+                <li>Check that you've installed @webcontainer/api package</li>
+                <li>Try opening the browser's developer console for more details</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
