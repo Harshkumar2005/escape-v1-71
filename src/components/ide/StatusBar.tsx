@@ -8,6 +8,7 @@ import { MusicStatusBar, useMusic } from '@/contexts/MusicContext';
 
 interface StatusBarProps {
   toggleTerminal: () => void;
+  toggleMusicPanel: () => void;
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
 }
@@ -15,12 +16,13 @@ interface StatusBarProps {
 const StatusBar: React.FC<StatusBarProps> = ({ 
   toggleTerminal, 
   toggleLeftSidebar, 
-  toggleRightSidebar 
+  toggleRightSidebar,
+  toggleMusicPanel
 }) => {
   const { theme, toggleTheme } = useTheme();
   const { activeTabId } = useEditor();
   const { getFileById, addLogMessage } = useFileSystem();
-  const { toggleMusicPanel } = useMusic();
+  //const { toggleMusicPanel } = useMusic();
   const [time, setTime] = useState<string>('');
   const [activeFileInfo, setActiveFileInfo] = useState({ 
     language: 'Text', 
@@ -80,19 +82,21 @@ const StatusBar: React.FC<StatusBarProps> = ({
         <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
         <button
           className="flex items-center hover:text-white transition-colors"
-          onClick={toggleMusicPanel}
+          onClick={() => {
+            toggleMusicPanel();
+            //addLogMessage('info', 'Toggled explorer sidebar');
+          }}
         >
-          <Music size={14} className="mr-1" />
-          <span>Music</span>
+          {/*<Music size={14} className="mr-1" />
+          <span>Music</span>*/}
+          <MusicStatusBar />
         </button>
       </div>
       
       <div className="flex items-center space-x-1">
-        <MusicStatusBar />
-        
         {activeFileInfo.path && (
           <>
-            <SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />
+            {/*<SlashLg size={16} style={{ transform: 'rotate(-20deg)', marginTop: '1px', opacity: 0.5 }} />*/}
             <span className="text-slate-500 max-w-xs truncate text-[13px]" title={activeFileInfo.path}>
               {activeFileInfo.path.replace("/", "")}
             </span>
