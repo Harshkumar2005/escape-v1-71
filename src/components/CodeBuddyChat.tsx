@@ -466,7 +466,7 @@ export function CodeBuddyChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="bg-sidebar p-2 border-t">
+      <div className="bg-sidebar p-2 border-t" style={{marginBottom: '0.2rem'}}>
         {getCurrentFileName() && (
           <div className="border mb-2 px-2 py-0.5 rounded-md text-sm flex items-center" style={{
             width: 'fit-content',
