@@ -320,7 +320,7 @@ export const MusicPlayerPanel: React.FC = () => {
             autoFocus 
           />
           {isLoading && searchQuery.trim() && (
-            <div className="absolute right-2 top-1">
+            <div className="hidden absolute right-2 top-1">
               <div className="w-4 h-4 border-2 border-t-transparent border-slate-300 rounded-full animate-spin"></div>
             </div>
           )}
@@ -378,16 +378,16 @@ export const MusicPlayerPanel: React.FC = () => {
           <div className="flex items-center justify-center h-full">
             {isLoading ? (
               <div className="flex flex-col items-center">
-                <div className="w-8 h-8 border-4 border-t-transparent border-slate-300 rounded-full animate-spin mb-2"></div>
-                <p className="text-[#858585]">Searching for "{searchQuery}"...</p>
+                <div className="hidden w-8 h-8 border-4 border-t-transparent border-slate-300 rounded-full animate-spin mb-2"></div>
+                <p className="text-zinc-400">Searching for: "{searchQuery}"</p>
               </div>
             ) : (
-              <p className="text-[#858585]">No results found for "{searchQuery}"</p>
+              <p className="text-zinc-400">No results found for: "{searchQuery}"</p>
             )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <Music size={32} className="text-[#858585]/50 mb-2" />
+            <Music size={32} className="text-zinc-400 mb-2" />
             <p className="text-[#858585]">Search for music to start listening</p>
           </div>
         )}
