@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { Play, SkipBack, SkipForward, Volume2, VolumeX, Search, Music } from 'lucide-react';
-import { Pause } from 'react-bootstrap-icons';
+import { PauseBtn, PlayBtn } from 'react-bootstrap-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
@@ -497,7 +497,7 @@ export const MusicStatusBar: React.FC = () => {
           togglePlay();
         }}
       >
-        {isPlaying ? <Pause size={14} className="pt-0.5" /> : <Play size={14} className="pt-0.5" />}
+        {isPlaying ? <PauseBtn size={17} className="pt-0.5" /> : <PlayBtn size={17} className="pt-0.5" />}
       </button>
     
     </div>
