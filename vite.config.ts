@@ -23,15 +23,15 @@ export default defineConfig(({ mode }) => {
       host: "::",
       port: 8080,
       // Add the COOP and COEP headers here
-      headers: {
+      /*headers: {
         'Cross-Origin-Embedder-Policy': 'require-corp',
         'Cross-Origin-Opener-Policy': 'same-origin'
-      },
+      },*/
       middleware: [
         async (req: IncomingMessage, res: ServerResponse, next: NextFunction) => {
           // Ensure CORS headers are set
-          res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
-          res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+         // res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+          //res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
           
           if (req.url === '/api/list-files') {
             const response = await handleListFiles(new Request(`http://localhost${req.url}`));
