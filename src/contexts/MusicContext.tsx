@@ -274,14 +274,14 @@ export const MusicPlayerPanel: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground rounded-none text-sm">
       {/* Search Header */}
-      <div className="px-2 py-1.5 border-b bg-sidebar flex justify-between items-center">
+      <div className="px-1.5 py-2 border-b bg-sidebar flex justify-between items-center">
         <form onSubmit={handleSearch} className="flex gap-2 w-full">
           <Input
             type="text"
             placeholder="Search for songs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-sidebar-foreground bg-opacity-10 text-sm px-3 py-1 rounded text-sidebar-foreground outline-none"
+            className="h-6 w-full bg-sidebar bg-opacity-10 text-sm px-3 py-1 rounded border-none text-sidebar-foreground outline-none"
             autoFocus 
             />
           <Button
@@ -324,7 +324,7 @@ export const MusicPlayerPanel: React.FC = () => {
                   </p>
                 </div>
                 <button
-                  className="p-2 rounded-md bg-[#333333] hover:bg-[#cccccc29]"
+                  className="p-2 rounded-md bg-[#2c313c] hover:bg-[#333333]"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (currentSong?.id === song.id) {
