@@ -399,7 +399,7 @@ export const MusicPlayerPanel: React.FC = () => {
                   className={`flex flex-col rounded-md overflow-hidden border border-[#313244] transition-all hover:shadow-md cursor-pointer bg-[#181825] hover:bg-[#20212c] ${
                     currentSong?.id === song.id ? 'ring-2 ring-[#9333ea]' : ''
                   }`}
-                  onClick={() => playSong(song)}
+                  onClick={() => playSong(song.media_url)}
                 >
                   <div className="relative aspect-square bg-black/50">
                     <img
