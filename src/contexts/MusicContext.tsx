@@ -288,7 +288,7 @@ export const MusicPlayerPanel: React.FC = () => {
             type="submit"
             size="sm"
             variant="ghost"
-            className="hover:bg-[#cccccc29] bg-[#cccccc29] text-[#d4d4d4]"
+            className="hidden hover:bg-[#cccccc29] bg-[#cccccc29] text-[#d4d4d4]"
           >
             <Search size={16} className="" />
             Search
@@ -299,7 +299,7 @@ export const MusicPlayerPanel: React.FC = () => {
       {/* Search Results */}
       <div className="flex-1 overflow-y-auto bg-sidebar">
         {searchResults.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 p-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 p-2 md:grid-cols-3" style={{scrollbarWidth: 'none'}}>
             {searchResults.map((song) => (
               <div
                 key={song.id}
@@ -324,7 +324,7 @@ export const MusicPlayerPanel: React.FC = () => {
                   </p>
                 </div>
                 <button
-                  className="p-2 rounded-md bg-[#2c313c] hover:bg-[#333333]"
+                  className="hidden p-2 rounded-md bg-[#2c313c] hover:bg-[#333333]"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (currentSong?.id === song.id) {
@@ -466,29 +466,17 @@ export const MusicStatusBar: React.FC = () => {
 
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1 rounded-md bg-[#181825]/80 border border-[#313244] cursor-pointer hover:bg-[#181825] transition-colors"
+      className="flex items-center gap-2 rounded-md cursor-pointertransition-colors"
       onClick={toggleMusicPanel}
     >
-      <button
-        className="flex items-center justify-center h-6 w-6 rounded-full bg-[#9333ea]/20 hover:bg-[#9333ea]/40 transition-colors"
-        onClick={(e) => {
-          e.stopPropagation();
-          togglePlay();
-        }}
-      >
-        {isPlaying ? <Pause size={12} className="text-[#cdd6f4]" /> : <Play size={12} className="text-[#cdd6f4]" />}
-      </button>
+ 
 
-      <div className="flex items-center max-w-[200px]">
-        <span className="font-medium text-xs truncate text-[#cdd6f4]">{currentSong.song}</span>
-      </div>
-
-      {isPlaying && (
+  {isPlaying && (
         <div className="flex items-center h-4 gap-[2px]">
           {[1, 2, 3, 4].map((bar) => (
             <div
               key={bar}
-              className="w-[2px] bg-[#9333ea] rounded-full animate-pulse"
+              className="w-[2px] bg-slate-400 rounded-full animate-pulse"
               style={{
                 height: `${6 + Math.random() * 6}px`,
                 animationDelay: `${bar * 0.1}s`
@@ -497,6 +485,20 @@ export const MusicStatusBar: React.FC = () => {
           ))}
         </div>
       )}
+      
+      <div className="flex items-center max-w-[200px]">
+        <span className="text-xs truncate text-slate-400">{currentSong.song}</span>
+      </div>
+     <button
+        className="flex items-center justify-center transition-colors"
+        onClick={(e) => {
+          e.stopPropagation();
+          togglePlay();
+        }}
+      >
+        {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+      </button>
+    
     </div>
   );
 };
