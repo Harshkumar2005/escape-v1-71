@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
-import { Play, SkipBack, SkipForward, Volume2, VolumeX, Search, Music } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Search, Music } from 'lucide-react';
 import { PauseBtn, PlayBtn } from 'react-bootstrap-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
