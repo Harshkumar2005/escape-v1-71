@@ -466,13 +466,13 @@ export const MusicStatusBar: React.FC = () => {
 
   return (
     <div
-      className="flex items-center gap-2 rounded-md cursor-pointertransition-colors"
+      className="flex items-center gap-1.5 rounded-md cursor-pointertransition-colors"
       onClick={toggleMusicPanel}
     >
  
 
   {isPlaying && (
-        <div className="flex items-center h-4 gap-[2px]">
+        <div className="flex items-center pt-0.5 h-4 gap-[2px]">
           {[1, 2, 3, 4].map((bar) => (
             <div
               key={bar}
@@ -496,7 +496,7 @@ export const MusicStatusBar: React.FC = () => {
           togglePlay();
         }}
       >
-        {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+        {isPlaying ? <Pause size={14} className="pt-0.5" strokeWidth={1.25} /> : <Play size={14} className="pt-0.5" />}
       </button>
     
     </div>
