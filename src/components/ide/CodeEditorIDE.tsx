@@ -94,9 +94,10 @@ const CodeEditorIDE: React.FC = () => {
 
                 {/* Status Bar */}
                 <StatusBar 
-                  toggleTerminal={() => setShowMusicPanel(prev => !prev)}
+                  toggleMusicPanel={() => setShowMusicPanel(prev => !prev)}
                   toggleLeftSidebar={() => setShowLeftSidebar(prev => !prev)}
                   toggleRightSidebar={() => setShowRightSidebar(prev => !prev)}
+                  
                 />
                 
                 {/* Command Palette */}
