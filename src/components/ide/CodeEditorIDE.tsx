@@ -72,7 +72,7 @@ const CodeEditorIDE: React.FC = () => {
                         {showMusicPanel && (
                           <>
                             <ResizableHandle withHandle />
-                            <ResizablePanel defaultSize={32} maxSize={35} minSize={0}>
+                            <ResizablePanel defaultSize={33} maxSize={35} minSize={0}>
                               <MusicPlayerPanel />
                             </ResizablePanel>
                           </>
