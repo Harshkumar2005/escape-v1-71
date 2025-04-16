@@ -379,10 +379,10 @@ export const MusicPlayerPanel: React.FC = () => {
             {isLoading ? (
               <div className="flex flex-col items-center">
                 <div className="hidden w-8 h-8 border-4 border-t-transparent border-slate-300 rounded-full animate-spin mb-2"></div>
-                <p className="text-zinc-400">Searching for: "{searchQuery}"</p>
+                <p className="text-zinc-400">Searching for: {searchQuery}</p>
               </div>
             ) : (
-              <p className="text-zinc-400">No results found for: "{searchQuery}"</p>
+              <p className="text-zinc-400">No results found for: {searchQuery}</p>
             )}
           </div>
         ) : (
