@@ -272,24 +272,25 @@ export const MusicPlayerPanel: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground border-t rounded-none text-sm">
+    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground rounded-none text-sm">
       {/* Search Header */}
-      <div className="px-4 py-2 border-b bg-sidebar flex justify-between items-center">
+      <div className="px-2 py-1.5 border-b bg-sidebar flex justify-between items-center">
         <form onSubmit={handleSearch} className="flex gap-2 w-full">
           <Input
             type="text"
             placeholder="Search for songs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-sidebar text-sidebar-foreground border placeholder:text-[#858585]"
-          />
+            className="w-full bg-sidebar-foreground bg-opacity-10 text-sm px-3 py-1 rounded text-sidebar-foreground outline-none"
+            autoFocus 
+            />
           <Button
             type="submit"
             size="sm"
             variant="ghost"
-            className="bg-[#3c3c3c] hover:bg-[#454545] text-[#d4d4d4]"
+            className="hover:bg-[#cccccc29] bg-[#cccccc29] text-[#d4d4d4]"
           >
-            <Search size={16} className="mr-2" />
+            <Search size={16} className="" />
             Search
           </Button>
         </form>
@@ -302,14 +303,14 @@ export const MusicPlayerPanel: React.FC = () => {
             {searchResults.map((song) => (
               <div
                 key={song.id}
-                className={`flex items-center gap-3 p-2 rounded-md border transition-all hover:shadow-sm cursor-pointer bg-[#252526] hover:bg-[#333333] ${currentSong?.id === song.id ? 'ring-1 ring-[#0e639c]' : ''
+                className={`flex items-center gap-3 p-2 rounded-md border transition-all hover:shadow-sm cursor-pointer ${currentSong?.id === song.id ? 'bg-[#272b34]' : 'bg-sidebar'
                   }`}
                 onClick={() => playSong(song)}
               >
                 <img
                   src={song.image}
                   alt={song.song}
-                  className="w-12 h-12 rounded-sm object-cover"
+                  className="w-10 h-10 rounded-sm object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1472396961693-142e6e269027';
                   }}
@@ -323,7 +324,7 @@ export const MusicPlayerPanel: React.FC = () => {
                   </p>
                 </div>
                 <button
-                  className="p-2 rounded-sm bg-[#3c3c3c] hover:bg-[#505050]"
+                  className="p-2 rounded-md bg-[#333333] hover:bg-[#cccccc29]"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (currentSong?.id === song.id) {
@@ -356,7 +357,7 @@ export const MusicPlayerPanel: React.FC = () => {
 
       {/* Player Controls */}
       {currentSong && (
-        <div className="p-3 border-t border-[#3c3c3c] bg-[#252526]">
+        <div className="hidden p-3 border-t border-[#3c3c3c] bg-[#252526]">
           <div className="flex items-center justify-between">
             {/* Left: Song Info */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
