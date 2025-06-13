@@ -51,7 +51,7 @@ const availableAgents: AIAgent[] = [
   { 
     id: 'gemini-2.0-flash-thinking-exp-01-21',
     name: 'Gemini Exp.', 
-    model: 'gemini-2.0-flash-thinking-exp-01-21',
+    model: 'gemini-2.5-flash-preview-05-20',
     description: 'More powerful reasoning and code optimization capabilities'
   },
   { 
@@ -90,8 +90,8 @@ export function CodeBuddyChat() {
   // Use the Editor context to get the active tab's content
   const { openedTabs, activeTabId, getTabContent } = useEditor();
 
-  const genAI = new GoogleGenerativeAI("AIzaSyBUSTc2Ux0c8iNu66zSc-v43Ie36te6q3Y");
-
+  const genAI = new GoogleGenerativeAI("AIzaSyB-HrndvDM5bQIFFUQ9GBlpDKC4WHLgnrY");
+//AIzaSyBUSTc2Ux0c8iNu66zSc-v43Ie36te6q3Y
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
